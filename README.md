@@ -119,3 +119,8 @@ Open the local address printed by Vite. Avoid opening `index.html` through `file
 5. Use `index.html` as the entry page.
 
 No sibling JSON repository or asset-download script is required for the bundled reference content.
+
+
+## Qualification cutoff build v2
+
+The Team Summary uses versioned CSS and JavaScript asset filenames so GitHub Pages and browsers do not retain an older cached dashboard script. The cutoff dropdown is rebuilt from the currently filtered team count every time the summary renders.
