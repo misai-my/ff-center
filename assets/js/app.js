@@ -31,6 +31,7 @@ const WEAPON_JSON_URLS = ['data/weapon.json','data/weapons.json','data/free_fire
 const TEAM_LOGOS_JSON_URL = 'data/team_logos.json';
 const MAX_ROWS_TO_LOAD = 5000;
 const CHUNK_SIZE = 1000;
+let EWC_PENDING_QUALIFICATION_CUTOFF = '';
 
 // Columns used by this dashboard only. Heavy JSON/text columns such as row_data,
 // player_stats_weapon_usages and knock_down_damage_info are intentionally excluded.
@@ -2844,6 +2845,66 @@ function rowsForMovementReference(latestOrder){
   });
 }
 
+function syncQualificationCutoffOptions(teamCount){
+  const select = el('overallQualiCutoff');
+  if(!select) return 0;
+
+  const maxTeams = Math.max(0, Number(teamCount) || 0);
+  const requested = String(select.value || EWC_PENDING_QUALIFICATION_CUTOFF || '').trim();
+  const requestedNumber = Number(requested);
+  const selected = Number.isInteger(requestedNumber) && requestedNumber > 0
+    ? Math.min(requestedNumber, maxTeams)
+    : 0;
+
+  const optionCount = Math.max(0, select.options.length - 1);
+  if(optionCount !== maxTeams){
+    select.innerHTML = '<option value="">Off</option>' + Array.from({length:maxTeams}, (_, index) => {
+      const rank = index + 1;
+      return `<option value="${rank}">Top ${rank}</option>`;
+    }).join('');
+  }
+
+  select.value = selected ? String(selected) : '';
+  EWC_PENDING_QUALIFICATION_CUTOFF = select.value;
+  return selected;
+}
+
+function applyQualificationMetrics(rows, cutoff){
+  const standings = rows.slice();
+  sortOverallRows(standings, 'total_score', 'desc');
+  const cutoffRow = cutoff > 0 ? standings[cutoff - 1] : null;
+  const cutoffScore = cutoffRow ? Number(cutoffRow.total_score || 0) : null;
+
+  standings.forEach((row, index) => {
+    const above = index > 0 ? standings[index - 1] : null;
+    row.standing_rank = index + 1;
+    row.one_up = above ? Math.max(0, Number(above.total_score || 0) - Number(row.total_score || 0)) : null;
+    row.quali_pts = cutoffRow
+      ? (row.standing_rank <= cutoff ? 0 : Math.max(0, cutoffScore - Number(row.total_score || 0) + 1))
+      : null;
+    row.below_qualification_cutoff = !!cutoffRow && row.standing_rank > cutoff;
+    row.at_qualification_cutoff = !!cutoffRow && row.standing_rank === cutoff;
+  });
+
+  return { standings, cutoffRow, cutoffScore };
+}
+
+function applyQualificationRowStyles(rows, cutoff){
+  const table = el('tblOverall')?.querySelector('table');
+  if(!table) return;
+  const byTeam = new Map(rows.map(row => [norm(row.team).toUpperCase(), row]));
+
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    tr.classList.remove('below-quali-cutoff', 'at-quali-cutoff');
+    const teamCell = tr.querySelector('td[data-key="team"]');
+    const team = norm(teamCell?.querySelector('.team-name-move')?.dataset?.teamCode || teamCell?.textContent).toUpperCase();
+    const row = byTeam.get(team);
+    if(!row || !cutoff) return;
+    if(row.below_qualification_cutoff) tr.classList.add('below-quali-cutoff');
+    if(row.at_qualification_cutoff) tr.classList.add('at-quali-cutoff');
+  });
+}
+
 function rankMovementHtml(row){
   const move = row?.rank_move || 'same';
   const delta = Number(row?.rank_delta || 0);
@@ -2858,6 +2919,8 @@ function rankMovementHtml(row){
 function renderOverall(options = {}){
   const tm = teamMatchAgg(FILTERED);
   const rows = buildOverallRowsFromTeamMatches(tm);
+  const qualificationCutoff = syncQualificationCutoffOptions(rows.length);
+  applyQualificationMetrics(rows, qualificationCutoff);
 
   const sortKey = el('overallSortKey').value || 'total_score';
   const dir = el('overallSortDir').dataset.dir || 'desc';
@@ -2912,15 +2975,18 @@ function renderOverall(options = {}){
     {label:'ELM', key:'elims', right:true},
     {label:'PLC', key:'ranking_score', right:true},
     {label:'TOT', key:'total_score', right:true},
+    {label:'1UP', key:'one_up', right:true, html:(r)=>r.one_up == null ? '—' : fmtNum(r.one_up)},
+    {label:'Quali Pts', key:'quali_pts', right:true, html:(r)=>r.quali_pts == null ? '—' : fmtNum(r.quali_pts)},
     {label:'DMG', key:'damage', right:true},
     {label:'ELM/M', key:'elims_pm', right:true, format:'1d'},
     {label:'PLC/M', key:'ranking_score_pm', right:true, format:'1d'},
     {label:'TOT/M', key:'total_pm', right:true, format:'1d'},
     {label:'DMG/M', key:'dmg_pm', right:true, format:'0d'}
   ]);
-  setStableHTML(el('tblOverall'), overallHtml, `overall::${sortKey}::${dir}::${rows.map(r => `${r.team}:${r.total_score}:${r.elims}:${r.ranking_score}:${r.damage}:${r.rank_move}:${r.rank_delta}`).join('|')}`, !!arguments[0]?.silentRefresh);
+  setStableHTML(el('tblOverall'), overallHtml, `overall::${sortKey}::${dir}::cutoff=${qualificationCutoff}::${rows.map(r => `${r.team}:${r.total_score}:${r.one_up}:${r.quali_pts}:${r.elims}:${r.ranking_score}:${r.damage}:${r.rank_move}:${r.rank_delta}`).join('|')}`, !!arguments[0]?.silentRefresh);
 
   applyColumnHeatmap('tblOverall', ['matches','booyahs','elims','ranking_score','total_score','damage','elims_pm','ranking_score_pm','total_pm','dmg_pm']);
+  applyQualificationRowStyles(rows, qualificationCutoff);
 
   const currentSortKey = el('overallSortKey').value || 'total_score';
   const currentDir = el('overallSortDir').dataset.dir || 'desc';
@@ -2932,7 +2998,9 @@ function renderOverall(options = {}){
 
     if(!sortableKeys.has(key)){
       th.style.cursor = 'default';
-      th.title = 'Current display rank';
+      th.title = key === 'display_rank'
+        ? 'Current display rank'
+        : (key === 'one_up' ? 'Total-points gap to the team immediately above in the standings' : 'Additional points needed to move above the selected qualification cutoff');
       return;
     }
 
@@ -5185,6 +5253,10 @@ function wire(){
   });
 
   el('overallSortKey')?.addEventListener('change', renderOverall);
+  el('overallQualiCutoff')?.addEventListener('change', () => {
+    EWC_PENDING_QUALIFICATION_CUTOFF = el('overallQualiCutoff')?.value || '';
+    renderOverall();
+  });
 
   el('teamSearch')?.addEventListener('input', e => {
     renderTeamGrid(e.target.value || '');
@@ -5376,13 +5448,15 @@ function restoreAccordionState(state){
 function getOverallSortState(){
   return {
     key: readControlValue('overallSortKey', 'total_score') || 'total_score',
-    dir: el('overallSortDir')?.dataset?.dir || 'desc'
+    dir: el('overallSortDir')?.dataset?.dir || 'desc',
+    qualificationCutoff: el('overallQualiCutoff')?.value || EWC_PENDING_QUALIFICATION_CUTOFF || ''
   };
 }
 function restoreOverallSortState(state){
   if(!state || typeof state !== 'object') return;
   const sortKey = state.key || 'total_score';
   const sortDir = state.dir === 'asc' ? 'asc' : 'desc';
+  EWC_PENDING_QUALIFICATION_CUTOFF = String(state.qualificationCutoff || '');
   if(el('overallSortKey') && optionExists('overallSortKey', sortKey)) el('overallSortKey').value = sortKey;
   const btn = el('overallSortDir');
   if(btn){

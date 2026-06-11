@@ -4649,3 +4649,52 @@ body.ewc-refreshing.betting-experiment tbody tr {
 .live-feed-card > .live-feed-players .live-feed-kill-row .visual-icon-wrap{
   align-self:center!important;
 }
+
+
+/* ===== Qualification cutoff + gap columns ===== */
+#overallQualiCutoff{
+  min-width:118px;
+}
+#tblOverall th[data-key="one_up"],
+#tblOverall td[data-key="one_up"]{
+  width:48px !important;
+}
+#tblOverall th[data-key="quali_pts"],
+#tblOverall td[data-key="quali_pts"]{
+  width:58px !important;
+}
+#tblOverall tbody tr.below-quali-cutoff td{
+  background:rgba(207,45,65,.22) !important;
+  border-top-color:rgba(255,91,111,.34) !important;
+  border-bottom-color:rgba(255,91,111,.34) !important;
+  color:rgba(255,235,238,.98) !important;
+}
+#tblOverall tbody tr.below-quali-cutoff:hover td{
+  background:rgba(225,54,75,.30) !important;
+  border-color:rgba(255,112,130,.50) !important;
+}
+#tblOverall tbody tr.at-quali-cutoff td{
+  border-bottom:2px solid rgba(255,189,89,.82) !important;
+}
+#tblOverall tbody tr.at-quali-cutoff td:first-child::after{
+  content:"CUT";
+  display:block;
+  margin-top:2px;
+  color:var(--brand);
+  font-size:.46rem;
+  font-weight:1000;
+  letter-spacing:.04em;
+}
+html[data-theme="light"] #tblOverall tbody tr.below-quali-cutoff td{
+  background:rgba(223,61,78,.16) !important;
+  color:#5d1720 !important;
+  border-top-color:rgba(190,36,53,.28) !important;
+  border-bottom-color:rgba(190,36,53,.28) !important;
+}
+@media(max-width:760px){
+  #overallQualiCutoff{min-width:98px;}
+  #tblOverall th[data-key="one_up"],
+  #tblOverall td[data-key="one_up"]{width:6.5% !important;}
+  #tblOverall th[data-key="quali_pts"],
+  #tblOverall td[data-key="quali_pts"]{width:8% !important;}
+}
