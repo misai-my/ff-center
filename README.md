@@ -129,3 +129,7 @@ The Team Summary uses versioned CSS and JavaScript asset filenames so GitHub Pag
 ## Premium Team Summary
 
 The Team Summary uses color-coded podium ranks, qualification-line highlighting, sticky rank/team columns on desktop, and responsive standings cards on mobile. Existing sorting, qualification cutoff, 1UP, Quali Pts, team profile opening, and saved view-state behavior are unchanged.
+
+## Team Selection premium layout
+
+The team selector uses larger logo cards, natural responsive wrapping, a high-contrast selected state, and mobile-friendly tap targets. Desktop cards keep consistent dimensions instead of compressing up to 24 teams into a single row; phones use four columns or three columns on narrow screens.

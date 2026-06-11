@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles-summary-premium-v3.css">
+  <link rel="stylesheet" href="assets/css/styles-team-selection-premium-v4.css">
 </head>
 <body class="betting-experiment">
 
@@ -306,11 +306,22 @@
     </aside>
   </section>
 
-  <div class="section">
-    <h2>Team Selection — Click to Open Profile</h2>
-    <div class="bar"><input type="search" id="teamSearch" placeholder="Search EWC team…" class="input" style="flex:1;max-width:420px"><span class="chip">Selected: <span id="selectedTeamChip">—</span></span></div>
-    <div id="teamGrid" class="team-grid">Loading teams…</div>
-  </div>
+  <section class="section team-selection-section" aria-labelledby="teamSelectionTitle">
+    <div class="team-selection-head">
+      <div class="team-selection-title">
+        <span class="team-selection-kicker">Team Profiles</span>
+        <h2 id="teamSelectionTitle">Team Selection</h2>
+        <p>Select a team to open its full performance profile.</p>
+      </div>
+      <span class="chip team-selection-current"><span class="selected-label">Selected</span><span id="selectedTeamChip">—</span></span>
+    </div>
+    <div class="team-selection-toolbar">
+      <label class="team-selection-search" aria-label="Search teams">
+        <input type="search" id="teamSearch" placeholder="Search EWC team…" class="input" autocomplete="off">
+      </label>
+    </div>
+    <div id="teamGrid" class="team-grid" aria-live="polite">Loading teams…</div>
+  </section>
 
 
 
@@ -500,6 +511,6 @@
   </section>
 </div>
 
-<script src="assets/js/app-summary-premium-v3.js"></script>
+<script src="assets/js/app-team-selection-premium-v4.js"></script>
 </body>
 </html>
