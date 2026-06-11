@@ -124,3 +124,8 @@ No sibling JSON repository or asset-download script is required for the bundled 
 ## Qualification cutoff build v2
 
 The Team Summary uses versioned CSS and JavaScript asset filenames so GitHub Pages and browsers do not retain an older cached dashboard script. The cutoff dropdown is rebuilt from the currently filtered team count every time the summary renders.
+
+
+## Premium Team Summary
+
+The Team Summary uses color-coded podium ranks, qualification-line highlighting, sticky rank/team columns on desktop, and responsive standings cards on mobile. Existing sorting, qualification cutoff, 1UP, Quali Pts, team profile opening, and saved view-state behavior are unchanged.

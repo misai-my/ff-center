@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles-qualification-v2.css">
+  <link rel="stylesheet" href="assets/css/styles-summary-premium-v3.css">
 </head>
 <body class="betting-experiment">
 
@@ -255,8 +255,9 @@
   <details class="accordion" id="accOverall">
     <summary><span>Overall — Team Summary</span><span class="muted" id="overallHint"></span></summary>
     <div class="accordion-body">
-      <div class="bar">
-        <label>Sort by
+      <div class="standings-toolbar">
+      <div class="bar standings-controls">
+        <label><span class="control-label">Sort by</span>
           <select id="overallSortKey" class="input">
             <option value="total_score" selected>Total Score</option>
             <option value="booyahs">Booyahs</option>
@@ -276,9 +277,17 @@
             <option value="">Off</option>
           </select>
         </label>
-        <span class="muted quali-cutoff-help" id="overallQualiHelp">Select a Top position to activate the cutoff.</span>
+        <span class="muted quali-cutoff-help" id="overallQualiHelp"><span class="quali-status-dot off"></span>Select a Top position to activate the qualification line.</span>
       </div>
-      <div class="summary-layout summary-layout-table-only">
+      <div class="rank-color-legend" aria-label="Rank color legend">
+        <span><i class="rank-swatch gold"></i>1st</span>
+        <span><i class="rank-swatch silver"></i>2nd</span>
+        <span><i class="rank-swatch bronze"></i>3rd</span>
+        <span><i class="rank-swatch contender"></i>Top field</span>
+        <span><i class="rank-swatch danger"></i>Below cutoff</span>
+      </div>
+      </div>
+      <div class="summary-layout summary-layout-table-only premium-summary-layout">
         <div class="card summary-table-card"><div id="tblOverall">Loading…</div></div>
       </div>
     </div>
@@ -491,6 +500,6 @@
   </section>
 </div>
 
-<script src="assets/js/app-qualification-v2.js"></script>
+<script src="assets/js/app-summary-premium-v3.js"></script>
 </body>
 </html>
