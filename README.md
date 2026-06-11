@@ -76,6 +76,13 @@ RHK
 TS
 ```
 
+## Team Summary qualification tools
+
+The Overall Team Summary includes a qualification-cutoff selector populated from `1` through the number of teams in the active filters. Teams below the selected total-points position are highlighted in red.
+
+- `1UP` is the current total-points gap to the team immediately above in the total-points standings.
+- `Quali Pts` is `0` for teams inside the selected cutoff. For teams below it, it is the additional score needed to move one point above the current cutoff score.
+
 ## Supabase setup
 
 In the Supabase SQL Editor, run:
