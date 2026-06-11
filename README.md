@@ -1,46 +1,114 @@
-# EWC Team Command Center Package
+# EWC Team Command Center
 
-This package is a structural recreation of the supplied single-file dashboard. The visible interface, Supabase queries, storage keys, event handlers, filters, refresh behavior, modal logic, and relative URLs are preserved.
+Standalone repository build of the EWC Team Command Center. The dashboard UI and application behavior are preserved, while the reference JSON files and available image assets are bundled in this repository.
 
-## Files
+## Repository contents
 
-- `index.html` — package entry point
-- `ewc-team-overview.html` — original page filename for compatibility with existing navigation
-- `assets/css/styles.css` — extracted original CSS
-- `assets/js/theme-init.js` — theme pre-load logic, kept in the document head
-- `assets/js/app.js` — extracted original dashboard application logic
-- `legacy/original-single-file.html` — untouched source copy for rollback/comparison
+```text
+.
+├── index.html
+├── ewc-team-overview.html
+├── package.json
+├── assets/
+│   ├── css/
+│   ├── js/
+│   ├── img/
+│   │   ├── characters/
+│   │   ├── pets/
+│   │   ├── loadouts/
+│   │   └── weapons/
+│   └── logo/
+├── data/
+│   ├── character.json
+│   ├── pet.json
+│   ├── loadout.json
+│   ├── weapon.json
+│   ├── counter.json
+│   ├── team_logos.json
+│   └── asset_manifest.json
+└── supabase/
+    ├── 01_reference_tables.sql
+    └── 02_asset_metadata.sql
+```
+
+## Bundled data
+
+- 64 characters
+- 23 pets
+- 4 loadouts
+- 75 weapons
+- 23 character counter profiles
+- Team-logo registry and local asset manifest
+
+The JSON records retain their original remote `image_url` fields and also contain local asset paths where matching artwork is bundled.
+
+## Image coverage
+
+- Characters: 64 of 64 local PNG files
+- Pets: 23 of 23 local PNG files
+- Loadouts: 4 of 4 local PNG files
+- Weapons: 67 of 75 local PNG files
+- Team logos: 29 supplied PNG files, with SVG fallbacks for configured teams that do not yet have supplied artwork
+
+Weapons still using their bundled SVG/remote fallback:
+
+```text
+Treatment Laser Gun
+Crossbow
+MGL140
+Gatling
+FF Knife
+Flamethrower
+CG15
+Hydro Blaster
+```
+
+Configured team codes still using SVG placeholders:
+
+```text
+CLVS
+E1
+HS
+NVL
+R7
+RC
+RHK
+TS
+```
+
+## Supabase setup
+
+In the Supabase SQL Editor, run:
+
+1. `supabase/01_reference_tables.sql`
+2. `supabase/02_asset_metadata.sql`
+
+The migrations create and seed the reference tables and add local image metadata and team-logo records.
+
+The live dashboard still expects the existing backend resources used by the original page, including:
+
+- Supabase authentication/session access
+- `ff_player_stats_raw`
+- `match_api`
+- The `team-insights` Edge Function where AI insights are used
 
 ## Run locally
 
-The page uses `fetch()`, Supabase, and browser storage, so open it through a local web server rather than by double-clicking the HTML file.
+Node.js is optional but provides the simplest local server:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then open the local address shown by Vite.
+Open the local address printed by Vite. Avoid opening `index.html` through `file://`, because browsers can block local JSON requests.
 
-A no-install alternative is:
+## GitHub Pages deployment
 
-```bash
-python -m http.server 8080
-```
+1. Create a new GitHub repository.
+2. Upload the contents of this folder to the repository root.
+3. Open **Settings → Pages**.
+4. Select deployment from the repository branch and root folder.
+5. Use `index.html` as the entry page.
 
-Then open `http://localhost:8080/`.
-
-## Existing runtime dependencies preserved
-
-The application still expects these sibling JSON files at the package root, exactly as before:
-
-- `character.json`
-- `pet.json`
-- `loadout.json`
-- one of `weapon.json`, `weapons.json`, or `free_fire_full_weapon_data_with_armory.json`
-
-It also keeps links to the existing sibling dashboard pages such as `home.html`, `character.html`, `pet.html`, `weapon.html`, `preset.html`, `map.html`, and the other pages already referenced by the source. Add those existing files beside this package when integrating it into the full site.
-
-## Deployment
-
-Upload the contents of this folder to the same directory level used by the original page. No build step is required for static hosting. The Vite build command is optional.
+No sibling JSON repository or asset-download script is required for the bundled reference content.

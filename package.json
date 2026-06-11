@@ -2,7 +2,7 @@
   "name": "ewc-team-command-center",
   "version": "1.0.0",
   "private": true,
-  "description": "Packaged EWC Team Command Center with behavior preserved from the original single-file page.",
+  "description": "Standalone EWC Team Command Center repository with bundled reference data and assets.",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",

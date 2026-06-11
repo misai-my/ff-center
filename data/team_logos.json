@@ -1,0 +1,427 @@
+[
+  {
+    "team_code": "AG",
+    "team_name": "All Gamers",
+    "image_url": "assets/logo/ag.png",
+    "remote_image_url": "",
+    "aliases": [
+      "AG",
+      "All Gamers"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/ag.png"
+  },
+  {
+    "team_code": "AHL",
+    "team_name": "AHL",
+    "image_url": "assets/logo/ahl.png",
+    "local_image_path": "assets/logo/ahl.png",
+    "remote_image_url": "",
+    "aliases": [
+      "AHL"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "AUR",
+    "team_name": "AUR",
+    "image_url": "assets/logo/aur.png",
+    "local_image_path": "assets/logo/aur.png",
+    "remote_image_url": "",
+    "aliases": [
+      "AUR"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "AVD",
+    "team_name": "AVD",
+    "image_url": "assets/logo/avd.png",
+    "local_image_path": "assets/logo/avd.png",
+    "remote_image_url": "",
+    "aliases": [
+      "AVD"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "BRU",
+    "team_name": "Buriram United Esports",
+    "image_url": "assets/logo/bru.png",
+    "remote_image_url": "",
+    "aliases": [
+      "BRU",
+      "Buriram United Esports"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/bru.png"
+  },
+  {
+    "team_code": "BTR",
+    "team_name": "BTR",
+    "image_url": "assets/logo/btr.png",
+    "local_image_path": "assets/logo/btr.png",
+    "remote_image_url": "",
+    "aliases": [
+      "BTR"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "CLVS",
+    "team_name": "Corinthians Esports",
+    "image_url": "assets/logo/clvs.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "CLVS",
+      "Corinthians Esports"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/clvs.svg"
+  },
+  {
+    "team_code": "DP",
+    "team_name": "DP",
+    "image_url": "assets/logo/dp.png",
+    "local_image_path": "assets/logo/dp.png",
+    "remote_image_url": "",
+    "aliases": [
+      "DP"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "DRS",
+    "team_name": "DRS",
+    "image_url": "assets/logo/drs.png",
+    "local_image_path": "assets/logo/drs.png",
+    "remote_image_url": "",
+    "aliases": [
+      "DRS"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "E1",
+    "team_name": "E1 Sports",
+    "image_url": "assets/logo/e1.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "E1",
+      "E1 Sports"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/e1.svg"
+  },
+  {
+    "team_code": "EVOS",
+    "team_name": "EVOS Divine",
+    "image_url": "assets/logo/evos.png",
+    "remote_image_url": "",
+    "aliases": [
+      "EVOS",
+      "EVOS Divine"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/evos.png"
+  },
+  {
+    "team_code": "FF",
+    "team_name": "FF",
+    "image_url": "assets/logo/ff.png",
+    "local_image_path": "assets/logo/ff.png",
+    "remote_image_url": "",
+    "aliases": [
+      "FF"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "FL",
+    "team_name": "FL",
+    "image_url": "assets/logo/fl.png",
+    "local_image_path": "assets/logo/fl.png",
+    "remote_image_url": "",
+    "aliases": [
+      "FL"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "FLCN",
+    "team_name": "Team Falcons",
+    "image_url": "assets/logo/flcn.png",
+    "remote_image_url": "",
+    "aliases": [
+      "FLCN",
+      "Team Falcons"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/flcn.png"
+  },
+  {
+    "team_code": "FX",
+    "team_name": "Fluxo",
+    "image_url": "assets/logo/fx.png",
+    "remote_image_url": "",
+    "aliases": [
+      "FX",
+      "Fluxo"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/fx.png"
+  },
+  {
+    "team_code": "GOW",
+    "team_name": "GOW Esports",
+    "image_url": "assets/logo/gow.png",
+    "remote_image_url": "",
+    "aliases": [
+      "GOW",
+      "GOW Esports"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/gow.png"
+  },
+  {
+    "team_code": "HEV",
+    "team_name": "Heavy",
+    "image_url": "assets/logo/hev.png",
+    "remote_image_url": "",
+    "aliases": [
+      "HEV",
+      "Heavy"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/hev.png"
+  },
+  {
+    "team_code": "HS",
+    "team_name": "Hotshot Esports",
+    "image_url": "assets/logo/hs.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "HS",
+      "Hotshot Esports"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/hs.svg"
+  },
+  {
+    "team_code": "LOUD",
+    "team_name": "LOUD",
+    "image_url": "assets/logo/loud.png",
+    "local_image_path": "assets/logo/loud.png",
+    "remote_image_url": "",
+    "aliases": [
+      "LOUD"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "LYON",
+    "team_name": "LYON",
+    "image_url": "assets/logo/lyon.png",
+    "local_image_path": "assets/logo/lyon.png",
+    "remote_image_url": "",
+    "aliases": [
+      "LYON"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "MEC",
+    "team_name": "MEC",
+    "image_url": "assets/logo/mec.png",
+    "local_image_path": "assets/logo/mec.png",
+    "remote_image_url": "",
+    "aliases": [
+      "MEC"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "MIA",
+    "team_name": "MIA",
+    "image_url": "assets/logo/mia.png",
+    "local_image_path": "assets/logo/mia.png",
+    "remote_image_url": "",
+    "aliases": [
+      "MIA"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "MIBR",
+    "team_name": "MIBR",
+    "image_url": "assets/logo/mibr.png",
+    "local_image_path": "assets/logo/mibr.png",
+    "remote_image_url": "",
+    "aliases": [
+      "MIBR"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "NVL",
+    "team_name": "Nova Legion",
+    "image_url": "assets/logo/nvl.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "NVL",
+      "Nova Legion"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/nvl.svg"
+  },
+  {
+    "team_code": "ONIC",
+    "team_name": "ONIC",
+    "image_url": "assets/logo/onic.png",
+    "local_image_path": "assets/logo/onic.png",
+    "remote_image_url": "",
+    "aliases": [
+      "ONIC"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "PDX",
+    "team_name": "PDX",
+    "image_url": "assets/logo/pdx.png",
+    "local_image_path": "assets/logo/pdx.png",
+    "remote_image_url": "",
+    "aliases": [
+      "PDX"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "PE",
+    "team_name": "P Esports",
+    "image_url": "assets/logo/pe.png",
+    "remote_image_url": "",
+    "aliases": [
+      "PE",
+      "P Esports"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/pe.png"
+  },
+  {
+    "team_code": "R7",
+    "team_name": "R7 Esports",
+    "image_url": "assets/logo/r7.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "R7",
+      "R7 Esports"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/r7.svg"
+  },
+  {
+    "team_code": "RC",
+    "team_name": "Red Canids",
+    "image_url": "assets/logo/rc.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "RC",
+      "Red Canids"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/rc.svg"
+  },
+  {
+    "team_code": "RHK",
+    "team_name": "Rex Regum Hikari",
+    "image_url": "assets/logo/rhk.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "RHK",
+      "Rex Regum Hikari"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/rhk.svg"
+  },
+  {
+    "team_code": "RRQ",
+    "team_name": "RRQ Kazu",
+    "image_url": "assets/logo/rrq.png",
+    "remote_image_url": "",
+    "aliases": [
+      "RRQ",
+      "RRQ Kazu"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/rrq.png"
+  },
+  {
+    "team_code": "SE",
+    "team_name": "SE",
+    "image_url": "assets/logo/se.png",
+    "local_image_path": "assets/logo/se.png",
+    "remote_image_url": "",
+    "aliases": [
+      "SE"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "SH",
+    "team_name": "SH",
+    "image_url": "assets/logo/sh.png",
+    "local_image_path": "assets/logo/sh.png",
+    "remote_image_url": "",
+    "aliases": [
+      "SH"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "TEC",
+    "team_name": "TEC",
+    "image_url": "assets/logo/tec.png",
+    "local_image_path": "assets/logo/tec.png",
+    "remote_image_url": "",
+    "aliases": [
+      "TEC"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "TS",
+    "team_name": "Team Solid",
+    "image_url": "assets/logo/ts.svg",
+    "remote_image_url": "",
+    "aliases": [
+      "TS",
+      "Team Solid"
+    ],
+    "is_placeholder": true,
+    "local_image_path": "assets/logo/ts.svg"
+  },
+  {
+    "team_code": "TWIS",
+    "team_name": "TWIS",
+    "image_url": "assets/logo/twis.png",
+    "local_image_path": "assets/logo/twis.png",
+    "remote_image_url": "",
+    "aliases": [
+      "TWIS"
+    ],
+    "is_placeholder": false
+  },
+  {
+    "team_code": "WAG",
+    "team_name": "WAG",
+    "image_url": "assets/logo/wag.png",
+    "remote_image_url": "",
+    "aliases": [
+      "WAG",
+      "WAG"
+    ],
+    "is_placeholder": false,
+    "local_image_path": "assets/logo/wag.png"
+  }
+]

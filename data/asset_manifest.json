@@ -1,0 +1,2037 @@
+{
+  "version": 2,
+  "generated_from": "Uploaded JSON datasets plus user-provided img.zip",
+  "generated_at": "2026-06-11T22:46:52.118155+00:00",
+  "assets": [
+    {
+      "kind": "character",
+      "name": "A124",
+      "slug": "a124",
+      "remote_url": "https://i.imgur.com/xHoCTQm.png",
+      "local_path": "assets/img/characters/a124.png",
+      "included": true,
+      "placeholder": "assets/img/characters/a124.svg",
+      "target_base": "assets/img/characters/a124"
+    },
+    {
+      "kind": "character",
+      "name": "Alok",
+      "slug": "alok",
+      "remote_url": "https://i.imgur.com/u5xch51.png",
+      "local_path": "assets/img/characters/alok.png",
+      "included": true,
+      "placeholder": "assets/img/characters/alok.svg",
+      "target_base": "assets/img/characters/alok"
+    },
+    {
+      "kind": "character",
+      "name": "Chrono",
+      "slug": "chrono",
+      "remote_url": "https://i.imgur.com/nOciCJx.png",
+      "local_path": "assets/img/characters/chrono.png",
+      "included": true,
+      "placeholder": "assets/img/characters/chrono.svg",
+      "target_base": "assets/img/characters/chrono"
+    },
+    {
+      "kind": "character",
+      "name": "Clu",
+      "slug": "clu",
+      "remote_url": "https://i.imgur.com/rb0QZx7.png",
+      "local_path": "assets/img/characters/clu.png",
+      "included": true,
+      "placeholder": "assets/img/characters/clu.svg",
+      "target_base": "assets/img/characters/clu"
+    },
+    {
+      "kind": "character",
+      "name": "Dimitri",
+      "slug": "dimitri",
+      "remote_url": "https://i.imgur.com/13rPnSI.png",
+      "local_path": "assets/img/characters/dimitri.png",
+      "included": true,
+      "placeholder": "assets/img/characters/dimitri.svg",
+      "target_base": "assets/img/characters/dimitri"
+    },
+    {
+      "kind": "character",
+      "name": "Homer",
+      "slug": "homer",
+      "remote_url": "https://i.imgur.com/ySk50DI.png",
+      "local_path": "assets/img/characters/homer.png",
+      "included": true,
+      "placeholder": "assets/img/characters/homer.svg",
+      "target_base": "assets/img/characters/homer"
+    },
+    {
+      "kind": "character",
+      "name": "Ignis",
+      "slug": "ignis",
+      "remote_url": "https://i.imgur.com/tdPOAHI.png",
+      "local_path": "assets/img/characters/ignis.png",
+      "included": true,
+      "placeholder": "assets/img/characters/ignis.svg",
+      "target_base": "assets/img/characters/ignis"
+    },
+    {
+      "kind": "character",
+      "name": "Iris",
+      "slug": "iris",
+      "remote_url": "https://i.imgur.com/SVvmZnM.png",
+      "local_path": "assets/img/characters/iris.png",
+      "included": true,
+      "placeholder": "assets/img/characters/iris.svg",
+      "target_base": "assets/img/characters/iris"
+    },
+    {
+      "kind": "character",
+      "name": "K",
+      "slug": "k",
+      "remote_url": "https://i.imgur.com/Xq8oACe.png",
+      "local_path": "assets/img/characters/k.png",
+      "included": true,
+      "placeholder": "assets/img/characters/k.svg",
+      "target_base": "assets/img/characters/k"
+    },
+    {
+      "kind": "character",
+      "name": "Kassie",
+      "slug": "kassie",
+      "remote_url": "https://i.imgur.com/Ya0dxi1.png",
+      "local_path": "assets/img/characters/kassie.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kassie.svg",
+      "target_base": "assets/img/characters/kassie"
+    },
+    {
+      "kind": "character",
+      "name": "Kenta",
+      "slug": "kenta",
+      "remote_url": "https://i.imgur.com/6S0svrf.png",
+      "local_path": "assets/img/characters/kenta.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kenta.svg",
+      "target_base": "assets/img/characters/kenta"
+    },
+    {
+      "kind": "character",
+      "name": "Koda",
+      "slug": "koda",
+      "remote_url": "https://i.imgur.com/COE3DRg.png",
+      "local_path": "assets/img/characters/koda.png",
+      "included": true,
+      "placeholder": "assets/img/characters/koda.svg",
+      "target_base": "assets/img/characters/koda"
+    },
+    {
+      "kind": "character",
+      "name": "Morse",
+      "slug": "morse",
+      "remote_url": "https://i.imgur.com/b7KHp6d.png",
+      "local_path": "assets/img/characters/morse.png",
+      "included": true,
+      "placeholder": "assets/img/characters/morse.svg",
+      "target_base": "assets/img/characters/morse"
+    },
+    {
+      "kind": "character",
+      "name": "Nero",
+      "slug": "nero",
+      "remote_url": "https://i.imgur.com/p7gQoSG.png",
+      "local_path": "assets/img/characters/nero.png",
+      "included": true,
+      "placeholder": "assets/img/characters/nero.svg",
+      "target_base": "assets/img/characters/nero"
+    },
+    {
+      "kind": "character",
+      "name": "Orion",
+      "slug": "orion",
+      "remote_url": "https://i.imgur.com/icFg0cY.png",
+      "local_path": "assets/img/characters/orion.png",
+      "included": true,
+      "placeholder": "assets/img/characters/orion.svg",
+      "target_base": "assets/img/characters/orion"
+    },
+    {
+      "kind": "character",
+      "name": "Oscar",
+      "slug": "oscar",
+      "remote_url": "https://i.imgur.com/Q5T5FRN.png",
+      "local_path": "assets/img/characters/oscar.png",
+      "included": true,
+      "placeholder": "assets/img/characters/oscar.svg",
+      "target_base": "assets/img/characters/oscar"
+    },
+    {
+      "kind": "character",
+      "name": "Ray",
+      "slug": "ray",
+      "remote_url": "https://i.imgur.com/exkI81x.png",
+      "local_path": "assets/img/characters/ray.png",
+      "included": false,
+      "placeholder": "assets/img/characters/ray.svg",
+      "target_base": "assets/img/characters/ray"
+    },
+    {
+      "kind": "character",
+      "name": "Ryden",
+      "slug": "ryden",
+      "remote_url": "https://i.imgur.com/UvI83b8.png",
+      "local_path": "assets/img/characters/ryden.png",
+      "included": true,
+      "placeholder": "assets/img/characters/ryden.svg",
+      "target_base": "assets/img/characters/ryden"
+    },
+    {
+      "kind": "character",
+      "name": "Santino",
+      "slug": "santino",
+      "remote_url": "https://i.imgur.com/kfDV961.png",
+      "local_path": "assets/img/characters/santino.png",
+      "included": true,
+      "placeholder": "assets/img/characters/santino.svg",
+      "target_base": "assets/img/characters/santino"
+    },
+    {
+      "kind": "character",
+      "name": "Skyler",
+      "slug": "skyler",
+      "remote_url": "https://i.imgur.com/f0H8bdb.png",
+      "local_path": "assets/img/characters/skyler.png",
+      "included": true,
+      "placeholder": "assets/img/characters/skyler.svg",
+      "target_base": "assets/img/characters/skyler"
+    },
+    {
+      "kind": "character",
+      "name": "Steffie",
+      "slug": "steffie",
+      "remote_url": "https://i.imgur.com/f2PQFdX.png",
+      "local_path": "assets/img/characters/steffie.png",
+      "included": true,
+      "placeholder": "assets/img/characters/steffie.svg",
+      "target_base": "assets/img/characters/steffie"
+    },
+    {
+      "kind": "character",
+      "name": "Tatsuya",
+      "slug": "tatsuya",
+      "remote_url": "https://i.imgur.com/i9fECS9.png",
+      "local_path": "assets/img/characters/tatsuya.png",
+      "included": true,
+      "placeholder": "assets/img/characters/tatsuya.svg",
+      "target_base": "assets/img/characters/tatsuya"
+    },
+    {
+      "kind": "character",
+      "name": "Wukong",
+      "slug": "wukong",
+      "remote_url": "https://i.imgur.com/LxZHoRW.png",
+      "local_path": "assets/img/characters/wukong.png",
+      "included": true,
+      "placeholder": "assets/img/characters/wukong.svg",
+      "target_base": "assets/img/characters/wukong"
+    },
+    {
+      "kind": "character",
+      "name": "Xayne",
+      "slug": "xayne",
+      "remote_url": "https://i.imgur.com/zTvHTlu.png",
+      "local_path": "assets/img/characters/xayne.png",
+      "included": true,
+      "placeholder": "assets/img/characters/xayne.svg",
+      "target_base": "assets/img/characters/xayne"
+    },
+    {
+      "kind": "character",
+      "name": "Alvaro",
+      "slug": "alvaro",
+      "remote_url": "https://i.imgur.com/BjxSoDK.png",
+      "local_path": "assets/img/characters/alvaro.png",
+      "included": true,
+      "placeholder": "assets/img/characters/alvaro.svg",
+      "target_base": "assets/img/characters/alvaro"
+    },
+    {
+      "kind": "character",
+      "name": "Andrew",
+      "slug": "andrew",
+      "remote_url": "https://i.imgur.com/s9bFMQZ.png",
+      "local_path": "assets/img/characters/andrew.png",
+      "included": true,
+      "placeholder": "assets/img/characters/andrew.svg",
+      "target_base": "assets/img/characters/andrew"
+    },
+    {
+      "kind": "character",
+      "name": "Antonio",
+      "slug": "antonio",
+      "remote_url": "https://i.imgur.com/kOAxVZS.png",
+      "local_path": "assets/img/characters/antonio.png",
+      "included": true,
+      "placeholder": "assets/img/characters/antonio.svg",
+      "target_base": "assets/img/characters/antonio"
+    },
+    {
+      "kind": "character",
+      "name": "Caroline",
+      "slug": "caroline",
+      "remote_url": "https://i.imgur.com/0hEEZlL.png",
+      "local_path": "assets/img/characters/caroline.png",
+      "included": true,
+      "placeholder": "assets/img/characters/caroline.svg",
+      "target_base": "assets/img/characters/caroline"
+    },
+    {
+      "kind": "character",
+      "name": "D-Bee",
+      "slug": "d-bee",
+      "remote_url": "https://i.imgur.com/sqG0U3u.png",
+      "local_path": "assets/img/characters/d-bee.png",
+      "included": true,
+      "placeholder": "assets/img/characters/d-bee.svg",
+      "target_base": "assets/img/characters/d-bee"
+    },
+    {
+      "kind": "character",
+      "name": "Dasha",
+      "slug": "dasha",
+      "remote_url": "https://i.imgur.com/loOR3hg.png",
+      "local_path": "assets/img/characters/dasha.png",
+      "included": true,
+      "placeholder": "assets/img/characters/dasha.svg",
+      "target_base": "assets/img/characters/dasha"
+    },
+    {
+      "kind": "character",
+      "name": "Ford",
+      "slug": "ford",
+      "remote_url": "https://i.imgur.com/9LWbDNP.png",
+      "local_path": "assets/img/characters/ford.png",
+      "included": true,
+      "placeholder": "assets/img/characters/ford.svg",
+      "target_base": "assets/img/characters/ford"
+    },
+    {
+      "kind": "character",
+      "name": "Hayato",
+      "slug": "hayato",
+      "remote_url": "https://i.imgur.com/R9CggPC.png",
+      "local_path": "assets/img/characters/hayato.png",
+      "included": true,
+      "placeholder": "assets/img/characters/hayato.svg",
+      "target_base": "assets/img/characters/hayato"
+    },
+    {
+      "kind": "character",
+      "name": "J.Biebs",
+      "slug": "j-biebs",
+      "remote_url": "https://i.imgur.com/nJsGTtn.png",
+      "local_path": "assets/img/characters/j-biebs.png",
+      "included": true,
+      "placeholder": "assets/img/characters/j-biebs.svg",
+      "target_base": "assets/img/characters/j-biebs"
+    },
+    {
+      "kind": "character",
+      "name": "Jai",
+      "slug": "jai",
+      "remote_url": "https://i.imgur.com/h3AX0sw.png",
+      "local_path": "assets/img/characters/jai.png",
+      "included": true,
+      "placeholder": "assets/img/characters/jai.svg",
+      "target_base": "assets/img/characters/jai"
+    },
+    {
+      "kind": "character",
+      "name": "Joseph",
+      "slug": "joseph",
+      "remote_url": "https://i.imgur.com/lFp1NEL.png",
+      "local_path": "assets/img/characters/joseph.png",
+      "included": true,
+      "placeholder": "assets/img/characters/joseph.svg",
+      "target_base": "assets/img/characters/joseph"
+    },
+    {
+      "kind": "character",
+      "name": "Jota",
+      "slug": "jota",
+      "remote_url": "https://i.imgur.com/QLjDhkY.png",
+      "local_path": "assets/img/characters/jota.png",
+      "included": true,
+      "placeholder": "assets/img/characters/jota.svg",
+      "target_base": "assets/img/characters/jota"
+    },
+    {
+      "kind": "character",
+      "name": "Kairos",
+      "slug": "kairos",
+      "remote_url": "https://i.imgur.com/h89p30Y.png",
+      "local_path": "assets/img/characters/kairos.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kairos.svg",
+      "target_base": "assets/img/characters/kairos"
+    },
+    {
+      "kind": "character",
+      "name": "Kapella",
+      "slug": "kapella",
+      "remote_url": "https://i.imgur.com/0xIQbAa.png",
+      "local_path": "assets/img/characters/kapella.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kapella.svg",
+      "target_base": "assets/img/characters/kapella"
+    },
+    {
+      "kind": "character",
+      "name": "Kelly",
+      "slug": "kelly",
+      "remote_url": "https://i.imgur.com/St3HV3s.png",
+      "local_path": "assets/img/characters/kelly.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kelly.svg",
+      "target_base": "assets/img/characters/kelly"
+    },
+    {
+      "kind": "character",
+      "name": "Kla",
+      "slug": "kla",
+      "remote_url": "https://i.imgur.com/mOAMXaH.png",
+      "local_path": "assets/img/characters/kla.png",
+      "included": true,
+      "placeholder": "assets/img/characters/kla.svg",
+      "target_base": "assets/img/characters/kla"
+    },
+    {
+      "kind": "character",
+      "name": "Laura",
+      "slug": "laura",
+      "remote_url": "https://i.imgur.com/wsFhbfY.png",
+      "local_path": "assets/img/characters/laura.png",
+      "included": true,
+      "placeholder": "assets/img/characters/laura.svg",
+      "target_base": "assets/img/characters/laura"
+    },
+    {
+      "kind": "character",
+      "name": "Leon",
+      "slug": "leon",
+      "remote_url": "https://i.imgur.com/A8bpTFX.png",
+      "local_path": "assets/img/characters/leon.png",
+      "included": true,
+      "placeholder": "assets/img/characters/leon.svg",
+      "target_base": "assets/img/characters/leon"
+    },
+    {
+      "kind": "character",
+      "name": "Lila",
+      "slug": "lila",
+      "remote_url": "https://i.imgur.com/H9hq2iX.png",
+      "local_path": "assets/img/characters/lila.png",
+      "included": true,
+      "placeholder": "assets/img/characters/lila.svg",
+      "target_base": "assets/img/characters/lila"
+    },
+    {
+      "kind": "character",
+      "name": "Luna",
+      "slug": "luna",
+      "remote_url": "https://i.imgur.com/pSQQblu.png",
+      "local_path": "assets/img/characters/luna.png",
+      "included": true,
+      "placeholder": "assets/img/characters/luna.svg",
+      "target_base": "assets/img/characters/luna"
+    },
+    {
+      "kind": "character",
+      "name": "Luqueta",
+      "slug": "luqueta",
+      "remote_url": "https://i.imgur.com/Kfz3Qc5.png",
+      "local_path": "assets/img/characters/luqueta.png",
+      "included": true,
+      "placeholder": "assets/img/characters/luqueta.svg",
+      "target_base": "assets/img/characters/luqueta"
+    },
+    {
+      "kind": "character",
+      "name": "Maro",
+      "slug": "maro",
+      "remote_url": "https://i.imgur.com/CoTcXYW.png",
+      "local_path": "assets/img/characters/maro.png",
+      "included": true,
+      "placeholder": "assets/img/characters/maro.svg",
+      "target_base": "assets/img/characters/maro"
+    },
+    {
+      "kind": "character",
+      "name": "Maxim",
+      "slug": "maxim",
+      "remote_url": "https://i.imgur.com/d4qjVdp.png",
+      "local_path": "assets/img/characters/maxim.png",
+      "included": true,
+      "placeholder": "assets/img/characters/maxim.svg",
+      "target_base": "assets/img/characters/maxim"
+    },
+    {
+      "kind": "character",
+      "name": "Miguel",
+      "slug": "miguel",
+      "remote_url": "https://i.imgur.com/MiVt2oZ.png",
+      "local_path": "assets/img/characters/miguel.png",
+      "included": true,
+      "placeholder": "assets/img/characters/miguel.svg",
+      "target_base": "assets/img/characters/miguel"
+    },
+    {
+      "kind": "character",
+      "name": "Misha",
+      "slug": "misha",
+      "remote_url": "https://i.imgur.com/cWWOMGa.png",
+      "local_path": "assets/img/characters/misha.png",
+      "included": true,
+      "placeholder": "assets/img/characters/misha.svg",
+      "target_base": "assets/img/characters/misha"
+    },
+    {
+      "kind": "character",
+      "name": "Moco",
+      "slug": "moco",
+      "remote_url": "https://i.imgur.com/U25JAH2.png",
+      "local_path": "assets/img/characters/moco.png",
+      "included": true,
+      "placeholder": "assets/img/characters/moco.svg",
+      "target_base": "assets/img/characters/moco"
+    },
+    {
+      "kind": "character",
+      "name": "Nairi",
+      "slug": "nairi",
+      "remote_url": "https://i.imgur.com/bBA4y4O.png",
+      "local_path": "assets/img/characters/nairi.png",
+      "included": true,
+      "placeholder": "assets/img/characters/nairi.svg",
+      "target_base": "assets/img/characters/nairi"
+    },
+    {
+      "kind": "character",
+      "name": "Nikita",
+      "slug": "nikita",
+      "remote_url": "https://i.imgur.com/i3XCg37.png",
+      "local_path": "assets/img/characters/nikita.png",
+      "included": true,
+      "placeholder": "assets/img/characters/nikita.svg",
+      "target_base": "assets/img/characters/nikita"
+    },
+    {
+      "kind": "character",
+      "name": "Notora",
+      "slug": "notora",
+      "remote_url": "https://i.imgur.com/qpkQ1J0.png",
+      "local_path": "assets/img/characters/notora.png",
+      "included": true,
+      "placeholder": "assets/img/characters/notora.svg",
+      "target_base": "assets/img/characters/notora"
+    },
+    {
+      "kind": "character",
+      "name": "Olivia",
+      "slug": "olivia",
+      "remote_url": "https://i.imgur.com/ONpMyvg.png",
+      "local_path": "assets/img/characters/olivia.png",
+      "included": true,
+      "placeholder": "assets/img/characters/olivia.svg",
+      "target_base": "assets/img/characters/olivia"
+    },
+    {
+      "kind": "character",
+      "name": "Otho",
+      "slug": "otho",
+      "remote_url": "https://i.imgur.com/awjix7g.png",
+      "local_path": "assets/img/characters/otho.png",
+      "included": true,
+      "placeholder": "assets/img/characters/otho.svg",
+      "target_base": "assets/img/characters/otho"
+    },
+    {
+      "kind": "character",
+      "name": "Paloma",
+      "slug": "paloma",
+      "remote_url": "https://i.imgur.com/i7VsSjh.png",
+      "local_path": "assets/img/characters/paloma.png",
+      "included": true,
+      "placeholder": "assets/img/characters/paloma.svg",
+      "target_base": "assets/img/characters/paloma"
+    },
+    {
+      "kind": "character",
+      "name": "Rafael",
+      "slug": "rafael",
+      "remote_url": "https://i.imgur.com/25KB7bS.png",
+      "local_path": "assets/img/characters/rafael.png",
+      "included": true,
+      "placeholder": "assets/img/characters/rafael.svg",
+      "target_base": "assets/img/characters/rafael"
+    },
+    {
+      "kind": "character",
+      "name": "Rin",
+      "slug": "rin",
+      "remote_url": "https://i.imgur.com/NYrVZIG.png",
+      "local_path": "assets/img/characters/rin.png",
+      "included": true,
+      "placeholder": "assets/img/characters/rin.svg",
+      "target_base": "assets/img/characters/rin"
+    },
+    {
+      "kind": "character",
+      "name": "Shani",
+      "slug": "shani",
+      "remote_url": "https://i.imgur.com/DeRg7XI.png",
+      "local_path": "assets/img/characters/shani.png",
+      "included": true,
+      "placeholder": "assets/img/characters/shani.svg",
+      "target_base": "assets/img/characters/shani"
+    },
+    {
+      "kind": "character",
+      "name": "Shirou",
+      "slug": "shirou",
+      "remote_url": "https://i.imgur.com/20g7qRn.png",
+      "local_path": "assets/img/characters/shirou.png",
+      "included": true,
+      "placeholder": "assets/img/characters/shirou.svg",
+      "target_base": "assets/img/characters/shirou"
+    },
+    {
+      "kind": "character",
+      "name": "Sonia",
+      "slug": "sonia",
+      "remote_url": "https://i.imgur.com/U2Nsxxp.png",
+      "local_path": "assets/img/characters/sonia.png",
+      "included": true,
+      "placeholder": "assets/img/characters/sonia.svg",
+      "target_base": "assets/img/characters/sonia"
+    },
+    {
+      "kind": "character",
+      "name": "Suzy",
+      "slug": "suzy",
+      "remote_url": "https://i.imgur.com/Wnbgzc5.png",
+      "local_path": "assets/img/characters/suzy.png",
+      "included": true,
+      "placeholder": "assets/img/characters/suzy.svg",
+      "target_base": "assets/img/characters/suzy"
+    },
+    {
+      "kind": "character",
+      "name": "Thiva",
+      "slug": "thiva",
+      "remote_url": "https://i.imgur.com/21ulo2C.png",
+      "local_path": "assets/img/characters/thiva.png",
+      "included": true,
+      "placeholder": "assets/img/characters/thiva.svg",
+      "target_base": "assets/img/characters/thiva"
+    },
+    {
+      "kind": "character",
+      "name": "Wolfrahh",
+      "slug": "wolfrahh",
+      "remote_url": "https://i.imgur.com/oN94Iw9.png",
+      "local_path": "assets/img/characters/wolfrahh.png",
+      "included": true,
+      "placeholder": "assets/img/characters/wolfrahh.svg",
+      "target_base": "assets/img/characters/wolfrahh"
+    },
+    {
+      "kind": "pet",
+      "name": "Arvon",
+      "slug": "arvon",
+      "remote_url": "https://i.imgur.com/FISOMJy.png",
+      "local_path": "assets/img/pets/arvon.png",
+      "included": true,
+      "placeholder": "assets/img/pets/arvon.svg",
+      "target_base": "assets/img/pets/arvon"
+    },
+    {
+      "kind": "pet",
+      "name": "Agent Hop",
+      "slug": "agent-hop",
+      "remote_url": "https://i.imgur.com/rvCcY1n.png",
+      "local_path": "assets/img/pets/agent-hop.png",
+      "included": true,
+      "placeholder": "assets/img/pets/agent-hop.svg",
+      "target_base": "assets/img/pets/agent-hop"
+    },
+    {
+      "kind": "pet",
+      "name": "Beaston",
+      "slug": "beaston",
+      "remote_url": "https://i.imgur.com/OBhKB23.png",
+      "local_path": "assets/img/pets/beaston.png",
+      "included": true,
+      "placeholder": "assets/img/pets/beaston.svg",
+      "target_base": "assets/img/pets/beaston"
+    },
+    {
+      "kind": "pet",
+      "name": "Detective Panda",
+      "slug": "detective-panda",
+      "remote_url": "https://i.imgur.com/1VpKm0M.png",
+      "local_path": "assets/img/pets/detective-panda.png",
+      "included": true,
+      "placeholder": "assets/img/pets/detective-panda.svg",
+      "target_base": "assets/img/pets/detective-panda"
+    },
+    {
+      "kind": "pet",
+      "name": "Dreki",
+      "slug": "dreki",
+      "remote_url": "https://i.imgur.com/fpcIgCd.png",
+      "local_path": "assets/img/pets/dreki.png",
+      "included": true,
+      "placeholder": "assets/img/pets/dreki.svg",
+      "target_base": "assets/img/pets/dreki"
+    },
+    {
+      "kind": "pet",
+      "name": "Dr. Beanie",
+      "slug": "dr-beanie",
+      "remote_url": "https://i.imgur.com/tVR1NjI.png",
+      "local_path": "assets/img/pets/dr-beanie.png",
+      "included": true,
+      "placeholder": "assets/img/pets/dr-beanie.svg",
+      "target_base": "assets/img/pets/dr-beanie"
+    },
+    {
+      "kind": "pet",
+      "name": "Falco",
+      "slug": "falco",
+      "remote_url": "https://i.imgur.com/jJQ4XJ8.png",
+      "local_path": "assets/img/pets/falco.png",
+      "included": true,
+      "placeholder": "assets/img/pets/falco.svg",
+      "target_base": "assets/img/pets/falco"
+    },
+    {
+      "kind": "pet",
+      "name": "Fang",
+      "slug": "fang",
+      "remote_url": "https://i.imgur.com/LDma2s6.png",
+      "local_path": "assets/img/pets/fang.png",
+      "included": true,
+      "placeholder": "assets/img/pets/fang.svg",
+      "target_base": "assets/img/pets/fang"
+    },
+    {
+      "kind": "pet",
+      "name": "Finn",
+      "slug": "finn",
+      "remote_url": "https://i.imgur.com/fMEt9HF.png",
+      "local_path": "assets/img/pets/finn.png",
+      "included": true,
+      "placeholder": "assets/img/pets/finn.svg",
+      "target_base": "assets/img/pets/finn"
+    },
+    {
+      "kind": "pet",
+      "name": "Flash",
+      "slug": "flash",
+      "remote_url": "https://i.imgur.com/VUq5fqP.png",
+      "local_path": "assets/img/pets/flash.png",
+      "included": true,
+      "placeholder": "assets/img/pets/flash.svg",
+      "target_base": "assets/img/pets/flash"
+    },
+    {
+      "kind": "pet",
+      "name": "Hoot",
+      "slug": "hoot",
+      "remote_url": "https://i.imgur.com/dKNbKTC.png",
+      "local_path": "assets/img/pets/hoot.png",
+      "included": true,
+      "placeholder": "assets/img/pets/hoot.svg",
+      "target_base": "assets/img/pets/hoot"
+    },
+    {
+      "kind": "pet",
+      "name": "Kaktus",
+      "slug": "kaktus",
+      "remote_url": "https://i.imgur.com/K7WLWW9.png",
+      "local_path": "assets/img/pets/kaktus.png",
+      "included": true,
+      "placeholder": "assets/img/pets/kaktus.svg",
+      "target_base": "assets/img/pets/kaktus"
+    },
+    {
+      "kind": "pet",
+      "name": "Moony",
+      "slug": "moony",
+      "remote_url": "https://i.imgur.com/N8USbxf.png",
+      "local_path": "assets/img/pets/moony.png",
+      "included": true,
+      "placeholder": "assets/img/pets/moony.svg",
+      "target_base": "assets/img/pets/moony"
+    },
+    {
+      "kind": "pet",
+      "name": "Mr. Waggor",
+      "slug": "mr-waggor",
+      "remote_url": "https://i.imgur.com/aECLdnx.png",
+      "local_path": "assets/img/pets/mr-waggor.png",
+      "included": true,
+      "placeholder": "assets/img/pets/mr-waggor.svg",
+      "target_base": "assets/img/pets/mr-waggor"
+    },
+    {
+      "kind": "pet",
+      "name": "Night Panther",
+      "slug": "night-panther",
+      "remote_url": "https://i.imgur.com/YD3kw1m.png",
+      "local_path": "assets/img/pets/night-panther.png",
+      "included": true,
+      "placeholder": "assets/img/pets/night-panther.svg",
+      "target_base": "assets/img/pets/night-panther"
+    },
+    {
+      "kind": "pet",
+      "name": "Ottero",
+      "slug": "ottero",
+      "remote_url": "https://i.imgur.com/rg7GPSp.png",
+      "local_path": "assets/img/pets/ottero.png",
+      "included": true,
+      "placeholder": "assets/img/pets/ottero.svg",
+      "target_base": "assets/img/pets/ottero"
+    },
+    {
+      "kind": "pet",
+      "name": "Robo",
+      "slug": "robo",
+      "remote_url": "https://i.imgur.com/2k7pgD0.png",
+      "local_path": "assets/img/pets/robo.png",
+      "included": true,
+      "placeholder": "assets/img/pets/robo.svg",
+      "target_base": "assets/img/pets/robo"
+    },
+    {
+      "kind": "pet",
+      "name": "Rockie",
+      "slug": "rockie",
+      "remote_url": "https://i.imgur.com/6Xyo5f2.png",
+      "local_path": "assets/img/pets/rockie.png",
+      "included": true,
+      "placeholder": "assets/img/pets/rockie.svg",
+      "target_base": "assets/img/pets/rockie"
+    },
+    {
+      "kind": "pet",
+      "name": "Sensei Tig",
+      "slug": "sensei-tig",
+      "remote_url": "https://i.imgur.com/Xi2bOc5.png",
+      "local_path": "assets/img/pets/sensei-tig.png",
+      "included": true,
+      "placeholder": "assets/img/pets/sensei-tig.svg",
+      "target_base": "assets/img/pets/sensei-tig"
+    },
+    {
+      "kind": "pet",
+      "name": "Shiba",
+      "slug": "shiba",
+      "remote_url": "https://i.imgur.com/LfyWPMu.png",
+      "local_path": "assets/img/pets/shiba.png",
+      "included": true,
+      "placeholder": "assets/img/pets/shiba.svg",
+      "target_base": "assets/img/pets/shiba"
+    },
+    {
+      "kind": "pet",
+      "name": "Spirit Fox",
+      "slug": "spirit-fox",
+      "remote_url": "https://i.imgur.com/0f2SFWb.png",
+      "local_path": "assets/img/pets/spirit-fox.png",
+      "included": true,
+      "placeholder": "assets/img/pets/spirit-fox.svg",
+      "target_base": "assets/img/pets/spirit-fox"
+    },
+    {
+      "kind": "pet",
+      "name": "Yeti",
+      "slug": "yeti",
+      "remote_url": "https://i.imgur.com/qcOCUux.png",
+      "local_path": "assets/img/pets/yeti.png",
+      "included": true,
+      "placeholder": "assets/img/pets/yeti.svg",
+      "target_base": "assets/img/pets/yeti"
+    },
+    {
+      "kind": "pet",
+      "name": "Zasil",
+      "slug": "zasil",
+      "remote_url": "https://i.imgur.com/yHtTSRa.png",
+      "local_path": "assets/img/pets/zasil.png",
+      "included": true,
+      "placeholder": "assets/img/pets/zasil.svg",
+      "target_base": "assets/img/pets/zasil"
+    },
+    {
+      "kind": "loadout",
+      "name": "Enhance Hammer",
+      "slug": "enhance-hammer",
+      "remote_url": "https://i.imgur.com/gClc4RN.png",
+      "local_path": "assets/img/loadouts/enhance-hammer.png",
+      "included": true,
+      "placeholder": "assets/img/loadouts/enhance-hammer.svg",
+      "target_base": "assets/img/loadouts/enhance-hammer"
+    },
+    {
+      "kind": "loadout",
+      "name": "Super Leg Pocket",
+      "slug": "super-leg-pocket",
+      "remote_url": "https://i.imgur.com/hVW6fWi.png",
+      "local_path": "assets/img/loadouts/super-leg-pocket.png",
+      "included": true,
+      "placeholder": "assets/img/loadouts/super-leg-pocket.svg",
+      "target_base": "assets/img/loadouts/super-leg-pocket"
+    },
+    {
+      "kind": "loadout",
+      "name": "Tactical Market",
+      "slug": "tactical-market",
+      "remote_url": "https://i.imgur.com/OBnERWB.png",
+      "local_path": "assets/img/loadouts/tactical-market.png",
+      "included": true,
+      "placeholder": "assets/img/loadouts/tactical-market.svg",
+      "target_base": "assets/img/loadouts/tactical-market"
+    },
+    {
+      "kind": "loadout",
+      "name": "Team Booster",
+      "slug": "team-booster",
+      "remote_url": "https://i.imgur.com/RAG1acC.png",
+      "local_path": "assets/img/loadouts/team-booster.png",
+      "included": true,
+      "placeholder": "assets/img/loadouts/team-booster.svg",
+      "target_base": "assets/img/loadouts/team-booster"
+    },
+    {
+      "kind": "weapon",
+      "name": "AK47",
+      "slug": "ak47",
+      "remote_url": "https://i.imgur.com/2tWZbdT.png",
+      "local_path": "assets/img/weapons/ak47.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/ak47.svg",
+      "target_base": "assets/img/weapons/ak47"
+    },
+    {
+      "kind": "weapon",
+      "name": "AN94",
+      "slug": "an94",
+      "remote_url": "https://i.imgur.com/RbSNG4J.png",
+      "local_path": "assets/img/weapons/an94.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/an94.svg",
+      "target_base": "assets/img/weapons/an94"
+    },
+    {
+      "kind": "weapon",
+      "name": "AUG",
+      "slug": "aug",
+      "remote_url": "https://i.imgur.com/mp2mqAB.png",
+      "local_path": "assets/img/weapons/aug.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/aug.svg",
+      "target_base": "assets/img/weapons/aug"
+    },
+    {
+      "kind": "weapon",
+      "name": "FAMAS",
+      "slug": "famas",
+      "remote_url": "https://i.imgur.com/8urdI55.png",
+      "local_path": "assets/img/weapons/famas.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/famas.svg",
+      "target_base": "assets/img/weapons/famas"
+    },
+    {
+      "kind": "weapon",
+      "name": "G36",
+      "slug": "g36",
+      "remote_url": "https://i.imgur.com/2pP6OAG.png",
+      "local_path": "assets/img/weapons/g36.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/g36.svg",
+      "target_base": "assets/img/weapons/g36"
+    },
+    {
+      "kind": "weapon",
+      "name": "Groza",
+      "slug": "groza",
+      "remote_url": "https://i.imgur.com/zCMFfco.png",
+      "local_path": "assets/img/weapons/groza.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/groza.svg",
+      "target_base": "assets/img/weapons/groza"
+    },
+    {
+      "kind": "weapon",
+      "name": "Kingfisher",
+      "slug": "kingfisher",
+      "remote_url": "https://i.imgur.com/BDyLIvy.png",
+      "local_path": "assets/img/weapons/kingfisher.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/kingfisher.svg",
+      "target_base": "assets/img/weapons/kingfisher"
+    },
+    {
+      "kind": "weapon",
+      "name": "M14",
+      "slug": "m14",
+      "remote_url": "https://i.imgur.com/tozgMAr.png",
+      "local_path": "assets/img/weapons/m14.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m14.svg",
+      "target_base": "assets/img/weapons/m14"
+    },
+    {
+      "kind": "weapon",
+      "name": "M4A1",
+      "slug": "m4a1",
+      "remote_url": "https://i.imgur.com/OtPiFPT.png",
+      "local_path": "assets/img/weapons/m4a1.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m4a1.svg",
+      "target_base": "assets/img/weapons/m4a1"
+    },
+    {
+      "kind": "weapon",
+      "name": "PARAFAL",
+      "slug": "parafal",
+      "remote_url": "https://i.imgur.com/jba7sgc.png",
+      "local_path": "assets/img/weapons/parafal.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/parafal.svg",
+      "target_base": "assets/img/weapons/parafal"
+    },
+    {
+      "kind": "weapon",
+      "name": "PLASMA",
+      "slug": "plasma",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/c824bf1a7bbffed3f77588e051ff2f70.png",
+      "local_path": "assets/img/weapons/plasma.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/plasma.svg",
+      "target_base": "assets/img/weapons/plasma"
+    },
+    {
+      "kind": "weapon",
+      "name": "SCAR",
+      "slug": "scar",
+      "remote_url": "https://i.imgur.com/2xiOFb4.png",
+      "local_path": "assets/img/weapons/scar.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/scar.svg",
+      "target_base": "assets/img/weapons/scar"
+    },
+    {
+      "kind": "weapon",
+      "name": "XM8",
+      "slug": "xm8",
+      "remote_url": "https://i.imgur.com/tRVZkX9.png",
+      "local_path": "assets/img/weapons/xm8.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/xm8.svg",
+      "target_base": "assets/img/weapons/xm8"
+    },
+    {
+      "kind": "weapon",
+      "name": "Treatment Laser Gun",
+      "slug": "treatment-laser-gun",
+      "remote_url": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20229/138f1641addbe25de161dd0037cb80e9.png",
+      "local_path": "assets/img/weapons/treatment-laser-gun.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/treatment-laser-gun.svg",
+      "target_base": "assets/img/weapons/treatment-laser-gun"
+    },
+    {
+      "kind": "weapon",
+      "name": "Shield Gun",
+      "slug": "shield-gun",
+      "remote_url": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20229/0d3e888a3e44e38bcf1bf78a7a500f8b.png",
+      "local_path": "assets/img/weapons/shield-gun.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/shield-gun.svg",
+      "target_base": "assets/img/weapons/shield-gun"
+    },
+    {
+      "kind": "weapon",
+      "name": "Crossbow",
+      "slug": "crossbow",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/7eddf7c5c7f19d603233f302b695ab09.png",
+      "local_path": "assets/img/weapons/crossbow.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/crossbow.svg",
+      "target_base": "assets/img/weapons/crossbow"
+    },
+    {
+      "kind": "weapon",
+      "name": "M79",
+      "slug": "m79",
+      "remote_url": "https://i.imgur.com/06CtunM.png",
+      "local_path": "assets/img/weapons/m79.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m79.svg",
+      "target_base": "assets/img/weapons/m79"
+    },
+    {
+      "kind": "weapon",
+      "name": "MGL140",
+      "slug": "mgl140",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/42b16b1e58e45e53d99c053e027859c5.png",
+      "local_path": "assets/img/weapons/mgl140.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/mgl140.svg",
+      "target_base": "assets/img/weapons/mgl140"
+    },
+    {
+      "kind": "weapon",
+      "name": "RGS-50",
+      "slug": "rgs-50",
+      "remote_url": "https://i.imgur.com/Q4Dsyyo.png",
+      "local_path": "assets/img/weapons/rgs-50.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/rgs-50.svg",
+      "target_base": "assets/img/weapons/rgs-50"
+    },
+    {
+      "kind": "weapon",
+      "name": "Gatling",
+      "slug": "gatling",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/df16d03e0649a503f92de68ab0aac585.png",
+      "local_path": "assets/img/weapons/gatling.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/gatling.svg",
+      "target_base": "assets/img/weapons/gatling"
+    },
+    {
+      "kind": "weapon",
+      "name": "Kord",
+      "slug": "kord",
+      "remote_url": "https://i.imgur.com/pPkAILF.png",
+      "local_path": "assets/img/weapons/kord.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/kord.svg",
+      "target_base": "assets/img/weapons/kord"
+    },
+    {
+      "kind": "weapon",
+      "name": "M249",
+      "slug": "m249",
+      "remote_url": "https://i.imgur.com/VMWzckc.png",
+      "local_path": "assets/img/weapons/m249.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m249.svg",
+      "target_base": "assets/img/weapons/m249"
+    },
+    {
+      "kind": "weapon",
+      "name": "M60",
+      "slug": "m60",
+      "remote_url": "https://i.imgur.com/3OjNAgg.png",
+      "local_path": "assets/img/weapons/m60.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m60.svg",
+      "target_base": "assets/img/weapons/m60"
+    },
+    {
+      "kind": "weapon",
+      "name": "AC80",
+      "slug": "ac80",
+      "remote_url": "https://i.imgur.com/LvsvJtO.png",
+      "local_path": "assets/img/weapons/ac80.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/ac80.svg",
+      "target_base": "assets/img/weapons/ac80"
+    },
+    {
+      "kind": "weapon",
+      "name": "SKS",
+      "slug": "sks",
+      "remote_url": "https://i.imgur.com/RaoMjy6.png",
+      "local_path": "assets/img/weapons/sks.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/sks.svg",
+      "target_base": "assets/img/weapons/sks"
+    },
+    {
+      "kind": "weapon",
+      "name": "SVD",
+      "slug": "svd",
+      "remote_url": "https://i.imgur.com/g0Ab3mS.png",
+      "local_path": "assets/img/weapons/svd.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/svd.svg",
+      "target_base": "assets/img/weapons/svd"
+    },
+    {
+      "kind": "weapon",
+      "name": "Winchester",
+      "slug": "winchester",
+      "remote_url": "https://i.imgur.com/zFmrDBa.png",
+      "local_path": "assets/img/weapons/winchester.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/winchester.svg",
+      "target_base": "assets/img/weapons/winchester"
+    },
+    {
+      "kind": "weapon",
+      "name": "Woodpecker",
+      "slug": "woodpecker",
+      "remote_url": "https://i.imgur.com/1uweVBm.png",
+      "local_path": "assets/img/weapons/woodpecker.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/woodpecker.svg",
+      "target_base": "assets/img/weapons/woodpecker"
+    },
+    {
+      "kind": "weapon",
+      "name": "Bat",
+      "slug": "bat",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/698669f81b6b3d5c79f6059d1d934ad5.png",
+      "local_path": "assets/img/weapons/bat.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/bat.svg",
+      "target_base": "assets/img/weapons/bat"
+    },
+    {
+      "kind": "weapon",
+      "name": "FF Knife",
+      "slug": "ff-knife",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/0a7e9a154df42962387613548e6def2f.png",
+      "local_path": "assets/img/weapons/ff-knife.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/ff-knife.svg",
+      "target_base": "assets/img/weapons/ff-knife"
+    },
+    {
+      "kind": "weapon",
+      "name": "Katana",
+      "slug": "katana",
+      "remote_url": "https://i.imgur.com/k647HaF.png",
+      "local_path": "assets/img/weapons/katana.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/katana.svg",
+      "target_base": "assets/img/weapons/katana"
+    },
+    {
+      "kind": "weapon",
+      "name": "Pan",
+      "slug": "pan",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/5fcb37e763470c7f785a1bc5055d398d.png",
+      "local_path": "assets/img/weapons/pan.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/pan.svg",
+      "target_base": "assets/img/weapons/pan"
+    },
+    {
+      "kind": "weapon",
+      "name": "Parang",
+      "slug": "parang",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/294b5dffe76f6f1c699569bf7e83d50d.png",
+      "local_path": "assets/img/weapons/parang.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/parang.svg",
+      "target_base": "assets/img/weapons/parang"
+    },
+    {
+      "kind": "weapon",
+      "name": "Scythe",
+      "slug": "scythe",
+      "remote_url": "https://i.imgur.com/orDAXss.png",
+      "local_path": "assets/img/weapons/scythe.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/scythe.svg",
+      "target_base": "assets/img/weapons/scythe"
+    },
+    {
+      "kind": "weapon",
+      "name": "Desert Eagle",
+      "slug": "desert-eagle",
+      "remote_url": "https://i.imgur.com/xhcBJrF.png",
+      "local_path": "assets/img/weapons/desert-eagle.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/desert-eagle.svg",
+      "target_base": "assets/img/weapons/desert-eagle"
+    },
+    {
+      "kind": "weapon",
+      "name": "G18",
+      "slug": "g18",
+      "remote_url": "https://i.imgur.com/zfLI6Ae.png",
+      "local_path": "assets/img/weapons/g18.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/g18.svg",
+      "target_base": "assets/img/weapons/g18"
+    },
+    {
+      "kind": "weapon",
+      "name": "Hand Cannon",
+      "slug": "hand-cannon",
+      "remote_url": "https://i.imgur.com/jXnEmo0.png",
+      "local_path": "assets/img/weapons/hand-cannon.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/hand-cannon.svg",
+      "target_base": "assets/img/weapons/hand-cannon"
+    },
+    {
+      "kind": "weapon",
+      "name": "M1873",
+      "slug": "m1873",
+      "remote_url": "https://i.imgur.com/RibYs3j.png",
+      "local_path": "assets/img/weapons/m1873.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m1873.svg",
+      "target_base": "assets/img/weapons/m1873"
+    },
+    {
+      "kind": "weapon",
+      "name": "M1917",
+      "slug": "m1917",
+      "remote_url": "https://i.imgur.com/9ve3D1v.png",
+      "local_path": "assets/img/weapons/m1917.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m1917.svg",
+      "target_base": "assets/img/weapons/m1917"
+    },
+    {
+      "kind": "weapon",
+      "name": "M500",
+      "slug": "m500",
+      "remote_url": "https://i.imgur.com/UXaLWL0.png",
+      "local_path": "assets/img/weapons/m500.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m500.svg",
+      "target_base": "assets/img/weapons/m500"
+    },
+    {
+      "kind": "weapon",
+      "name": "USP",
+      "slug": "usp",
+      "remote_url": "https://i.imgur.com/nGZKC4E.png",
+      "local_path": "assets/img/weapons/usp.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/usp.svg",
+      "target_base": "assets/img/weapons/usp"
+    },
+    {
+      "kind": "weapon",
+      "name": "USP-2",
+      "slug": "usp-2",
+      "remote_url": "https://i.imgur.com/z7hLwEK.png",
+      "local_path": "assets/img/weapons/usp-2.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/usp-2.svg",
+      "target_base": "assets/img/weapons/usp-2"
+    },
+    {
+      "kind": "weapon",
+      "name": "UZI",
+      "slug": "uzi",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/c3e906b732e6016a8d4076b8179feb17.png",
+      "local_path": "assets/img/weapons/uzi.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/uzi.svg",
+      "target_base": "assets/img/weapons/uzi"
+    },
+    {
+      "kind": "weapon",
+      "name": "FGL-24",
+      "slug": "fgl-24",
+      "remote_url": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20246/2777e4a3343b6aa480eff589ff7e717b.png",
+      "local_path": "assets/img/weapons/fgl-24.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/fgl-24.svg",
+      "target_base": "assets/img/weapons/fgl-24"
+    },
+    {
+      "kind": "weapon",
+      "name": "Healing Pistol",
+      "slug": "healing-pistol",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/f3bc5385dea6a1dba577a733c7458b98.png",
+      "local_path": "assets/img/weapons/healing-pistol.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/healing-pistol.svg",
+      "target_base": "assets/img/weapons/healing-pistol"
+    },
+    {
+      "kind": "weapon",
+      "name": "Flamethrower",
+      "slug": "flamethrower",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/e4fdaca2482dd5a5a860f2b40d4cc7be.png",
+      "local_path": "assets/img/weapons/flamethrower.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/flamethrower.svg",
+      "target_base": "assets/img/weapons/flamethrower"
+    },
+    {
+      "kind": "weapon",
+      "name": "Flash Freeze",
+      "slug": "flash-freeze",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/f1fa2b4ca56ae57d38e97e5beccce8bb.png",
+      "local_path": "assets/img/weapons/flash-freeze.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/flash-freeze.svg",
+      "target_base": "assets/img/weapons/flash-freeze"
+    },
+    {
+      "kind": "weapon",
+      "name": "Gloo Melter",
+      "slug": "gloo-melter",
+      "remote_url": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20229/88e13401f4662dc43580cfbf8f7f65fa.png",
+      "local_path": "assets/img/weapons/gloo-melter.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/gloo-melter.svg",
+      "target_base": "assets/img/weapons/gloo-melter"
+    },
+    {
+      "kind": "weapon",
+      "name": "Gloo Wall",
+      "slug": "gloo-wall",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/71c9976d4b23cc37bb15fe398d186b7e.png",
+      "local_path": "assets/img/weapons/gloo-wall.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/gloo-wall.svg",
+      "target_base": "assets/img/weapons/gloo-wall"
+    },
+    {
+      "kind": "weapon",
+      "name": "Bizon",
+      "slug": "bizon",
+      "remote_url": "https://i.imgur.com/RddFgsJ.png",
+      "local_path": "assets/img/weapons/bizon.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/bizon.svg",
+      "target_base": "assets/img/weapons/bizon"
+    },
+    {
+      "kind": "weapon",
+      "name": "CG15",
+      "slug": "cg15",
+      "remote_url": "https://freefiremobile-a.akamaihd.net/common/web_event/official2.ff.garena.all/img/20228/efb774d875151b9faa51366c4d5ed699.png",
+      "local_path": "assets/img/weapons/cg15.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/cg15.svg",
+      "target_base": "assets/img/weapons/cg15"
+    },
+    {
+      "kind": "weapon",
+      "name": "MAC10",
+      "slug": "mac10",
+      "remote_url": "https://i.imgur.com/NbOsFFv.png",
+      "local_path": "assets/img/weapons/mac10.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/mac10.svg",
+      "target_base": "assets/img/weapons/mac10"
+    },
+    {
+      "kind": "weapon",
+      "name": "MP40",
+      "slug": "mp40",
+      "remote_url": "https://i.imgur.com/ICTTTyw.png",
+      "local_path": "assets/img/weapons/mp40.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/mp40.svg",
+      "target_base": "assets/img/weapons/mp40"
+    },
+    {
+      "kind": "weapon",
+      "name": "MP5",
+      "slug": "mp5",
+      "remote_url": "https://i.imgur.com/dmTcly0.png",
+      "local_path": "assets/img/weapons/mp5.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/mp5.svg",
+      "target_base": "assets/img/weapons/mp5"
+    },
+    {
+      "kind": "weapon",
+      "name": "P90",
+      "slug": "p90",
+      "remote_url": "https://i.imgur.com/A4vIStW.png",
+      "local_path": "assets/img/weapons/p90.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/p90.svg",
+      "target_base": "assets/img/weapons/p90"
+    },
+    {
+      "kind": "weapon",
+      "name": "Thompson",
+      "slug": "thompson",
+      "remote_url": "https://i.imgur.com/6DuGy4Q.png",
+      "local_path": "assets/img/weapons/thompson.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/thompson.svg",
+      "target_base": "assets/img/weapons/thompson"
+    },
+    {
+      "kind": "weapon",
+      "name": "UMP",
+      "slug": "ump",
+      "remote_url": "https://i.imgur.com/gBYEGzu.png",
+      "local_path": "assets/img/weapons/ump.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/ump.svg",
+      "target_base": "assets/img/weapons/ump"
+    },
+    {
+      "kind": "weapon",
+      "name": "Vector",
+      "slug": "vector",
+      "remote_url": "https://i.imgur.com/3nLFoJf.png",
+      "local_path": "assets/img/weapons/vector.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/vector.svg",
+      "target_base": "assets/img/weapons/vector"
+    },
+    {
+      "kind": "weapon",
+      "name": "VSS",
+      "slug": "vss",
+      "remote_url": "https://i.imgur.com/FyZPTyt.png",
+      "local_path": "assets/img/weapons/vss.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/vss.svg",
+      "target_base": "assets/img/weapons/vss"
+    },
+    {
+      "kind": "weapon",
+      "name": "Charge Buster",
+      "slug": "charge-buster",
+      "remote_url": "https://i.imgur.com/4iVruqh.png",
+      "local_path": "assets/img/weapons/charge-buster.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/charge-buster.svg",
+      "target_base": "assets/img/weapons/charge-buster"
+    },
+    {
+      "kind": "weapon",
+      "name": "M1014",
+      "slug": "m1014",
+      "remote_url": "https://i.imgur.com/E8Qz1C5.png",
+      "local_path": "assets/img/weapons/m1014.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m1014.svg",
+      "target_base": "assets/img/weapons/m1014"
+    },
+    {
+      "kind": "weapon",
+      "name": "M1887",
+      "slug": "m1887",
+      "remote_url": "https://i.imgur.com/LwwJKRU.png",
+      "local_path": "assets/img/weapons/m1887.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m1887.svg",
+      "target_base": "assets/img/weapons/m1887"
+    },
+    {
+      "kind": "weapon",
+      "name": "M590",
+      "slug": "m590",
+      "remote_url": "https://i.imgur.com/qGncRpQ.png",
+      "local_path": "assets/img/weapons/m590.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m590.svg",
+      "target_base": "assets/img/weapons/m590"
+    },
+    {
+      "kind": "weapon",
+      "name": "MAG-7",
+      "slug": "mag-7",
+      "remote_url": "https://i.imgur.com/x7DXSmz.png",
+      "local_path": "assets/img/weapons/mag-7.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/mag-7.svg",
+      "target_base": "assets/img/weapons/mag-7"
+    },
+    {
+      "kind": "weapon",
+      "name": "SPAS12",
+      "slug": "spas12",
+      "remote_url": "https://i.imgur.com/awXUVcQ.png",
+      "local_path": "assets/img/weapons/spas12.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/spas12.svg",
+      "target_base": "assets/img/weapons/spas12"
+    },
+    {
+      "kind": "weapon",
+      "name": "Trogon",
+      "slug": "trogon",
+      "remote_url": "https://i.imgur.com/7NQpej2.png",
+      "local_path": "assets/img/weapons/trogon.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/trogon.svg",
+      "target_base": "assets/img/weapons/trogon"
+    },
+    {
+      "kind": "weapon",
+      "name": "AWM",
+      "slug": "awm",
+      "remote_url": "https://i.imgur.com/zaJ2M3X.png",
+      "local_path": "assets/img/weapons/awm.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/awm.svg",
+      "target_base": "assets/img/weapons/awm"
+    },
+    {
+      "kind": "weapon",
+      "name": "Healing Sniper",
+      "slug": "healing-sniper",
+      "remote_url": "https://i.imgur.com/43jH8wW.png",
+      "local_path": "assets/img/weapons/healing-sniper.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/healing-sniper.svg",
+      "target_base": "assets/img/weapons/healing-sniper"
+    },
+    {
+      "kind": "weapon",
+      "name": "Kar98k",
+      "slug": "kar98k",
+      "remote_url": "https://i.imgur.com/erX9gxO.png",
+      "local_path": "assets/img/weapons/kar98k.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/kar98k.svg",
+      "target_base": "assets/img/weapons/kar98k"
+    },
+    {
+      "kind": "weapon",
+      "name": "M24",
+      "slug": "m24",
+      "remote_url": "https://i.imgur.com/lakE0lB.png",
+      "local_path": "assets/img/weapons/m24.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m24.svg",
+      "target_base": "assets/img/weapons/m24"
+    },
+    {
+      "kind": "weapon",
+      "name": "M82B",
+      "slug": "m82b",
+      "remote_url": "https://i.imgur.com/0W25ZuK.png",
+      "local_path": "assets/img/weapons/m82b.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/m82b.svg",
+      "target_base": "assets/img/weapons/m82b"
+    },
+    {
+      "kind": "weapon",
+      "name": "VSK94",
+      "slug": "vsk94",
+      "remote_url": "https://i.imgur.com/ficzDsZ.png",
+      "local_path": "assets/img/weapons/vsk94.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/vsk94.svg",
+      "target_base": "assets/img/weapons/vsk94"
+    },
+    {
+      "kind": "weapon",
+      "name": "Hydro Blaster",
+      "slug": "hydro-blaster",
+      "remote_url": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/98c90c806629c427b524bfaf111acd6a.jpeg",
+      "local_path": "assets/img/weapons/hydro-blaster.svg",
+      "included": false,
+      "placeholder": "assets/img/weapons/hydro-blaster.svg",
+      "target_base": "assets/img/weapons/hydro-blaster"
+    },
+    {
+      "kind": "weapon",
+      "name": "Grenade",
+      "slug": "grenade",
+      "remote_url": "https://i.imgur.com/x5n2XLa.png",
+      "local_path": "assets/img/weapons/grenade.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/grenade.svg",
+      "target_base": "assets/img/weapons/grenade"
+    },
+    {
+      "kind": "weapon",
+      "name": "Smoke Grenade",
+      "slug": "smoke-grenade",
+      "remote_url": "https://i.imgur.com/A6JTPy8.png",
+      "local_path": "assets/img/weapons/smoke-grenade.png",
+      "included": true,
+      "placeholder": "assets/img/weapons/smoke-grenade.svg",
+      "target_base": "assets/img/weapons/smoke-grenade"
+    },
+    {
+      "kind": "team_logo",
+      "name": "AG",
+      "slug": "ag",
+      "remote_url": "",
+      "local_path": "assets/logo/ag.png",
+      "included": true,
+      "placeholder": "assets/logo/ag.svg",
+      "target_base": "assets/logo/ag"
+    },
+    {
+      "kind": "team_logo",
+      "name": "AHL",
+      "slug": "ahl",
+      "remote_url": "",
+      "local_path": "assets/logo/ahl.png",
+      "included": true,
+      "placeholder": "assets/logo/ahl.svg",
+      "target_base": "assets/logo/ahl"
+    },
+    {
+      "kind": "team_logo",
+      "name": "AUR",
+      "slug": "aur",
+      "remote_url": "",
+      "local_path": "assets/logo/aur.png",
+      "included": true,
+      "placeholder": "assets/logo/aur.svg",
+      "target_base": "assets/logo/aur"
+    },
+    {
+      "kind": "team_logo",
+      "name": "AVD",
+      "slug": "avd",
+      "remote_url": "",
+      "local_path": "assets/logo/avd.png",
+      "included": true,
+      "placeholder": "assets/logo/avd.svg",
+      "target_base": "assets/logo/avd"
+    },
+    {
+      "kind": "team_logo",
+      "name": "BRU",
+      "slug": "bru",
+      "remote_url": "",
+      "local_path": "assets/logo/bru.png",
+      "included": true,
+      "placeholder": "assets/logo/bru.svg",
+      "target_base": "assets/logo/bru"
+    },
+    {
+      "kind": "team_logo",
+      "name": "BTR",
+      "slug": "btr",
+      "remote_url": "",
+      "local_path": "assets/logo/btr.png",
+      "included": true,
+      "placeholder": "assets/logo/btr.svg",
+      "target_base": "assets/logo/btr"
+    },
+    {
+      "kind": "team_logo",
+      "name": "CLVS",
+      "slug": "clvs",
+      "remote_url": "",
+      "local_path": "assets/logo/clvs.svg",
+      "included": false,
+      "placeholder": "assets/logo/clvs.svg",
+      "target_base": "assets/logo/clvs"
+    },
+    {
+      "kind": "team_logo",
+      "name": "DP",
+      "slug": "dp",
+      "remote_url": "",
+      "local_path": "assets/logo/dp.png",
+      "included": true,
+      "placeholder": "assets/logo/dp.svg",
+      "target_base": "assets/logo/dp"
+    },
+    {
+      "kind": "team_logo",
+      "name": "DRS",
+      "slug": "drs",
+      "remote_url": "",
+      "local_path": "assets/logo/drs.png",
+      "included": true,
+      "placeholder": "assets/logo/drs.svg",
+      "target_base": "assets/logo/drs"
+    },
+    {
+      "kind": "team_logo",
+      "name": "E1",
+      "slug": "e1",
+      "remote_url": "",
+      "local_path": "assets/logo/e1.svg",
+      "included": false,
+      "placeholder": "assets/logo/e1.svg",
+      "target_base": "assets/logo/e1"
+    },
+    {
+      "kind": "team_logo",
+      "name": "EVOS",
+      "slug": "evos",
+      "remote_url": "",
+      "local_path": "assets/logo/evos.png",
+      "included": true,
+      "placeholder": "assets/logo/evos.svg",
+      "target_base": "assets/logo/evos"
+    },
+    {
+      "kind": "team_logo",
+      "name": "FF",
+      "slug": "ff",
+      "remote_url": "",
+      "local_path": "assets/logo/ff.png",
+      "included": true,
+      "placeholder": "assets/logo/ff.svg",
+      "target_base": "assets/logo/ff"
+    },
+    {
+      "kind": "team_logo",
+      "name": "FL",
+      "slug": "fl",
+      "remote_url": "",
+      "local_path": "assets/logo/fl.png",
+      "included": true,
+      "placeholder": "assets/logo/fl.svg",
+      "target_base": "assets/logo/fl"
+    },
+    {
+      "kind": "team_logo",
+      "name": "FLCN",
+      "slug": "flcn",
+      "remote_url": "",
+      "local_path": "assets/logo/flcn.png",
+      "included": true,
+      "placeholder": "assets/logo/flcn.svg",
+      "target_base": "assets/logo/flcn"
+    },
+    {
+      "kind": "team_logo",
+      "name": "FX",
+      "slug": "fx",
+      "remote_url": "",
+      "local_path": "assets/logo/fx.png",
+      "included": true,
+      "placeholder": "assets/logo/fx.svg",
+      "target_base": "assets/logo/fx"
+    },
+    {
+      "kind": "team_logo",
+      "name": "GOW",
+      "slug": "gow",
+      "remote_url": "",
+      "local_path": "assets/logo/gow.png",
+      "included": true,
+      "placeholder": "assets/logo/gow.svg",
+      "target_base": "assets/logo/gow"
+    },
+    {
+      "kind": "team_logo",
+      "name": "HEV",
+      "slug": "hev",
+      "remote_url": "",
+      "local_path": "assets/logo/hev.png",
+      "included": true,
+      "placeholder": "assets/logo/hev.svg",
+      "target_base": "assets/logo/hev"
+    },
+    {
+      "kind": "team_logo",
+      "name": "HS",
+      "slug": "hs",
+      "remote_url": "",
+      "local_path": "assets/logo/hs.svg",
+      "included": false,
+      "placeholder": "assets/logo/hs.svg",
+      "target_base": "assets/logo/hs"
+    },
+    {
+      "kind": "team_logo",
+      "name": "LOUD",
+      "slug": "loud",
+      "remote_url": "",
+      "local_path": "assets/logo/loud.png",
+      "included": true,
+      "placeholder": "assets/logo/loud.svg",
+      "target_base": "assets/logo/loud"
+    },
+    {
+      "kind": "team_logo",
+      "name": "LYON",
+      "slug": "lyon",
+      "remote_url": "",
+      "local_path": "assets/logo/lyon.png",
+      "included": true,
+      "placeholder": "assets/logo/lyon.svg",
+      "target_base": "assets/logo/lyon"
+    },
+    {
+      "kind": "team_logo",
+      "name": "MEC",
+      "slug": "mec",
+      "remote_url": "",
+      "local_path": "assets/logo/mec.png",
+      "included": true,
+      "placeholder": "assets/logo/mec.svg",
+      "target_base": "assets/logo/mec"
+    },
+    {
+      "kind": "team_logo",
+      "name": "MIA",
+      "slug": "mia",
+      "remote_url": "",
+      "local_path": "assets/logo/mia.png",
+      "included": true,
+      "placeholder": "assets/logo/mia.svg",
+      "target_base": "assets/logo/mia"
+    },
+    {
+      "kind": "team_logo",
+      "name": "MIBR",
+      "slug": "mibr",
+      "remote_url": "",
+      "local_path": "assets/logo/mibr.png",
+      "included": true,
+      "placeholder": "assets/logo/mibr.svg",
+      "target_base": "assets/logo/mibr"
+    },
+    {
+      "kind": "team_logo",
+      "name": "NVL",
+      "slug": "nvl",
+      "remote_url": "",
+      "local_path": "assets/logo/nvl.svg",
+      "included": false,
+      "placeholder": "assets/logo/nvl.svg",
+      "target_base": "assets/logo/nvl"
+    },
+    {
+      "kind": "team_logo",
+      "name": "ONIC",
+      "slug": "onic",
+      "remote_url": "",
+      "local_path": "assets/logo/onic.png",
+      "included": true,
+      "placeholder": "assets/logo/onic.svg",
+      "target_base": "assets/logo/onic"
+    },
+    {
+      "kind": "team_logo",
+      "name": "PDX",
+      "slug": "pdx",
+      "remote_url": "",
+      "local_path": "assets/logo/pdx.png",
+      "included": true,
+      "placeholder": "assets/logo/pdx.svg",
+      "target_base": "assets/logo/pdx"
+    },
+    {
+      "kind": "team_logo",
+      "name": "PE",
+      "slug": "pe",
+      "remote_url": "",
+      "local_path": "assets/logo/pe.png",
+      "included": true,
+      "placeholder": "assets/logo/pe.svg",
+      "target_base": "assets/logo/pe"
+    },
+    {
+      "kind": "team_logo",
+      "name": "R7",
+      "slug": "r7",
+      "remote_url": "",
+      "local_path": "assets/logo/r7.svg",
+      "included": false,
+      "placeholder": "assets/logo/r7.svg",
+      "target_base": "assets/logo/r7"
+    },
+    {
+      "kind": "team_logo",
+      "name": "RC",
+      "slug": "rc",
+      "remote_url": "",
+      "local_path": "assets/logo/rc.svg",
+      "included": false,
+      "placeholder": "assets/logo/rc.svg",
+      "target_base": "assets/logo/rc"
+    },
+    {
+      "kind": "team_logo",
+      "name": "RHK",
+      "slug": "rhk",
+      "remote_url": "",
+      "local_path": "assets/logo/rhk.svg",
+      "included": false,
+      "placeholder": "assets/logo/rhk.svg",
+      "target_base": "assets/logo/rhk"
+    },
+    {
+      "kind": "team_logo",
+      "name": "RRQ",
+      "slug": "rrq",
+      "remote_url": "",
+      "local_path": "assets/logo/rrq.png",
+      "included": true,
+      "placeholder": "assets/logo/rrq.svg",
+      "target_base": "assets/logo/rrq"
+    },
+    {
+      "kind": "team_logo",
+      "name": "SE",
+      "slug": "se",
+      "remote_url": "",
+      "local_path": "assets/logo/se.png",
+      "included": true,
+      "placeholder": "assets/logo/se.svg",
+      "target_base": "assets/logo/se"
+    },
+    {
+      "kind": "team_logo",
+      "name": "SH",
+      "slug": "sh",
+      "remote_url": "",
+      "local_path": "assets/logo/sh.png",
+      "included": true,
+      "placeholder": "assets/logo/sh.svg",
+      "target_base": "assets/logo/sh"
+    },
+    {
+      "kind": "team_logo",
+      "name": "TEC",
+      "slug": "tec",
+      "remote_url": "",
+      "local_path": "assets/logo/tec.png",
+      "included": true,
+      "placeholder": "assets/logo/tec.svg",
+      "target_base": "assets/logo/tec"
+    },
+    {
+      "kind": "team_logo",
+      "name": "TS",
+      "slug": "ts",
+      "remote_url": "",
+      "local_path": "assets/logo/ts.svg",
+      "included": false,
+      "placeholder": "assets/logo/ts.svg",
+      "target_base": "assets/logo/ts"
+    },
+    {
+      "kind": "team_logo",
+      "name": "TWIS",
+      "slug": "twis",
+      "remote_url": "",
+      "local_path": "assets/logo/twis.png",
+      "included": true,
+      "placeholder": "assets/logo/twis.svg",
+      "target_base": "assets/logo/twis"
+    },
+    {
+      "kind": "team_logo",
+      "name": "WAG",
+      "slug": "wag",
+      "remote_url": "",
+      "local_path": "assets/logo/wag.png",
+      "included": true,
+      "placeholder": "assets/logo/wag.svg",
+      "target_base": "assets/logo/wag"
+    }
+  ]
+}
