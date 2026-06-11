@@ -24,10 +24,11 @@ function withTimeout(promise, ms = 20000, label = 'Operation timed out'){
 
 const TABLE = 'ff_player_stats_raw';
 const MAP_TABLE = 'match_api';
-const CHARACTER_JSON_URL = 'character.json';
-const PET_JSON_URL = 'pet.json';
-const LOADOUT_JSON_URL = 'loadout.json';
-const WEAPON_JSON_URLS = ['weapon.json','weapons.json','free_fire_full_weapon_data_with_armory.json'];
+const CHARACTER_JSON_URL = 'data/character.json';
+const PET_JSON_URL = 'data/pet.json';
+const LOADOUT_JSON_URL = 'data/loadout.json';
+const WEAPON_JSON_URLS = ['data/weapon.json','data/weapons.json','data/free_fire_full_weapon_data_with_armory.json'];
+const TEAM_LOGOS_JSON_URL = 'data/team_logos.json';
 const MAX_ROWS_TO_LOAD = 5000;
 const CHUNK_SIZE = 1000;
 
@@ -64,7 +65,7 @@ const LOADOUT_NAME_TO_CODE = new Map([...LOADOUT_CODE_MAP.entries()].map(([code,
 
 // Sample profile data keeps the EWC card layout complete while official assets are not ready.
 // Replace these objects later with real team/player metadata from Supabase or JSON.
-const SAMPLE_TEAM_PROFILES = {
+let SAMPLE_TEAM_PROFILES = {
   DEFAULT: {
     team_name: 'EWC Contender',
     region: 'TBD Region',
@@ -1130,6 +1131,11 @@ function slugAssetName(value){
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 }
+function localAssetCandidates(folder, assetSlug){
+  if(!assetSlug) return [];
+  const exts = ['png','webp','jpg','jpeg','gif','svg'];
+  return exts.map(ext => `${folder}/${assetSlug}.${ext}`);
+}
 function initialsFromLabel(label){
   const words = norm(label).replace(/[()]/g, ' ').split(/\s+/).filter(Boolean);
   if(!words.length) return '?';
@@ -1222,60 +1228,37 @@ function visualImageCandidates(kind, label, id=''){
   const candidates = [];
 
   if(kind === 'skill'){
-    // Skills must use character.json image fields first.
-    // For names like "Moco Awakened" / "Alok Awakened", lookup the first name in character.json.
+    const firstKey = firstSkillNameTokenKey(name);
+    const firstSlug = firstKey ? slugAssetName(firstKey) : '';
+    if(firstSlug && firstSlug !== slug) candidates.push(...localAssetCandidates('assets/img/characters', firstSlug));
+    if(slug) candidates.push(...localAssetCandidates('assets/img/characters', slug));
+
     const byId = normalizedId ? CHAR_ID_TO_IMAGE.get(normalizedId) : '';
     const mapped = lookupSkillImageFromCharacterJson(name);
     if(byId) candidates.push(byId);
     if(mapped) candidates.push(mapped);
-
-    const firstKey = firstSkillNameTokenKey(name);
-    const firstSlug = firstKey ? slugAssetName(firstKey) : '';
-
-    // Prefer character portrait folders first. This avoids multiple slow 404s when
-    // character.json does not provide a direct image but your repo has character art.
-    if(firstSlug && firstSlug !== slug){
-      candidates.push(`assets/img/characters/${firstSlug}.png`, `assets/img/character/${firstSlug}.png`, `assets/img/skills/${firstSlug}.png`, `assets/img/skill/${firstSlug}.png`);
-    }
-    if(slug){
-      candidates.push(`assets/img/characters/${slug}.png`, `assets/img/character/${slug}.png`, `assets/img/skills/${slug}.png`, `assets/img/skill/${slug}.png`);
-    }
   }else if(kind === 'pet'){
-    // Pets must use pet.json image fields first, by ID then by name.
+    if(slug) candidates.push(...localAssetCandidates('assets/img/pets', slug));
     const byId = normalizedId ? PET_ID_TO_IMAGE.get(normalizedId) : '';
     const byName = PET_NAME_TO_IMAGE.get(key);
     if(byId) candidates.push(byId);
     if(byName) candidates.push(byName);
-    if(slug){
-      candidates.push(`assets/img/pets/${slug}.png`, `assets/img/pet/${slug}.png`);
-    }
   }else if(kind === 'loadout'){
-    // Loadouts must use loadout.json image fields first, by code/ID then by name.
+    if(code) candidates.push(...localAssetCandidates('assets/img/loadouts', slugAssetName(code)));
+    if(slug) candidates.push(...localAssetCandidates('assets/img/loadouts', slug));
     const byId = code ? LOADOUT_ID_TO_IMAGE.get(code) : '';
     const byName = LOADOUT_NAME_TO_IMAGE.get(key);
     if(byId) candidates.push(byId);
     if(byName) candidates.push(byName);
-    if(code){
-      candidates.push(`assets/img/loadouts/${code}.png`, `assets/img/loadout/${code}.png`);
-    }
-    if(slug){
-      candidates.push(`assets/img/loadouts/${slug}.png`, `assets/img/loadout/${slug}.png`);
-    }
   }else if(kind === 'weapon'){
     const found = findClosestWeaponResourceItem(name, normalizedId);
     const rawImg = normalizeImageUrl(found?.img || found?.image || found?.icon || found?.src || '');
     const foundName = norm(found?.name || '');
     const foundSlug = slugAssetName(foundName);
+    if(normalizedId) candidates.push(...localAssetCandidates('assets/img/weapons', slugAssetName(normalizedId)));
+    if(foundSlug && foundSlug !== slug) candidates.push(...localAssetCandidates('assets/img/weapons', foundSlug));
+    if(slug) candidates.push(...localAssetCandidates('assets/img/weapons', slug));
     if(rawImg) candidates.push(rawImg);
-    if(normalizedId){
-      candidates.push(`assets/img/weapons/${normalizedId}.png`, `assets/img/weapon/${normalizedId}.png`, `assets/weapons/${normalizedId}.png`);
-    }
-    if(foundSlug && foundSlug !== slug){
-      candidates.push(`assets/img/weapons/${foundSlug}.png`, `assets/img/weapon/${foundSlug}.png`, `assets/weapons/${foundSlug}.png`);
-    }
-    if(slug){
-      candidates.push(`assets/img/weapons/${slug}.png`, `assets/img/weapon/${slug}.png`, `assets/weapons/${slug}.png`);
-    }
   }
 
   return uniqueList(candidates);
@@ -3352,6 +3335,42 @@ function clearTeam(){
   closeTeamModal();
 }
 
+async function loadTeamLogosJson(){
+  try{
+    const res = await fetch(`${TEAM_LOGOS_JSON_URL}?v=${Date.now()}`, { cache:'no-store' });
+    if(!res.ok) throw new Error(`team_logos.json fetch failed: ${res.status}`);
+    const data = await res.json();
+    const rows = Array.isArray(data) ? data : (Array.isArray(data?.teams) ? data.teams : []);
+    for(const row of rows){
+      if(!row || typeof row !== 'object') continue;
+      const code = norm(row.team_code || row.code || row.tag).toUpperCase();
+      const name = norm(row.team_name || row.name || code);
+      if(!code && !name) continue;
+      const profile = {
+        team_name: name || code,
+        team_code: code || name,
+        team_logo_url: row.image_url || row.local_image_path || '',
+        logo_url: row.remote_image_url || '',
+        team_logo_tag: code || row.tag || '',
+        region: row.region || 'TBD Region',
+        country: row.country || 'TBD Country',
+        group: row.group || 'TBD Group',
+        seed: row.seed || 'TBD Seed',
+        qualification_path: row.qualification_path || 'Qualification path TBD',
+        coach: row.coach || 'TBD Coach',
+        team_color: row.team_color || '#ffbd59'
+      };
+      const keys = uniqueList([code, name, ...(Array.isArray(row.aliases) ? row.aliases : [])]);
+      for(const key of keys){
+        const normalized = norm(key).toUpperCase();
+        if(normalized) SAMPLE_TEAM_PROFILES[normalized] = profile;
+      }
+    }
+  }catch(e){
+    console.warn('team_logos.json load failed:', e?.message || e);
+  }
+}
+
 function getTeamProfile(teamCode){
   const direct = SAMPLE_TEAM_PROFILES[teamCode] || SAMPLE_TEAM_PROFILES[teamCode?.toUpperCase?.()] || SAMPLE_TEAM_PROFILES.DEFAULT || {};
   return {
@@ -3437,6 +3456,7 @@ function teamLogoImageCandidates(teamCode, profile={}){
 
   // Final default logo when a team-specific asset is not available.
   addPath('assets/logo/ff.png');
+  addPath('assets/logo/ff.svg');
 
   return out;
 }
@@ -4719,7 +4739,6 @@ function resourceImageHtml(item, kind){
   const name = item?.name || resourceKindSingular(kind);
   const rawImg = normalizeImageUrl(item?.img || item?.image || item?.icon || item?.src || '');
   let candidates = [];
-  if(rawImg) candidates.push(rawImg);
   const slug = slugAssetName(name);
   if(kind === 'maps'){
     if(slug) candidates.push(`assets/img/maps/${slug}.png`, `assets/img/map/${slug}.png`, `assets/maps/${slug}.png`);
@@ -4732,6 +4751,7 @@ function resourceImageHtml(item, kind){
   }else if(kind === 'skills'){
     candidates = candidates.concat(visualImageCandidates('skill', name, item?.raw?.id || item?.raw?.skill_id || ''));
   }
+  if(rawImg) candidates.push(rawImg);
   candidates = uniqueList(candidates);
   const fallback = initialsFromLabel(name);
   if(!candidates.length) return `<span class="resource-fallback">${escHtml(fallback)}</span>`;
@@ -5947,7 +5967,7 @@ async function init(){
     detectSchema(RAW[0]);
     await loadMatchApi();
     await loadCharacterJson();
-    await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson()]);
+    await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson(), loadTeamLogosJson()]);
     updateSkillDiagnostics();
     updateSkillLookupDiagnostics();
     populateTopDropdowns();
