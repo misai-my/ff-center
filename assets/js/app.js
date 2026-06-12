@@ -1899,6 +1899,16 @@ function resetToLatest(){
   el('fMatchNo').value = '__all__';
   applyFilters();
 }
+function refreshOpenTeamModalFromLiveData(){
+  const modal = el('teamModal');
+  if(!CURRENT_TEAM || !modal?.classList.contains('show')) return;
+  const activeTab = document.querySelector('.team-tab.active')?.dataset?.tab || 'overview';
+  const body = modal.querySelector('.team-modal-body');
+  const scrollTop = body?.scrollTop || 0;
+  selectTeam(CURRENT_TEAM, true);
+  setTeamTab(activeTab);
+  requestAnimationFrame(() => { if(body) body.scrollTop = scrollTop; });
+}
 function applyFilters(options = {}){
   const silentRefresh = !!options.silentRefresh;
   const updateOnlyLiveAndSummary = !!options.updateOnlyLiveAndSummary;
@@ -1925,6 +1935,7 @@ function applyFilters(options = {}){
     if(el('overallHint')) el('overallHint').textContent = `${matchCount} matches`;
     renderOverall({ silentRefresh:true });
     renderLiveFeed({ silentRefresh:true });
+    refreshOpenTeamModalFromLiveData();
     return;
   }
 
@@ -2002,6 +2013,31 @@ let LIVE_FEED_PLAYER_VIEW = (() => {
     return 'stats';
   }
 })();
+
+let EWC_LAST_LIVE_REFRESH_AT = Date.now();
+let EWC_LIVE_CONNECTION_STATE = 'live';
+function liveFeedRefreshTimeLabel(value = EWC_LAST_LIVE_REFRESH_AT){
+  const date = new Date(value || Date.now());
+  if(Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+function updateLiveFeedConnectionBadge(state = EWC_LIVE_CONNECTION_STATE, at = EWC_LAST_LIVE_REFRESH_AT){
+  EWC_LIVE_CONNECTION_STATE = state || 'live';
+  if(at) EWC_LAST_LIVE_REFRESH_AT = at;
+  document.querySelectorAll('[data-live-connection]').forEach(node => {
+    node.classList.remove('live','checking','error');
+    node.classList.add(EWC_LIVE_CONNECTION_STATE);
+    const statusText = EWC_LIVE_CONNECTION_STATE === 'checking'
+      ? 'Checking…'
+      : EWC_LIVE_CONNECTION_STATE === 'error'
+        ? 'Refresh issue'
+        : 'Live';
+    node.innerHTML = `<span class="live-connection-dot" aria-hidden="true"></span><b>${statusText}</b><span>Updated ${liveFeedRefreshTimeLabel()}</span>`;
+    node.setAttribute('title', EWC_LIVE_CONNECTION_STATE === 'error'
+      ? 'The last automatic refresh failed. Existing data remains visible.'
+      : `Latest successful data check: ${liveFeedRefreshTimeLabel()}`);
+  });
+}
 function setLiveFeedPlayerView(view){
   LIVE_FEED_PLAYER_VIEW = normalizeLiveFeedPlayerView(view);
   try{ localStorage.setItem(LIVE_FEED_PLAYER_VIEW_KEY, LIVE_FEED_PLAYER_VIEW); }catch(_e){}
@@ -2140,15 +2176,50 @@ function flattenKillInfoObjects(value, out = [], depth = 0){
   }
   return out;
 }
-function liveFeedTimeValue(raw){
+function liveFeedTimeSeconds(raw){
   if(raw == null || raw === '') return 0;
-  if(typeof raw === 'number' && Number.isFinite(raw)) return raw;
   const text = norm(raw);
   if(!text) return 0;
-  const numeric = Number(text.replace(/[^\d.-]/g, ''));
-  if(Number.isFinite(numeric) && numeric !== 0) return numeric;
+
+  // Preserve in-match clock values such as 04:32 or 1:04:32.
+  if(/^\d{1,3}:\d{2}(?::\d{2})?$/.test(text)){
+    const parts = text.split(':').map(Number);
+    if(parts.every(Number.isFinite)){
+      if(parts.length === 3) return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+      return (parts[0] * 60) + parts[1];
+    }
+  }
+
+  const numeric = typeof raw === 'number' ? raw : Number(text.replace(/[^\d.-]/g, ''));
+  if(Number.isFinite(numeric) && numeric !== 0){
+    const abs = Math.abs(numeric);
+    if(abs >= 1e12) return numeric / 1000; // epoch milliseconds
+    if(abs >= 1e9) return numeric;         // epoch seconds
+    if(abs > 10000) return numeric / 1000; // common in-match milliseconds
+    return numeric;                        // in-match seconds
+  }
+
   const parsed = Date.parse(text);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) ? parsed / 1000 : 0;
+}
+function liveFeedTimeValue(raw){
+  return liveFeedTimeSeconds(raw);
+}
+function liveFeedClockLabel(value, raw=''){
+  const rawText = norm(raw);
+  if(/^\d{1,3}:\d{2}(?::\d{2})?$/.test(rawText)){
+    const parts = rawText.split(':');
+    return parts.length === 3 ? `${parts[1].padStart(2,'0')}:${parts[2].padStart(2,'0')}` : `${parts[0].padStart(2,'0')}:${parts[1].padStart(2,'0')}`;
+  }
+  const seconds = Number(value || 0);
+  if(!Number.isFinite(seconds) || seconds <= 0) return '—:—';
+  // Epoch timestamps are shown as local minute:second; match clocks stay elapsed.
+  if(seconds >= 1e9){
+    const date = new Date(seconds * 1000);
+    return Number.isNaN(date.getTime()) ? '—:—' : `${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+  }
+  const whole = Math.max(0, Math.floor(seconds));
+  return `${String(Math.floor(whole / 60)).padStart(2,'0')}:${String(whole % 60).padStart(2,'0')}`;
 }
 function dedupeLiveFeedKillEvents(events){
   const seen = new Set();
@@ -2184,6 +2255,8 @@ function buildLiveFeedKillIndex(rows){
   const victimIds = new Set();
   const victimNames = new Set();
   const events = [];
+  let killInfoRows = 0;
+  let killInfoParseFailures = 0;
 
   const victimIdPatterns = [
     /^player_killed_id$/i, /^player_killed.*id$/i, /^killed_player.*id$/i, /^victim_id$/i, /^dead_id$/i, /^target_id$/i,
@@ -2237,7 +2310,9 @@ function buildLiveFeedKillIndex(rows){
     const killerFallbackTeam = norm(getVal(killerRow, KEYS.team)).toUpperCase() || 'UNKNOWN';
     const killerFallbackName = norm(getVal(killerRow, KEYS.player)) || norm(getVal(killerRow, KEYS.accountId)) || '—';
     const rawKillInfo = getVal(killerRow, KEYS.killInfo);
+    if(rawKillInfo != null && norm(rawKillInfo)) killInfoRows += 1;
     const objects = flattenKillInfoObjects(rawKillInfo);
+    if(rawKillInfo != null && norm(rawKillInfo) && !objects.length) killInfoParseFailures += 1;
 
     objects.forEach((obj, idx) => {
       const victimId = normalizeLookupId(findFirstByPathPatterns(obj, victimIdPatterns));
@@ -2261,7 +2336,9 @@ function buildLiveFeedKillIndex(rows){
       const weaponId = normalizeLookupId(findFirstByPathPatterns(obj, weaponIdPatterns));
       const weaponName = norm(findFirstByPathPatterns(obj, weaponNamePatterns));
       const timeRaw = findFirstByPathPatterns(obj, timePatterns);
-      const timeValue = liveFeedTimeValue(timeRaw) || (events.length + idx + 1);
+      const parsedTimeSeconds = liveFeedTimeSeconds(timeRaw);
+      const hasTime = Number.isFinite(parsedTimeSeconds) && parsedTimeSeconds > 0;
+      const timeValue = hasTime ? parsedTimeSeconds : (events.length + idx + 1);
 
       if(victimAccountId) victimIds.add(victimAccountId);
       if(victimNameKey) victimNames.add(victimNameKey);
@@ -2276,13 +2353,38 @@ function buildLiveFeedKillIndex(rows){
         weaponId,
         weaponName,
         timeValue,
+        timeSeconds: hasTime ? parsedTimeSeconds : null,
+        hasTime,
         timeRaw: norm(timeRaw),
+        rapidReference: false,
+        rapidGapSeconds: null,
         raw: obj
       });
     });
   });
 
-  return { playerById, playerByName, playerRowsByTeam, victimIds, victimNames, events: dedupeLiveFeedKillEvents(events) };
+  const cleanEvents = dedupeLiveFeedKillEvents(events).sort((a,b) =>
+    ((a.timeValue || 0) - (b.timeValue || 0)) || liveFeedKillEventSignature(a).localeCompare(liveFeedKillEventSignature(b))
+  );
+
+  // Highlight only the reference timestamp when another elimination follows within five seconds.
+  for(let i = 0; i < cleanEvents.length - 1; i++){
+    const current = cleanEvents[i];
+    const next = cleanEvents[i + 1];
+    if(!current.hasTime || !next.hasTime) continue;
+    const gap = (next.timeSeconds || 0) - (current.timeSeconds || 0);
+    if(gap >= 0 && gap <= 5){
+      current.rapidReference = true;
+      current.rapidGapSeconds = gap;
+    }
+  }
+
+  return {
+    playerById, playerByName, playerRowsByTeam, victimIds, victimNames,
+    events: cleanEvents,
+    killInfoRows,
+    killInfoParseFailures
+  };
 }
 function liveFeedRowEliminatedFromKillInfo(row, killIndex){
   if(!killIndex) return false;
@@ -2317,6 +2419,9 @@ function liveFeedTeamEliminationFeed(teams, killIndex){
       killerTeam: last?.killerTeam || '',
       killerName: last?.killerName || '',
       timeValue: last?.timeValue || team.position || 0,
+      timeSeconds: last?.timeSeconds || null,
+      timeRaw: last?.timeRaw || '',
+      hasTime: !!last?.hasTime,
       source: last ? 'kill_info' : 'status'
     });
   }
@@ -2325,14 +2430,14 @@ function liveFeedTeamEliminationFeed(teams, killIndex){
   return events;
 }
 function liveFeedElimFeedSignature(events){
-  return 'elim-feed::' + (events || []).map(e => [e.team,e.outCount,e.totalPlayers,e.lastVictim,e.killerTeam,e.killerName,e.timeValue,e.source].join('^')).join('|');
+  return 'elim-feed::' + (events || []).map(e => [e.team,e.outCount,e.totalPlayers,e.lastVictim,e.killerTeam,e.killerName,e.timeValue,e.timeRaw,e.source].join('^')).join('|');
 }
 function liveFeedElimFeedHtml(events){
   const count = events?.length || 0;
   const body = count
     ? `<div class="live-feed-elim-list">${events.map(e => `
         <article class="live-feed-elim-card" title="${escHtml(e.team)} eliminated${e.lastVictim ? ` • last out: ${e.lastVictim}` : ''}">
-          <div class="elim-team"><b>${escHtml(e.team)}</b><span class="elim-badge">Out</span></div>
+          <div class="elim-team"><b>${escHtml(e.team)}</b><span class="elim-time">${escHtml(liveFeedClockLabel(e.timeSeconds || e.timeValue, e.timeRaw))}</span><span class="elim-badge">Out</span></div>
           <div class="elim-line"><small>Players</small> ${fmtNum(e.outCount)}/${fmtNum(e.totalPlayers)} eliminated</div>
           <div class="elim-line"><small>Last</small> ${escHtml(e.lastVictim || 'Status confirmed')}</div>
           <div class="elim-line"><small>By</small> ${escHtml(e.killerTeam || e.killerName || '—')}</div>
@@ -2365,6 +2470,7 @@ function buildLiveFeedTeams(rows){
       damage: n(getVal(r, KEYS.damage)),
       assists: n(getVal(r, KEYS.assists)),
       headshots: n(getVal(r, KEYS.headshots)),
+      survivalTime: n(getVal(r, KEYS.survivalTime)),
       eliminated: liveFeedRowEliminated(r, team, killIndex),
       activeItem: (() => {
         const activeId = getActiveSkillId(r);
@@ -2383,8 +2489,18 @@ function buildLiveFeedTeams(rows){
       })()
     })).sort((a,b) => b.kills - a.kills || b.damage - a.damage || b.assists - a.assists || a.player.localeCompare(b.player));
     const elimEvents = liveFeedTeamKillEvents(team, killIndex);
-    teams.push({ team, day, matchNo, matchId, rankScore, teamElims, total, booyah, alivePlayers, eliminatedPlayers, eliminated, players, elimEvents });
+    const killInfoWarning = killIndex.killInfoParseFailures > 0 && !elimEvents.length
+      ? `${killIndex.killInfoParseFailures} kill-info row${killIndex.killInfoParseFailures === 1 ? '' : 's'} could not be parsed.`
+      : '';
+    teams.push({ team, day, matchNo, matchId, rankScore, teamElims, total, booyah, alivePlayers, eliminatedPlayers, eliminated, players, elimEvents, killInfoWarning });
   }
+
+  // Rank is always based on total points, even though cards remain ordered alive-first.
+  const pointsOrder = teams.slice().sort((a,b) =>
+    (b.total - a.total) || (b.booyah - a.booyah) || (b.teamElims - a.teamElims) || (b.rankScore - a.rankScore) || a.team.localeCompare(b.team)
+  );
+  pointsOrder.forEach((team, index) => { team.pointsPosition = index + 1; });
+
   // Live feed order: alive teams first, then total score descending.
   // Booyah teams count as alive because eliminated is false when booyah is true.
   teams.sort((a,b) => {
@@ -2397,7 +2513,10 @@ function buildLiveFeedTeams(rows){
       (b.rankScore - a.rankScore) ||
       a.team.localeCompare(b.team);
   });
-  teams.forEach((t, index) => t.position = index + 1);
+  teams.forEach((t, index) => {
+    t.displayOrder = index + 1;
+    t.position = t.pointsPosition || index + 1;
+  });
   teams.killIndex = killIndex;
   teams.eliminationFeed = liveFeedTeamEliminationFeed(teams, killIndex);
   return teams;
@@ -2413,7 +2532,7 @@ function liveFeedPlayerTag(team, name){
   return `${teamCode}.${cleanName}`;
 }
 function liveFeedKillEventSignature(ev){
-  return [ev.killerTeam, ev.killerName, ev.victimTeam, ev.victimName, ev.victimAccountId, ev.weaponId, ev.weaponName, ev.timeValue, ev.timeRaw].join('^');
+  return [ev.killerTeam, ev.killerName, ev.victimTeam, ev.victimName, ev.victimAccountId, ev.weaponId, ev.weaponName, ev.timeValue, ev.timeRaw, ev.rapidReference ? 1 : 0].join('^');
 }
 function liveFeedTeamKillEvents(teamCode, killIndex){
   const key = norm(teamCode).toUpperCase();
@@ -2453,8 +2572,14 @@ function liveFeedKillRowHtml(ev){
   const cls = ev.perspective === 'kill' ? 'kill' : 'death';
   const victim = liveFeedPlayerTag(ev.victimTeam, ev.victimName);
   const weaponLabel = liveFeedKillWeaponLabel(ev);
-  const title = `${killer} eliminated ${victim} with ${weaponLabel}${ev.timeRaw ? ` • ${ev.timeRaw}` : ''}`;
+  const timeLabel = liveFeedClockLabel(ev.timeSeconds || ev.timeValue, ev.timeRaw);
+  const rapidClass = ev.rapidReference ? ' rapid-reference' : '';
+  const rapidTitle = ev.rapidReference
+    ? `Another elimination followed ${Number(ev.rapidGapSeconds || 0).toFixed(1)}s later`
+    : `Elimination time ${timeLabel}`;
+  const title = `${timeLabel} • ${killer} eliminated ${victim} with ${weaponLabel}`;
   return `<div class="live-feed-kill-row ${cls}" title="${escHtml(title)}">
+    <span class="kill-time${rapidClass}" title="${escHtml(rapidTitle)}">${escHtml(timeLabel)}</span>
     <span class="kill-killer"><span class="kill-killer-name">${escHtml(killer)}</span></span>
     ${liveFeedKillWeaponHtml(ev)}
     ${liveFeedKillVictimHtml(ev)}
@@ -2462,9 +2587,12 @@ function liveFeedKillRowHtml(ev){
 }
 function liveFeedTeamElimEventsHtml(team){
   const events = team?.elimEvents || [];
+  const emptyText = team?.killInfoWarning
+    ? `Kill data was received, but it could not be parsed. ${team.killInfoWarning}`
+    : 'No player eliminations detected yet';
   const rows = events.length
     ? events.map(liveFeedKillRowHtml).join('')
-    : `<div class="live-feed-kill-empty">No player eliminations detected yet</div>`;
+    : `<div class="live-feed-kill-empty">${escHtml(emptyText)}</div>`;
   return `${liveFeedPlayerHeaderHtml()}<div class="live-feed-kill-rows">${rows}</div>`;
 }
 function liveFeedTeamRowsHtml(team){
@@ -2577,8 +2705,9 @@ function updateLiveFeedViewInPlace(){
 function liveFeedPlayerHeaderHtml(){
   if(LIVE_FEED_PLAYER_VIEW === 'elims'){
     return `<div class="live-feed-player-head elims" aria-hidden="true">
+      <span>Time</span>
       <span>Killer</span>
-      <span>Wpn</span>
+      <span>Weapon</span>
       <span>Eliminated</span>
     </div>`;
   }
@@ -2588,11 +2717,13 @@ function liveFeedPlayerHeaderHtml(){
       <span>Preset</span>
     </div>`;
   }
-  return `<div class="live-feed-player-head" aria-hidden="true">
+  return `<div class="live-feed-player-head stats" aria-hidden="true">
     <span>Player</span>
     <span>ELM</span>
     <span>DMG</span>
     <span>AST</span>
+    <span class="hs-col">HS</span>
+    <span class="time-col">Time</span>
     <span></span>
   </div>`;
 }
@@ -2639,13 +2770,22 @@ function liveFeedPlayerPresetHtml(player){
     <span class="live-feed-preset-badges">${badges}</span>
   </div>`;
 }
+function liveFeedSurvivalLabel(value){
+  const raw = Number(value || 0);
+  if(!Number.isFinite(raw) || raw <= 0) return '—';
+  const seconds = raw > 10000 ? raw / 1000 : raw;
+  const whole = Math.max(0, Math.floor(seconds));
+  return `${String(Math.floor(whole / 60)).padStart(2,'0')}:${String(whole % 60).padStart(2,'0')}`;
+}
 function liveFeedPlayerHtml(player){
   if(LIVE_FEED_PLAYER_VIEW === 'preset') return liveFeedPlayerPresetHtml(player);
-  return `<div class="live-feed-player" title="${escHtml(player.player)}">
+  return `<div class="live-feed-player stats" title="${escHtml(player.player)}">
     <span class="name">${escHtml(player.player)}</span>
     <span class="stat">${fmtNum(player.kills)}</span>
     <span class="stat">${fmtNum(player.damage)}</span>
     <span class="stat">${fmtNum(player.assists)}</span>
+    <span class="stat hs-col">${fmtNum(player.headshots)}</span>
+    <span class="stat time-col">${liveFeedSurvivalLabel(player.survivalTime)}</span>
     <span class="state" title="${player.eliminated ? 'Eliminated' : 'Alive'}">${player.eliminated ? '🔴' : '🟢'}</span>
   </div>`;
 }
@@ -2659,8 +2799,8 @@ function liveFeedTeamPopupHtml(team){
     <section class="live-feed-popup-panel" role="dialog" aria-modal="true" aria-label="${escHtml(team.team)} live feed preview">
       <div class="live-feed-popup-head">
         <div class="live-feed-popup-title-wrap">
-          <b>${escHtml(team.team)}</b>
-          <span>${statusText} • ${viewText}</span>
+          ${teamLogoHtml(team.team, getTeamProfile(team.team), 'live-feed-popup-team-logo')}
+          <div><b>${escHtml(team.team)}</b><span>${statusText} • Points Rank #${fmtNum(team.position)} • ${viewText}</span></div>
         </div>
         <div class="live-feed-popup-actions">
           ${liveFeedViewButtonHtml()}
@@ -2668,9 +2808,9 @@ function liveFeedTeamPopupHtml(team){
         </div>
       </div>
       <div class="live-feed-popup-stats">
-        <div><span>TOT</span><b>${fmtNum(team.total)}</b></div>
-        <div><span>PLC</span><b>${fmtNum(team.rankScore)}</b></div>
-        <div><span>ELM</span><b>${fmtNum(team.teamElims)}</b></div>
+        <div><span>Total</span><b>${fmtNum(team.total)}</b></div>
+        <div><span>Placement</span><b>${fmtNum(team.rankScore)}</b></div>
+        <div><span>Elims</span><b>${fmtNum(team.teamElims)}</b></div>
         <div><span>Alive</span><b>${fmtNum(team.alivePlayers)}</b></div>
       </div>
       <div class="live-feed-popup-players">${players}</div>
@@ -2700,8 +2840,8 @@ function liveFeedTeamPopupPanelHtml(team){
     <section class="live-feed-popup-panel" role="dialog" aria-modal="true" aria-label="${escHtml(team.team)} live feed preview">
       <div class="live-feed-popup-head">
         <div class="live-feed-popup-title-wrap">
-          <b>${escHtml(team.team)}</b>
-          <span>${statusText} • ${viewText}</span>
+          ${teamLogoHtml(team.team, getTeamProfile(team.team), 'live-feed-popup-team-logo')}
+          <div><b>${escHtml(team.team)}</b><span>${statusText} • Points Rank #${fmtNum(team.position)} • ${viewText}</span></div>
         </div>
         <div class="live-feed-popup-actions">
           ${liveFeedViewButtonHtml()}
@@ -2709,9 +2849,9 @@ function liveFeedTeamPopupPanelHtml(team){
         </div>
       </div>
       <div class="live-feed-popup-stats">
-        <div><span>TOT</span><b>${fmtNum(team.total)}</b></div>
-        <div><span>PLC</span><b>${fmtNum(team.rankScore)}</b></div>
-        <div><span>ELM</span><b>${fmtNum(team.teamElims)}</b></div>
+        <div><span>Total</span><b>${fmtNum(team.total)}</b></div>
+        <div><span>Placement</span><b>${fmtNum(team.rankScore)}</b></div>
+        <div><span>Elims</span><b>${fmtNum(team.teamElims)}</b></div>
         <div><span>Alive</span><b>${fmtNum(team.alivePlayers)}</b></div>
       </div>
       <div class="live-feed-popup-players">${players}</div>
@@ -2760,13 +2900,16 @@ function liveFeedCardHtml(t){
   return `
     <article class="live-feed-card" data-live-team="${escHtml(t.team)}" data-live-card-signature="${escHtml(liveFeedTeamSignature(t))}">
       <div class="live-feed-card-top">
-        <button class="live-feed-team live-feed-team-open" type="button" onclick="toggleLiveFeedTeamPopup(event, this)" title="Open larger ${escHtml(t.team)} view"><b>${escHtml(t.team)}</b></button>
-        <div class="live-feed-rank">#${fmtNum(t.position)}</div>
+        <button class="live-feed-team live-feed-team-open" type="button" onclick="toggleLiveFeedTeamPopup(event, this)" title="Open larger ${escHtml(t.team)} view">
+          ${teamLogoHtml(t.team, getTeamProfile(t.team), 'live-feed-card-team-logo')}
+          <b>${escHtml(t.team)}</b>
+        </button>
+        <div class="live-feed-rank" title="Ranked by total points">Pts #${fmtNum(t.position)}</div>
       </div>
       <div class="live-feed-score-row">
-        <div class="live-feed-score"><span>TOT</span><b>${fmtNum(t.total)}</b></div>
-        <div class="live-feed-score"><span>PLC</span><b>${fmtNum(t.rankScore)}</b></div>
-        <div class="live-feed-score"><span>ELM</span><b>${fmtNum(t.teamElims)}</b></div>
+        <div class="live-feed-score"><span>Total</span><b>${fmtNum(t.total)}</b></div>
+        <div class="live-feed-score"><span>Place</span><b>${fmtNum(t.rankScore)}</b></div>
+        <div class="live-feed-score"><span>Elims</span><b>${fmtNum(t.teamElims)}</b></div>
         <div class="live-feed-score"><span>Alive</span><b>${fmtNum(t.alivePlayers)}</b></div>
       </div>
       <div class="live-feed-status-row">
@@ -2782,7 +2925,7 @@ function liveFeedTeamSignature(t){
     t.team, t.position, t.total, t.rankScore, t.teamElims, t.booyah,
     t.alivePlayers, t.eliminatedPlayers, t.eliminated, LIVE_FEED_PLAYER_VIEW,
     ...(t.players || []).map(p => [
-      p.player, p.kills, p.damage, p.assists, p.headshots, p.eliminated,
+      p.player, p.kills, p.damage, p.assists, p.headshots, p.survivalTime, p.eliminated,
       p.activeItem?.id || p.activeItem?.name || '',
       (p.passiveItems || []).map(x => x.id || x.name).join(','),
       p.petItem?.id || p.petItem?.name || '',
@@ -2808,20 +2951,37 @@ function renderLiveFeed(options = {}){
   window.LIVE_FEED_TEAMS_CACHE = teams;
 
   const first = rows[0] || {};
-  const label = `D${escHtml(norm(getVal(first, KEYS.day)) || '—')} • M${escHtml(norm(getVal(first, KEYS.matchNo)) || '—')}`;
+  const tournament = norm(getVal(first, KEYS.tournament));
+  const stage = norm(getVal(first, KEYS.stage));
+  const week = norm(getVal(first, KEYS.week));
+  const day = norm(getVal(first, KEYS.day));
+  const matchNo = norm(getVal(first, KEYS.matchNo));
+  const matchId = norm(getVal(first, KEYS.matchId));
+  const contextParts = [
+    tournament,
+    stage,
+    week ? `Week ${week}` : '',
+    day ? `Day ${day}` : '',
+    matchNo ? `Match ${matchNo}` : '',
+    matchId ? `ID ${matchId}` : ''
+  ].filter(Boolean);
+  const label = contextParts.join(' • ') || 'Latest filtered match';
   const aliveTeams = teams.filter(t => !t.eliminated).length;
   const eliminatedTeams = teams.filter(t => t.eliminated).length;
   setText('liveFeedHint', `${label} • ${teams.length} teams`);
   box.className = '';
 
   const toolbarHtml = `
-    <div>
+    <div class="live-feed-heading">
       <div class="live-feed-title">Latest Match Live Feed</div>
+      <div class="live-feed-sub">${escHtml(label)}</div>
+      <div class="live-feed-order-note">Cards are ordered alive-first; <b>Pts #</b> is the total-points rank.</div>
     </div>
     <div class="live-feed-status-row">
       ${liveFeedViewButtonHtml()}
-      <span class="live-feed-status alive">${fmtNum(aliveTeams)} Alive Teams</span>
-      <span class="live-feed-status eliminated">${fmtNum(eliminatedTeams)} Eliminated Teams</span>
+      <span class="live-feed-status alive">${fmtNum(aliveTeams)} Alive</span>
+      <span class="live-feed-status eliminated">${fmtNum(eliminatedTeams)} Out</span>
+      <span class="live-feed-connection ${escHtml(EWC_LIVE_CONNECTION_STATE)}" data-live-connection></span>
     </div>
   `;
 
@@ -2836,10 +2996,17 @@ function renderLiveFeed(options = {}){
     grid = box.querySelector(':scope > .live-feed-grid');
   }
 
-  setStableHTML(toolbar, toolbarHtml, `toolbar::${LIVE_FEED_PLAYER_VIEW}::${aliveTeams}::${eliminatedTeams}`, silentRefresh);
+  setStableHTML(toolbar, toolbarHtml, `toolbar::${LIVE_FEED_PLAYER_VIEW}::${aliveTeams}::${eliminatedTeams}::${label}`, silentRefresh);
+  updateLiveFeedConnectionBadge();
   if(elimFeed){
-    elimFeed.style.display = 'none';
-    setStableHTML(elimFeed, '', 'elim-feed-moved-to-toggle', silentRefresh);
+    const showTeamElims = LIVE_FEED_PLAYER_VIEW === 'elims';
+    elimFeed.hidden = !showTeamElims;
+    if(showTeamElims){
+      const eliminationEvents = teams.eliminationFeed || [];
+      setStableHTML(elimFeed, liveFeedElimFeedHtml(eliminationEvents), liveFeedElimFeedSignature(eliminationEvents), silentRefresh);
+    }else{
+      setStableHTML(elimFeed, '', 'elim-feed-hidden', silentRefresh);
+    }
   }
 
   const existing = new Map([...grid.querySelectorAll('.live-feed-card[data-live-team]')].map(card => [norm(card.dataset.liveTeam).toUpperCase(), card]));
@@ -6042,10 +6209,10 @@ function getStableRowSignature(row){
     getVal(row, KEYS.team), getVal(row, KEYS.player), getVal(row, KEYS.accountId),
     getVal(row, KEYS.tournament), getVal(row, KEYS.year), getVal(row, KEYS.week), getVal(row, KEYS.day), getVal(row, KEYS.matchNo), getVal(row, KEYS.matchId),
     getVal(row, KEYS.mode), getVal(row, KEYS.dataSource),
-    getVal(row, KEYS.kills), getVal(row, KEYS.damage), getVal(row, KEYS.assists), getVal(row, KEYS.headshots), getVal(row, KEYS.shoots), getVal(row, KEYS.hits),
+    getVal(row, KEYS.kills), getVal(row, KEYS.damage), getVal(row, KEYS.assists), getVal(row, KEYS.headshots), getVal(row, KEYS.shoots), getVal(row, KEYS.hits), getVal(row, KEYS.survivalTime),
     getVal(row, KEYS.booyah), getVal(row, KEYS.killCount), getVal(row, KEYS.killingScore), getVal(row, KEYS.rankingScore),
     getVal(row, KEYS.petName), getVal(row, KEYS.petId), getVal(row, KEYS.loadouts),
-    getVal(row, KEYS.rawSkillIds), getVal(row, KEYS.skillInfoId), getVal(row, KEYS.skillInfoName),
+    getVal(row, KEYS.rawSkillIds), getVal(row, KEYS.skillInfoId), getVal(row, KEYS.skillInfoName), getVal(row, KEYS.killInfo),
     ...(KEYS.skillIds || []).map(k => row?.[k])
   ];
   return parts.map(v => norm(v)).join('~');
@@ -6275,6 +6442,7 @@ async function refreshDataOnly(){
   if(isUserActivelyScrolling()) return;
 
   EWC_DATA_REFRESH_BUSY = true;
+  updateLiveFeedConnectionBadge('checking');
   let state = null;
   let lockedFilters = null;
   let beforeFilterSig = '';
@@ -6284,8 +6452,13 @@ async function refreshDataOnly(){
     if(!activeSession) return;
 
     const freshRows = await withTimeout(fetchAllRows(), 45000, 'Live refresh data fetch timed out');
-    if(!freshRows?.length) return;
+    if(!freshRows?.length){
+      updateLiveFeedConnectionBadge('error');
+      return;
+    }
 
+    EWC_LAST_LIVE_REFRESH_AT = Date.now();
+    updateLiveFeedConnectionBadge('live', EWC_LAST_LIVE_REFRESH_AT);
     const newSignature = makeDataSignature(freshRows);
     if(newSignature === EWC_LAST_DATA_SIGNATURE) return;
     EWC_LAST_DATA_SIGNATURE = newSignature;
@@ -6317,6 +6490,7 @@ async function refreshDataOnly(){
     // Those can be manually refreshed by changing filters or reopening a team.
     restoreDashboardViewState(state);
   }catch(err){
+    updateLiveFeedConnectionBadge('error');
     console.warn('Data-only refresh failed:', err?.message || err);
   }finally{
     requestAnimationFrame(() => {
@@ -6331,6 +6505,8 @@ async function refreshDataOnly(){
 
 function startDataOnlyAutoRefresh(){
   EWC_LAST_DATA_SIGNATURE = makeDataSignature(RAW);
+  EWC_LAST_LIVE_REFRESH_AT = Date.now();
+  updateLiveFeedConnectionBadge('live', EWC_LAST_LIVE_REFRESH_AT);
   if(EWC_DATA_REFRESH_TIMER) clearInterval(EWC_DATA_REFRESH_TIMER);
   EWC_DATA_REFRESH_TIMER = setInterval(refreshDataOnly, EWC_DATA_REFRESH_MS);
   window.addEventListener('beforeunload', () => {

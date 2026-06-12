@@ -5934,3 +5934,197 @@ html[data-theme="light"] .team-booster-icon{background:rgba(10,20,40,.06);border
   .team-booster-icon{width:62px;height:70px;}
   .loadout-history-list article{grid-template-columns:52px minmax(0,1fr);}
 }
+
+
+/* ===== Latest Match Live Feed readability + reliability update ===== */
+.live-feed-toolbar{
+  align-items:flex-start!important;
+  gap:12px!important;
+}
+.live-feed-heading{min-width:0;display:grid;gap:3px;}
+.live-feed-heading .live-feed-sub{
+  max-width:760px;
+  white-space:normal;
+  line-height:1.28;
+  color:rgba(218,234,251,.82);
+}
+.live-feed-order-note{
+  color:rgba(170,190,215,.68);
+  font-size:.64rem;
+  font-weight:800;
+  line-height:1.2;
+}
+.live-feed-order-note b{color:var(--brand);}
+.live-feed-connection{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  min-height:27px;
+  padding:5px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.18);
+  color:rgba(225,238,252,.82);
+  font-size:.58rem;
+  font-weight:900;
+  white-space:nowrap;
+}
+.live-feed-connection b{font-size:.60rem;color:#fff;}
+.live-feed-connection span:last-child{color:rgba(190,210,230,.68);}
+.live-connection-dot{width:7px;height:7px;border-radius:50%;background:#62e887;box-shadow:0 0 0 3px rgba(98,232,135,.10);}
+.live-feed-connection.checking .live-connection-dot{background:var(--brand);box-shadow:0 0 0 3px rgba(255,189,89,.12);animation:livePulse 1s ease-in-out infinite;}
+.live-feed-connection.error .live-connection-dot{background:#ff7084;box-shadow:0 0 0 3px rgba(255,112,132,.12);}
+.live-feed-connection.error b{color:#ffb5c1;}
+@keyframes livePulse{50%{opacity:.42;transform:scale(.82)}}
+
+.live-feed-team-open{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:7px!important;
+}
+.live-feed-card-team-logo,
+.live-feed-popup-team-logo{
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.10);
+}
+.live-feed-card-team-logo{width:26px;height:26px;border-radius:9px;flex:0 0 26px;}
+.live-feed-popup-team-logo{width:42px;height:42px;border-radius:13px;flex:0 0 42px;}
+.live-feed-card-team-logo .team-logo-img,
+.live-feed-popup-team-logo .team-logo-img{width:100%;height:100%;object-fit:contain;padding:2px;}
+.live-feed-card-team-logo .team-logo-fallback-text,
+.live-feed-popup-team-logo .team-logo-fallback-text{display:none;font-family:Orbitron,sans-serif;font-size:.48rem;font-weight:1000;}
+.live-feed-card-team-logo.no-img .team-logo-fallback-text,
+.live-feed-popup-team-logo.no-img .team-logo-fallback-text{display:grid;}
+.live-feed-popup-title-wrap{display:flex!important;align-items:center!important;gap:10px!important;}
+.live-feed-popup-title-wrap > div{min-width:0;}
+.live-feed-rank{min-width:58px;text-align:center;}
+
+/* Team elimination timeline is shown only in Elims view. */
+.live-feed-elim-feed[hidden]{display:none!important;}
+.live-feed-elim-feed:not([hidden]){display:flex!important;}
+.live-feed-elim-card .elim-team{justify-content:flex-start!important;}
+.live-feed-elim-card .elim-team b{margin-right:auto;}
+.live-feed-elim-card .elim-time{
+  color:var(--brand);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:.60rem;
+  font-weight:1000;
+  padding:3px 6px;
+  border-radius:999px;
+  border:1px solid rgba(255,189,89,.18);
+  background:rgba(255,189,89,.08);
+}
+
+/* Full elimination row: timestamp -> killer -> weapon -> victim. */
+.live-feed-player-head.elims,
+.live-feed-kill-row,
+.live-feed-popup-players .live-feed-player-head.elims,
+.live-feed-popup-players .live-feed-kill-row{
+  grid-template-columns:54px minmax(150px,1fr) minmax(118px,158px) minmax(150px,1fr)!important;
+  grid-template-areas:none!important;
+}
+.live-feed-player-head.elims span:first-child{text-align:center!important;color:var(--brand)!important;}
+.live-feed-player-head.elims span:nth-child(2){text-align:right!important;color:inherit!important;}
+.live-feed-player-head.elims span:nth-child(3){text-align:center!important;color:var(--brand)!important;}
+.live-feed-player-head.elims span:nth-child(4){text-align:left!important;}
+.live-feed-kill-row .kill-time{
+  grid-column:1!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  height:26px!important;
+  padding:0 5px!important;
+  border-radius:8px!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  background:rgba(0,0,0,.20)!important;
+  color:rgba(224,237,252,.86)!important;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace!important;
+  font-size:.58rem!important;
+  font-weight:1000!important;
+  letter-spacing:.02em!important;
+  white-space:nowrap!important;
+}
+.live-feed-kill-row .kill-time.rapid-reference{
+  color:#1a1306!important;
+  background:linear-gradient(135deg,#ffe18b,var(--brand))!important;
+  border-color:rgba(255,225,139,.72)!important;
+  box-shadow:0 0 0 3px rgba(255,189,89,.12),0 0 16px rgba(255,189,89,.28)!important;
+}
+.live-feed-kill-row .kill-killer{grid-column:2!important;}
+.live-feed-kill-row .kill-weapon{grid-column:3!important;}
+.live-feed-kill-row .kill-victim{grid-column:4!important;}
+
+/* Expanded Stats view adds headshots and survival time; compact cards keep core stats. */
+.live-feed-player-head.stats,
+.live-feed-player.stats{
+  grid-template-columns:minmax(82px,1.4fr) 34px 54px 34px 34px 48px 24px!important;
+}
+.live-feed-card > .live-feed-players .live-feed-player-head.stats,
+.live-feed-card > .live-feed-players .live-feed-player.stats{
+  grid-template-columns:minmax(74px,1.45fr) 30px 48px 30px 22px!important;
+}
+.live-feed-card > .live-feed-players .live-feed-player-head.stats .hs-col,
+.live-feed-card > .live-feed-players .live-feed-player-head.stats .time-col,
+.live-feed-card > .live-feed-players .live-feed-player.stats .hs-col,
+.live-feed-card > .live-feed-players .live-feed-player.stats .time-col{display:none!important;}
+.live-feed-popup-players .live-feed-player-head.stats,
+.live-feed-popup-players .live-feed-player.stats{
+  grid-template-columns:minmax(130px,1.6fr) 48px 72px 48px 48px 70px 28px!important;
+}
+
+/* Override prior compact card kill row rules with a readable four-column line. */
+.live-feed-card > .live-feed-players .live-feed-kill-row{
+  display:grid!important;
+  grid-template-columns:38px minmax(0,1fr) 36px minmax(0,1fr)!important;
+  grid-template-areas:none!important;
+  height:28px!important;
+  min-height:28px!important;
+  gap:4px!important;
+  padding:2px 4px!important;
+  overflow:hidden!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-time{
+  grid-column:1!important;
+  height:22px!important;
+  padding:0 3px!important;
+  font-size:.48rem!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer{grid-column:2!important;}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon{grid-column:3!important;}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim{grid-column:4!important;}
+
+html[data-theme="light"] .live-feed-connection,
+html[data-theme="light"] .live-feed-kill-row .kill-time{
+  background:rgba(255,255,255,.72)!important;
+  border-color:rgba(10,20,40,.12)!important;
+  color:#27324a!important;
+}
+html[data-theme="light"] .live-feed-connection b{color:#152039;}
+html[data-theme="light"] .live-feed-order-note{color:#667089;}
+
+@media(max-width:760px){
+  .live-feed-toolbar{display:grid!important;grid-template-columns:1fr!important;}
+  .live-feed-status-row{justify-content:flex-start!important;}
+  .live-feed-connection span:last-child{display:none;}
+  .live-feed-order-note{font-size:.58rem;}
+  .live-feed-card-team-logo{width:24px;height:24px;flex-basis:24px;}
+  .live-feed-popup-team-logo{width:36px;height:36px;flex-basis:36px;}
+  .live-feed-popup-players .live-feed-player-head.elims,
+  .live-feed-popup-players .live-feed-kill-row{
+    grid-template-columns:46px minmax(102px,1fr) 72px minmax(102px,1fr)!important;
+    gap:5px!important;
+  }
+  .live-feed-popup-players .live-feed-kill-row .kill-weapon-name{display:none!important;}
+  .live-feed-card > .live-feed-players .live-feed-kill-row{
+    grid-template-columns:34px minmax(0,1fr) 32px minmax(0,1fr)!important;
+  }
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-time{font-size:.44rem!important;}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .live-feed-connection.checking .live-connection-dot{animation:none!important;}
+}
