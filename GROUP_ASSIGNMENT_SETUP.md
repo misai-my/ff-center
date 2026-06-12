@@ -93,3 +93,5 @@ If it displays an admin setup error, run `supabase/03_group_assignment_admin.sql
 ## Loading-screen recovery
 
 The admin page now times out stalled authentication/database requests instead of remaining behind the loading overlay. Use **Retry loading** when the network or Supabase session check fails.
+
+- Fixed the Group Assignment admin startup event binding so missing optional controls cannot stop the page from loading.

@@ -264,3 +264,5 @@ The page supports:
 - Team code, official name, short name, organization, country, region, external match-data ID, aliases, and notes
 
 Migration 03 creates or upgrades `ff_teams`, `tournament_stage_config`, and `tournament_team_assignments`; synchronizes team-logo metadata into `ff_team_logos`; and saves all group assignments in one database transaction through `save_tournament_group_assignments`. The browser cannot directly commit files into GitHub without a protected server function, so the page stores the live image in Supabase Storage and provides the correctly named PNG for `assets/logo/`.
+
+- Fixed the Group Assignment admin startup event binding so missing optional controls cannot stop the page from loading.

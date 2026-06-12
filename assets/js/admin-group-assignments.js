@@ -776,31 +776,36 @@ async function saveTeam(event) {
 }
 
 function bindEvents() {
-  els.loginForm?.addEventListener('submit', handleAdminLogin);
-  els.passwordToggle?.addEventListener('click', () => {
+  const bind = (element, eventName, handler) => {
+    if (!element || typeof element.addEventListener !== 'function') return false;
+    element.addEventListener(eventName, handler);
+    return true;
+  };
+  bind(els.loginForm, 'submit', handleAdminLogin);
+  bind(els.passwordToggle, 'click', () => {
     const showing = els.loginPassword.type === 'text';
     els.loginPassword.type = showing ? 'password' : 'text';
     els.passwordToggle.textContent = showing ? 'Show' : 'Hide';
   });
-  els.themeToggle.addEventListener('click', () => {
+  bind(els.themeToggle, 'click', () => {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('ff_theme_v1', next);
   });
-  els.logout.addEventListener('click', async () => {
+  bind(els.logout, 'click', async () => {
     if (client) await client.auth.signOut();
     showAdminLogin('You have been signed out.');
   });
-  els.tournament.addEventListener('input', refreshStageList);
-  els.load.addEventListener('click', loadSetup);
-  els.search.addEventListener('input', renderBoard);
-  els.groupCount.addEventListener('change', applyGroupCount);
-  els.teamsPerGroup.addEventListener('change', () => { state.teamsPerGroup = Math.max(1, Number(els.teamsPerGroup.value) || 1); renderSummary(); renderBoard(); });
-  els.autoSplit.addEventListener('click', autoSplit);
-  els.clear.addEventListener('click', clearGroups);
-  els.addTeam.addEventListener('click', () => openTeamModal());
-  els.saveDraft.addEventListener('click', () => saveAssignments(false));
-  els.confirm.addEventListener('click', () => {
+  bind(els.tournament, 'input', refreshStageList);
+  bind(els.load, 'click', loadSetup);
+  bind(els.search, 'input', renderBoard);
+  bind(els.groupCount, 'change', applyGroupCount);
+  bind(els.teamsPerGroup, 'change', () => { state.teamsPerGroup = Math.max(1, Number(els.teamsPerGroup.value) || 1); renderSummary(); renderBoard(); });
+  bind(els.autoSplit, 'click', autoSplit);
+  bind(els.clear, 'click', clearGroups);
+  bind(els.addTeam, 'click', () => openTeamModal());
+  bind(els.saveDraft, 'click', () => saveAssignments(false));
+  bind(els.confirm, 'click', () => {
     if (state.locked) {
       state.locked = false;
       updateLockState();
@@ -810,12 +815,12 @@ function bindEvents() {
       saveAssignments(true);
     }
   });
-  els.teamModalClose.addEventListener('click', closeTeamModal);
+  bind(els.modalClose, 'click', closeTeamModal);
   document.querySelectorAll('[data-close-team-modal]').forEach((node) => node.addEventListener('click', closeTeamModal));
-  els.teamForm.addEventListener('submit', saveTeam);
-  els.teamCode.addEventListener('input', updateLogoPathPreview);
-  els.downloadRepoLogo?.addEventListener('click', downloadRepoLogo);
-  els.logoFile.addEventListener('change', async () => {
+  bind(els.teamForm, 'submit', saveTeam);
+  bind(els.teamCode, 'input', updateLogoPathPreview);
+  bind(els.downloadRepoLogo, 'click', downloadRepoLogo);
+  bind(els.logoFile, 'change', async () => {
     const file = els.logoFile.files?.[0];
     if (!file) return;
     try {
@@ -836,12 +841,12 @@ function bindEvents() {
       setBusy(els.saveTeam, false);
     }
   });
-  els.retry?.addEventListener('click', async () => {
+  bind(els.retry, 'click', async () => {
     els.retry.hidden = true;
     showNotice('');
     await initializeAdminPage();
   });
-  window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && els.modal.classList.contains('show')) closeTeamModal(); });
+  window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && els.modal?.classList.contains('show')) closeTeamModal(); });
 }
 
 async function initializeAdminPage() {
