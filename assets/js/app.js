@@ -5945,16 +5945,73 @@ function applyTeamCardFilter(){
   saveFilterState();
   syncTeamCardFilterControls();
 }
+function setColorThemePaletteExpanded(expanded, options = {}){
+  const palette = el('colorThemePalette');
+  const toggle = el('colorThemeToggle');
+  if(!palette || !toggle) return;
+  const open = !!expanded;
+  palette.classList.toggle('expanded', open);
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Close color theme selector' : 'Choose color theme');
+  toggle.title = open ? 'Close color theme selector' : 'Choose color theme';
+  if(open && options.focusActive){
+    requestAnimationFrame(() => palette.querySelector('.theme-swatch.active')?.focus());
+  }
+}
 function applyColorTheme(accent){
   const value = ['red','blue','purple','gray'].includes(accent) ? accent : 'blue';
   document.documentElement.setAttribute('data-accent', value);
   try{ localStorage.setItem(EWC_COLOR_THEME_KEY, value); }catch(_e){}
-  document.querySelectorAll('.theme-swatch').forEach(btn => btn.classList.toggle('active', btn.dataset.accent === value));
+  const labels = { red:'Red', blue:'Blue', purple:'Purple', gray:'Black/gray' };
+  document.querySelectorAll('.theme-swatch').forEach(btn => {
+    const active = btn.dataset.accent === value;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', String(active));
+    btn.title = `${labels[btn.dataset.accent] || btn.dataset.accent} theme${active ? ' — selected' : ''}`;
+  });
+  const palette = el('colorThemePalette');
+  if(palette) palette.dataset.selectedAccent = value;
 }
 function wireColorThemeControls(){
+  const palette = el('colorThemePalette');
+  const toggle = el('colorThemeToggle');
+  if(!palette || !toggle) return;
+
   const saved = (() => { try{return localStorage.getItem(EWC_COLOR_THEME_KEY) || 'blue';}catch(_e){return 'blue';} })();
   applyColorTheme(saved);
-  document.querySelectorAll('.theme-swatch').forEach(btn => btn.addEventListener('click', () => applyColorTheme(btn.dataset.accent)));
+  setColorThemePaletteExpanded(false);
+
+  palette.querySelectorAll('.theme-swatch').forEach(btn => btn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const isOpen = palette.classList.contains('expanded');
+    const isSelected = btn.classList.contains('active');
+    if(!isOpen && isSelected){
+      setColorThemePaletteExpanded(true, { focusActive:false });
+      return;
+    }
+    applyColorTheme(btn.dataset.accent);
+    setColorThemePaletteExpanded(false);
+    toggle.focus({ preventScroll:true });
+  }));
+
+  toggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    setColorThemePaletteExpanded(!palette.classList.contains('expanded'), { focusActive:false });
+  });
+
+  document.addEventListener('pointerdown', (event) => {
+    if(palette.classList.contains('expanded') && !palette.contains(event.target)){
+      setColorThemePaletteExpanded(false);
+    }
+  });
+
+  palette.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape' && palette.classList.contains('expanded')){
+      event.preventDefault();
+      setColorThemePaletteExpanded(false);
+      toggle.focus({ preventScroll:true });
+    }
+  });
 }
 function wireTeamCardFilterControls(){
   ['teamCardTournament','teamCardStage','teamCardDay','teamCardMatchNo'].forEach(id => el(id)?.addEventListener('change', applyTeamCardFilter));

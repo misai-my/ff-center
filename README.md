@@ -148,3 +148,17 @@ Active assets:
 ## Loadout modal
 
 The Loadout detail popup uses separate Battle Royale and Clash Squad description panels, structured cost/unlock cards, and a dedicated Team Booster grid. Six Team Booster icons are bundled under `assets/img/team-boosters/`; Helper Bot uses an inline fallback icon because no separate image was supplied.
+
+
+## Latest Match Live Feed
+
+The live feed now includes visible `mm:ss` elimination timestamps, point-based rank labels, local team logos, full tournament/stage/day/match context, live refresh status, and a Team Elimination Feed inside the **Elims** view. When another elimination follows within five seconds, only the reference event timestamp is highlighted. The five-second data refresh also detects changes in `player_stats_kill_info`, and an already-open Team Profile refreshes without changing its active tab.
+
+## Latest Match Live Feed identity fix
+
+The elimination feed now resolves player names from all available player identifiers (`account_id`, player ID, role ID, UID, and user ID aliases). Compact cards and mobile views always display the killer name, victim name, weapon image, and weapon label. When a lookup is unavailable, the feed shows an explicit shortened player ID or weapon ID instead of a blank value.
+## Interface update
+
+- `index.html` and `ewc-team-overview.html` are kept identical and load the same refreshed `styles.css` and `app.js` assets.
+- The accent color selector is collapsible. When closed, only the selected color and expand button remain visible.
+

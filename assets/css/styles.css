@@ -6267,3 +6267,60 @@ html[data-theme="light"] .live-feed-order-note{color:#667089;}
 html[data-theme="light"] .live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon-name{
   color:#1c2942!important;
 }
+
+/* ===== Collapsible accent-color selector ===== */
+.theme-palette{
+  display:inline-flex!important;
+  align-items:center;
+  flex-wrap:nowrap!important;
+  gap:5px!important;
+  width:auto!important;
+  min-width:61px;
+  padding:5px!important;
+  overflow:visible;
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.theme-palette-swatches{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+}
+.theme-palette:not(.expanded) .theme-swatch:not(.active){display:none;}
+.theme-palette .theme-swatch.active{order:-1;}
+.theme-palette-toggle{
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  color:rgba(230,245,255,.82);
+  background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:999px;
+  cursor:pointer;
+  transition:transform .16s ease,background .16s ease,border-color .16s ease;
+}
+.theme-palette-toggle:hover{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18);}
+.theme-palette-toggle svg{width:15px;height:15px;transition:transform .18s ease;}
+.theme-palette.expanded .theme-palette-toggle svg{transform:rotate(180deg);}
+.theme-palette.expanded{
+  box-shadow:0 12px 34px rgba(0,0,0,.25),0 0 0 1px color-mix(in srgb,var(--ewc-accent) 22%,transparent);
+}
+.theme-palette.expanded .theme-swatch{animation:themeSwatchReveal .16s ease both;}
+@keyframes themeSwatchReveal{from{opacity:0;transform:scale(.84)}to{opacity:1;transform:scale(1)}}
+html[data-theme="light"] .theme-palette-toggle{color:rgba(18,20,40,.72);background:rgba(10,20,40,.05);border-color:rgba(10,20,40,.11);}
+@media(max-width:980px){
+  .theme-palette{order:initial!important;width:auto!important;justify-content:flex-start!important;}
+}
+@media(max-width:620px){
+  .theme-palette{min-width:57px;padding:4px!important;gap:4px!important;}
+  .theme-swatch{width:23px;height:23px;}
+  .theme-palette-toggle{width:23px;height:23px;flex-basis:23px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .theme-palette.expanded .theme-swatch{animation:none;}
+  .theme-palette-toggle svg{transition:none;}
+}
+

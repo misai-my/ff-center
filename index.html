@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/styles.css?cache-refresh=live-feed-theme">
 </head>
 <body class="betting-experiment">
 
@@ -209,12 +209,16 @@
       </button>
       <div class="page-title"><h1>EWC Team Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
       <div class="top-actions">
-        <div class="theme-palette" id="colorThemePalette" aria-label="Color theme">
-          <span class="theme-palette-label">Color</span>
-          <button class="theme-swatch" type="button" data-accent="red" title="Red theme" aria-label="Red theme"></button>
-          <button class="theme-swatch" type="button" data-accent="blue" title="Blue theme" aria-label="Blue theme"></button>
-          <button class="theme-swatch" type="button" data-accent="purple" title="Purple theme" aria-label="Purple theme"></button>
-          <button class="theme-swatch" type="button" data-accent="gray" title="Black/gray theme" aria-label="Black/gray theme"></button>
+        <div class="theme-palette" id="colorThemePalette" aria-label="Color theme selector">
+          <div class="theme-palette-swatches" id="colorThemeOptions" role="radiogroup" aria-label="Color theme">
+            <button class="theme-swatch" type="button" data-accent="red" title="Red theme" aria-label="Red theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="blue" title="Blue theme" aria-label="Blue theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="purple" title="Purple theme" aria-label="Purple theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="gray" title="Black/gray theme" aria-label="Black/gray theme" aria-pressed="false"></button>
+          </div>
+          <button class="theme-palette-toggle" id="colorThemeToggle" type="button" aria-expanded="false" aria-controls="colorThemeOptions" title="Choose color theme" aria-label="Choose color theme">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
         <div class="userchip"><div class="avatar"></div><div class="usertext"><b id="user-info">Checking login…</b><span id="connection-status">Connection checking…</span></div></div>
         <button class="logout" id="logoutBtn">Logout</button>
@@ -518,6 +522,6 @@
 </div>
 
 <div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<script src="assets/js/app.js"></script>
+<script src="assets/js/app.js?cache-refresh=live-feed-theme"></script>
 </body>
 </html>
