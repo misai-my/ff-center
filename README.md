@@ -133,3 +133,13 @@ The Team Summary uses color-coded podium ranks, qualification-line highlighting,
 ## Team Selection premium layout
 
 The team selector uses larger logo cards, natural responsive wrapping, a high-contrast selected state, and mobile-friendly tap targets. Desktop cards keep consistent dimensions instead of compressing up to 24 teams into a single row; phones use four columns or three columns on narrow screens.
+
+
+## Premium modal system
+
+The active build now includes a unified popup layer system, keyboard focus trapping and restoration, independent sidebar/modal scroll locks, Escape-to-close for the topmost popup, accessible team tabs, mobile-safe `dvh` sizing, larger tap targets, consistent loading/empty states, and contextual Back navigation in item details.
+
+Active assets:
+
+- `assets/css/styles.css`
+- `assets/js/app.js`

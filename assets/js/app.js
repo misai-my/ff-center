@@ -260,7 +260,7 @@ function renderSimpleTable(list, cols){
       else if(typeof v === 'number') v = fmtNum(v, 0);
       else if(c.escape !== false) v = escHtml(v ?? '');
     }
-    return `<td data-key="${c.key}" class="${c.right ? 'right' : ''}">${(v == null || v === '') ? '—' : v}</td>`;
+    return `<td data-key="${c.key}" data-label="${escHtml(c.label)}" class="${c.right ? 'right' : ''}">${(v == null || v === '') ? '—' : v}</td>`;
   }).join('')}</tr>`).join('')}</tbody>`;
   return `<div class="table-wrap"><table>${head}${body}</table></div>`;
 }
@@ -432,8 +432,8 @@ function setToggleIcon(){
     sbTogglePath.setAttribute('stroke-linejoin', 'round');
   }
 }
-function openMobileSidebar(){ sidebar?.classList.add('open'); sbOverlay?.classList.add('show'); sbOverlay?.setAttribute('aria-hidden','false'); document.body.classList.add('sb-open'); setToggleIcon(); }
-function closeMobileSidebar(){ sidebar?.classList.remove('open'); sbOverlay?.classList.remove('show'); sbOverlay?.setAttribute('aria-hidden','true'); document.body.classList.remove('sb-open'); setToggleIcon(); }
+function openMobileSidebar(){ sidebar?.classList.add('open'); sbOverlay?.classList.add('show'); sbOverlay?.setAttribute('aria-hidden','false'); document.body.classList.add('sidebar-open'); syncBodyInteractionLocks?.(); setToggleIcon(); }
+function closeMobileSidebar(){ sidebar?.classList.remove('open'); sbOverlay?.classList.remove('show'); sbOverlay?.setAttribute('aria-hidden','true'); document.body.classList.remove('sidebar-open'); syncBodyInteractionLocks?.(); setToggleIcon(); }
 function toggleSidebar(){
   if(!sidebar) return;
   if(isMobile()){
@@ -449,15 +449,154 @@ sbToggleBtn?.addEventListener('click', toggleSidebar);
 sbClose?.addEventListener('click', closeMobileSidebar);
 sbOverlay?.addEventListener('click', closeMobileSidebar);
 window.addEventListener('resize', () => { if(!isMobile()) closeMobileSidebar(); setToggleIcon(); });
-document.addEventListener('keydown', e => {
-  if(e.key !== 'Escape') return;
-  if(document.getElementById('liveFeedTeamGlobalModal')?.classList.contains('show')){ closeLiveFeedTeamPopup(e, document.getElementById('liveFeedTeamGlobalModal')); return; }
-  if(typeof isItemDetailOpen === 'function' && isItemDetailOpen()){ closeItemDetailPopup(); return; }
-  if(typeof isResourceModalOpen === 'function' && isResourceModalOpen()){ closeResourcePopup(); return; }
-  if(typeof isTeamModalOpen === 'function' && isTeamModalOpen()){ closeTeamModal(); return; }
-  closeMobileSidebar();
-});
 setToggleIcon();
+
+/* ===== Managed modal system: focus, stacking, scroll lock, keyboard control ===== */
+const EWC_MODAL_STACK = [];
+const EWC_MODAL_TRIGGERS = new WeakMap();
+const EWC_FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"]),[contenteditable="true"]';
+
+function ewcVisibleModal(modal){ return !!modal && modal.classList.contains('show') && modal.getAttribute('aria-hidden') !== 'true'; }
+function ewcOpenModalElements(){
+  return ['teamModal','liveFeedTeamGlobalModal','resourceModal','itemDetailModal']
+    .map(id => document.getElementById(id))
+    .filter(ewcVisibleModal);
+}
+function syncBodyInteractionLocks(){
+  const modalOpen = ewcOpenModalElements().length > 0;
+  const sidebarOpen = !!sidebar?.classList.contains('open') && isMobile();
+  if(modalOpen && !document.body.classList.contains('modal-open')){
+    const scrollbarWidth = Math.max(0, window.innerWidth - document.documentElement.clientWidth);
+    document.documentElement.style.setProperty('--ewc-scrollbar-compensation', `${scrollbarWidth}px`);
+  }
+  document.body.classList.toggle('modal-open', modalOpen);
+  document.body.classList.toggle('sidebar-open', sidebarOpen);
+  document.body.classList.toggle('sb-open', modalOpen || sidebarOpen); // compatibility with older selectors
+  if(!modalOpen) document.documentElement.style.removeProperty('--ewc-scrollbar-compensation');
+}
+function syncModalInertState(){
+  const open = ewcOpenModalElements();
+  const top = ewcTopModal();
+  open.forEach(modal => {
+    if(modal === top) modal.removeAttribute('inert');
+    else modal.setAttribute('inert','');
+  });
+}
+function ewcAnnounce(message){
+  const region = document.getElementById('modalLiveRegion');
+  if(!region || !message) return;
+  region.textContent = '';
+  requestAnimationFrame(() => { region.textContent = message; });
+}
+function ewcModalPanel(modal){
+  return modal?.querySelector('.team-modal-card,.resource-modal-card,.item-detail-card,.live-feed-popup-panel,[role="dialog"]') || modal;
+}
+function ewcRememberTrigger(modal){
+  const active = document.activeElement;
+  if(active && active !== document.body && active instanceof HTMLElement) EWC_MODAL_TRIGGERS.set(modal, active);
+}
+function ewcPushModal(modal){
+  const old = EWC_MODAL_STACK.indexOf(modal);
+  if(old >= 0) EWC_MODAL_STACK.splice(old, 1);
+  EWC_MODAL_STACK.push(modal);
+}
+function ewcTopModal(){
+  for(let i=EWC_MODAL_STACK.length-1;i>=0;i--){
+    const modal = EWC_MODAL_STACK[i];
+    if(ewcVisibleModal(modal)) return modal;
+    EWC_MODAL_STACK.splice(i,1);
+  }
+  const fallbacks = ['itemDetailModal','resourceModal','liveFeedTeamGlobalModal','teamModal'];
+  return fallbacks.map(id=>document.getElementById(id)).find(ewcVisibleModal) || null;
+}
+function openManagedModal(modal, options={}){
+  if(!modal) return;
+  const wasOpen = ewcVisibleModal(modal);
+  if(!wasOpen) ewcRememberTrigger(modal);
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+  modal.removeAttribute('inert');
+  ewcPushModal(modal);
+  syncBodyInteractionLocks();
+  syncModalInertState();
+  if(!wasOpen || options.refocus){
+    const focusTarget = options.initialFocus
+      ? modal.querySelector(options.initialFocus)
+      : ewcModalPanel(modal);
+    requestAnimationFrame(() => {
+      const target = focusTarget || ewcModalPanel(modal);
+      if(target instanceof HTMLElement){
+        if(!target.matches(EWC_FOCUSABLE) && !target.hasAttribute('tabindex')) target.setAttribute('tabindex','-1');
+        target.focus({preventScroll:true});
+      }
+    });
+  }
+  if(options.announce && !wasOpen) ewcAnnounce(options.announce);
+}
+function closeManagedModal(modal, options={}){
+  if(!modal) return;
+  modal.classList.remove('show','stacked');
+  modal.setAttribute('aria-hidden','true');
+  modal.setAttribute('inert','');
+  const idx = EWC_MODAL_STACK.indexOf(modal);
+  if(idx >= 0) EWC_MODAL_STACK.splice(idx,1);
+  syncBodyInteractionLocks();
+  syncModalInertState();
+  if(options.restoreFocus !== false){
+    const trigger = EWC_MODAL_TRIGGERS.get(modal);
+    EWC_MODAL_TRIGGERS.delete(modal);
+    requestAnimationFrame(() => {
+      if(trigger?.isConnected && typeof trigger.focus === 'function') trigger.focus({preventScroll:true});
+      else {
+        const next = ewcTopModal();
+        const nextPanel = ewcModalPanel(next);
+        nextPanel?.focus?.({preventScroll:true});
+      }
+    });
+  }
+}
+function ewcFocusableWithin(modal){
+  return [...(ewcModalPanel(modal)?.querySelectorAll(EWC_FOCUSABLE) || [])]
+    .filter(node => !node.hasAttribute('hidden') && node.getAttribute('aria-hidden') !== 'true' && node.offsetParent !== null);
+}
+function closeTopManagedModal(){
+  const modal = ewcTopModal();
+  if(!modal){ closeMobileSidebar(); return; }
+  if(modal.id === 'itemDetailModal') closeItemDetailPopup();
+  else if(modal.id === 'resourceModal') closeResourcePopup();
+  else if(modal.id === 'liveFeedTeamGlobalModal') closeLiveFeedTeamPopup(null, modal);
+  else if(modal.id === 'teamModal') closeTeamModal();
+}
+
+document.addEventListener('keydown', event => {
+  const modal = ewcTopModal();
+  if(event.key === 'Escape'){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    closeTopManagedModal();
+    return;
+  }
+  if(!modal) return;
+  if(event.key === 'Tab'){
+    const focusables = ewcFocusableWithin(modal);
+    if(!focusables.length){ event.preventDefault(); ewcModalPanel(modal)?.focus?.(); return; }
+    const first = focusables[0], last = focusables[focusables.length-1];
+    if(event.shiftKey && (document.activeElement === first || !modal.contains(document.activeElement))){ event.preventDefault(); last.focus(); }
+    else if(!event.shiftKey && document.activeElement === last){ event.preventDefault(); first.focus(); }
+  }
+  if(modal.id === 'teamModal' && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key) && document.activeElement?.matches?.('.team-tab')){
+    const tabs = [...modal.querySelectorAll('.team-tab')];
+    const current = tabs.indexOf(document.activeElement);
+    let next = current;
+    if(event.key === 'ArrowRight') next = (current + 1) % tabs.length;
+    if(event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
+    if(event.key === 'Home') next = 0;
+    if(event.key === 'End') next = tabs.length - 1;
+    event.preventDefault();
+    tabs[next]?.focus();
+    tabs[next]?.click();
+  }
+}, true);
 
 function setActiveNavItem(){
   const nav = document.getElementById('nav');
@@ -2583,14 +2722,12 @@ function renderLiveFeedGlobalModal(){
   const team = (window.LIVE_FEED_TEAMS_CACHE || []).find(t => norm(t.team).toUpperCase() === LIVE_FEED_ACTIVE_TEAM_CODE);
   const modal = ensureLiveFeedTeamGlobalModal();
   if(!team){
-    modal.classList.remove('show');
-    modal.setAttribute('aria-hidden','true');
+    closeManagedModal(modal);
     return false;
   }
+  const hadModalFocus = modal.contains(document.activeElement);
   modal.innerHTML = liveFeedTeamPopupPanelHtml(team);
-  modal.classList.add('show');
-  modal.setAttribute('aria-hidden','false');
-  document.body.classList.add('sb-open');
+  openManagedModal(modal, { initialFocus:'.live-feed-popup-close', refocus:hadModalFocus, announce:`${team.team} live feed preview opened` });
   return true;
 }
 function updateLiveFeedGlobalModalInPlace(){
@@ -2617,7 +2754,7 @@ function closeLiveFeedTeamPopup(event, button){
     modal.setAttribute('aria-hidden','true');
     modal.innerHTML = '';
   }
-  if(!isTeamModalOpen?.() && !isResourceModalOpen?.() && !isItemDetailOpen?.()) document.body.classList.remove('sb-open');
+  closeManagedModal(modal);
 }
 function liveFeedCardHtml(t){
   return `
@@ -2899,12 +3036,24 @@ function applyQualificationRowStyles(rows, cutoff){
   const byTeam = new Map(rows.map(row => [norm(row.team).toUpperCase(), row]));
 
   table.querySelectorAll('tbody tr').forEach(tr => {
-    tr.classList.remove('below-quali-cutoff', 'at-quali-cutoff');
+    tr.classList.remove('below-quali-cutoff', 'at-quali-cutoff', 'inside-quali-cutoff', 'rank-tier-1', 'rank-tier-2', 'rank-tier-3', 'rank-tier-top', 'rank-tier-field');
     const teamCell = tr.querySelector('td[data-key="team"]');
     const team = norm(teamCell?.querySelector('.team-name-move')?.dataset?.teamCode || teamCell?.textContent).toUpperCase();
     const row = byTeam.get(team);
-    if(!row || !cutoff) return;
+    if(!row) return;
+
+    const displayRank = Math.max(1, Number(row.display_rank || row.standing_rank || 1));
+    tr.dataset.rank = String(displayRank);
+    tr.dataset.standingRank = String(row.standing_rank || displayRank);
+    if(displayRank === 1) tr.classList.add('rank-tier-1');
+    else if(displayRank === 2) tr.classList.add('rank-tier-2');
+    else if(displayRank === 3) tr.classList.add('rank-tier-3');
+    else if(displayRank <= Math.max(6, cutoff || 0)) tr.classList.add('rank-tier-top');
+    else tr.classList.add('rank-tier-field');
+
+    if(!cutoff) return;
     if(row.below_qualification_cutoff) tr.classList.add('below-quali-cutoff');
+    else tr.classList.add('inside-quali-cutoff');
     if(row.at_qualification_cutoff) tr.classList.add('at-quali-cutoff');
   });
 }
@@ -2924,7 +3073,20 @@ function renderOverall(options = {}){
   const tm = teamMatchAgg(FILTERED);
   const rows = buildOverallRowsFromTeamMatches(tm);
   const qualificationCutoff = syncQualificationCutoffOptions(rows.length);
-  applyQualificationMetrics(rows, qualificationCutoff);
+  const qualificationInfo = applyQualificationMetrics(rows, qualificationCutoff);
+
+  const qualiHelp = el('overallQualiHelp');
+  if(qualiHelp){
+    if(qualificationCutoff && qualificationInfo.cutoffRow){
+      const firstOutside = qualificationInfo.standings[qualificationCutoff] || null;
+      const chaseText = firstOutside
+        ? ` • ${firstOutside.team} needs +${fmtNum(firstOutside.quali_pts || 0)}`
+        : ' • All filtered teams are inside the cutoff';
+      qualiHelp.innerHTML = `<span class="quali-status-dot"></span><strong>Top ${qualificationCutoff}</strong> line: ${fmtNum(qualificationInfo.cutoffScore)} pts${escHtml(chaseText)}`;
+    }else{
+      qualiHelp.innerHTML = '<span class="quali-status-dot off"></span>Select a Top position to activate the qualification line.';
+    }
+  }
 
   const sortKey = el('overallSortKey').value || 'total_score';
   const dir = el('overallSortDir').dataset.dir || 'desc';
@@ -2967,20 +3129,20 @@ function renderOverall(options = {}){
   });
 
   const overallHtml = renderSimpleTable(rows, [
-    {label:'#', key:'display_rank', right:true, html:(r)=>`<span class="rank-no">${escHtml(r.display_rank)}</span>`},
+    {label:'Rank', key:'display_rank', right:true, html:(r)=>`<span class="premium-rank-badge" aria-label="Rank ${escHtml(r.display_rank)}"><span>${escHtml(r.display_rank)}</span></span>`},
     {
       label:'Team',
       key:'team',
       escape:false,
-      html:(r)=>`<div class="team-name-move" data-team-code="${escHtml(r.team)}"><span class="team-name-text">${escHtml(r.team)}</span>${rankMovementHtml(r)}</div>`
+      html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>Team profile</small></span>${rankMovementHtml(r)}</div>`
     },
     {label:'MP', key:'matches', right:true},
     {label:'BYH', key:'booyahs', right:true},
     {label:'ELM', key:'elims', right:true},
     {label:'PLC', key:'ranking_score', right:true},
-    {label:'TOT', key:'total_score', right:true},
-    {label:'1UP', key:'one_up', right:true, html:(r)=>r.one_up == null ? '—' : fmtNum(r.one_up)},
-    {label:'Quali Pts', key:'quali_pts', right:true, html:(r)=>r.quali_pts == null ? '—' : fmtNum(r.quali_pts)},
+    {label:'TOT', key:'total_score', right:true, html:(r)=>`<strong class="premium-total-score">${fmtNum(r.total_score)}</strong>`},
+    {label:'1UP', key:'one_up', right:true, html:(r)=>r.one_up == null ? '<span class="gap-pill leader">LEAD</span>' : `<span class="gap-pill">${fmtNum(r.one_up)}</span>`},
+    {label:'Quali Pts', key:'quali_pts', right:true, html:(r)=>r.quali_pts == null ? '<span class="quali-pill off">—</span>' : (Number(r.quali_pts) === 0 ? '<span class="quali-pill safe"><b>0</b><small>SAFE</small></span>' : `<span class="quali-pill needed"><b>+${fmtNum(r.quali_pts)}</b><small>NEEDED</small></span>`)},
     {label:'DMG', key:'damage', right:true},
     {label:'ELM/M', key:'elims_pm', right:true, format:'1d'},
     {label:'PLC/M', key:'ranking_score_pm', right:true, format:'1d'},
@@ -3368,7 +3530,7 @@ function renderTeamGrid(filter='', options = {}){
 
   const html = teams.map(t=>{
     const profile = getTeamProfile(t);
-    return `<div class="team-tile" data-team="${escHtml(t)}">${teamLogoHtml(t, profile, 'team-tile-logo')}<div class="team-code" title="${escHtml(t)}">${escHtml(t)}</div></div>`;
+    return `<button type="button" class="team-tile" data-team="${escHtml(t)}" aria-label="Open ${escHtml(t)} team profile" aria-pressed="${CURRENT_TEAM === t ? 'true' : 'false'}">${teamLogoHtml(t, profile, 'team-tile-logo')}<span class="team-code" title="${escHtml(t)}">${escHtml(t)}</span></button>`;
   }).join('');
 
   setStableHTML(grid, html, sig, !!options.silentRefresh);
@@ -3378,7 +3540,7 @@ function renderTeamGrid(filter='', options = {}){
 }
 
 
-function highlightActiveTile(){ el('teamGrid')?.querySelectorAll('.team-tile').forEach(div=>div.classList.toggle('active', !!CURRENT_TEAM && CURRENT_TEAM === div.getAttribute('data-team'))); }
+function highlightActiveTile(){ el('teamGrid')?.querySelectorAll('.team-tile').forEach(tile=>{ const active=!!CURRENT_TEAM && CURRENT_TEAM===tile.getAttribute('data-team'); tile.classList.toggle('active',active); tile.setAttribute('aria-pressed',active?'true':'false'); }); }
 function clearTeam(){
   CURRENT_TEAM = null;
   LAST_SELECTED_TEAM_ROWS = [];
@@ -3388,6 +3550,7 @@ function clearTeam(){
   if(el('modalTeamSelect')) el('modalTeamSelect').value = '';
   setText('modalTeamMeta','Choose a team to open details.');
   setText('teamTitle','Team Overview');
+  if(el('modalTeamLogo')) el('modalTeamLogo').innerHTML = '<span>—</span>';
   setText('playersHint','');
   setText('aiInsightStatus','Rule-based insights loaded.');
   el('teamProfileHero').innerHTML='Select a team.';
@@ -3825,9 +3988,8 @@ function openChartMatchDetail(index){
     </div>
     <div class="item-detail-desc-block"><b>PLAYERS</b><div class="match-detail-player-grid">${detail.players?.length ? detail.players.map(renderChartPlayerCard).join('') : '<div class="muted">No player rows for this match.</div>'}</div></div>
   `;
-  el('itemDetailModal')?.classList.add('show');
-  el('itemDetailModal')?.setAttribute('aria-hidden','false');
-  document.body.classList.add('sb-open');
+  configureItemDetailBack('team', 'team');
+  openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detail.sourceLabel} match detail opened` });
 }
 function renderTeamProfileHero(teamCode, teamRows){
   const profile = getTeamProfile(teamCode);
@@ -4469,21 +4631,27 @@ function isTeamModalOpen(){ return el('teamModal')?.classList.contains('show'); 
 function openTeamModal(){
   const modal = el('teamModal');
   if(!modal) return;
-  modal.classList.add('show');
-  modal.setAttribute('aria-hidden','false');
-  document.body.classList.add('sb-open');
   setTeamTab('overview');
+  openManagedModal(modal, { initialFocus:'#teamModalClose', announce:`${CURRENT_TEAM || 'Team'} profile opened` });
 }
 function closeTeamModal(){
   const modal = el('teamModal');
   if(!modal) return;
-  modal.classList.remove('show');
-  modal.setAttribute('aria-hidden','true');
-  document.body.classList.remove('sb-open');
+  closeManagedModal(modal);
 }
 function setTeamTab(tab){
-  document.querySelectorAll('.team-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tab));
-  document.querySelectorAll('.team-tab-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.panel === tab));
+  document.querySelectorAll('.team-tab').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    btn.setAttribute('tabindex', active ? '0' : '-1');
+  });
+  document.querySelectorAll('.team-tab-panel').forEach(panel => {
+    const active = panel.dataset.panel === tab;
+    panel.classList.toggle('active', active);
+    panel.hidden = !active;
+    panel.setAttribute('aria-hidden', active ? 'false' : 'true');
+  });
 }
 function wireTeamModal(){
   el('teamModalClose')?.addEventListener('click', closeTeamModal);
@@ -4573,6 +4741,7 @@ function selectTeam(team, keepCurrentModalState=false){
   }
   setText('teamTitle', `Team Overview — ${teamCode}`);
   setText('modalTeamMeta', scopeLine());
+  if(el('modalTeamLogo')) el('modalTeamLogo').innerHTML = teamLogoHtml(teamCode, getTeamProfile(teamCode), 'modal-team-logo-inner');
   setText('playersHint', teamRows.length ? `• ${teamRows.length} rows` : '• no rows');
   setText('aiInsightStatus','Rule-based insights loaded.');
 
@@ -4852,7 +5021,7 @@ function renderResourceGrid(query=''){
   const grid = el('resourceGrid');
   if(!grid) return;
   if(!data.length){
-    grid.innerHTML = `<div class="muted" style="grid-column:1/-1">No ${escHtml(resourceKindSingular(kind).toLowerCase())} items found.</div>`;
+    grid.innerHTML = `<div class="modal-state modal-state-empty"><span aria-hidden="true">⌕</span><b>No ${escHtml(resourceKindSingular(kind).toLowerCase())} items found</b><small>Try another search term or reference category.</small></div>`;
     return;
   }
   grid.innerHTML = data.map((item, index) => `
@@ -4923,27 +5092,25 @@ function openResourcePopup(kind, pickTarget=null){
   setText('resourceModalSub', pickTarget ? 'Choose an item for the Mini Preset Builder.' : sub);
   const search = el('resourceSearch');
   if(search) search.value = '';
-  el('resourceModal')?.classList.toggle('stacked', isTeamModalOpen());
+  const modal = el('resourceModal');
+  modal?.classList.toggle('stacked', isTeamModalOpen());
   el('teamModal')?.classList.toggle('resource-stacked', isTeamModalOpen());
-  el('resourceModal')?.classList.add('show');
-  el('resourceModal')?.setAttribute('aria-hidden','false');
-  document.body.classList.add('sb-open');
+  const grid = el('resourceGrid');
+  if(grid) grid.innerHTML = '<div class="modal-state modal-state-loading"><span class="modal-spinner" aria-hidden="true"></span><b>Loading reference data…</b></div>';
+  openManagedModal(modal, { initialFocus:'#resourceSearch', announce:`${title} opened` });
   updateResourceNavButtons();
-  renderResourceGrid('');
-  setTimeout(() => search?.focus?.(), 50);
+  requestAnimationFrame(() => renderResourceGrid(''));
 }
-function closeResourcePopup(){
-  el('resourceModal')?.classList.remove('show','stacked');
-  el('resourceModal')?.setAttribute('aria-hidden','true');
+function closeResourcePopup(options={}){
+  const modal = el('resourceModal');
   RESOURCE_PICK_TARGET = null;
   el('teamModal')?.classList.remove('resource-stacked');
-  if(!isTeamModalOpen() && !isItemDetailOpen() && !document.querySelector('.live-feed-card.popup-open')) document.body.classList.remove('sb-open');
+  closeManagedModal(modal, options);
 }
-function closeItemDetailPopup(){
-  el('itemDetailModal')?.classList.remove('show');
-  el('itemDetailModal')?.setAttribute('aria-hidden','true');
-  el('itemDetailModal')?.querySelector('.item-detail-card')?.classList.remove('map-view');
-  if(!isTeamModalOpen() && !isResourceModalOpen()) document.body.classList.remove('sb-open');
+function closeItemDetailPopup(options={}){
+  const modal = el('itemDetailModal');
+  modal?.querySelector('.item-detail-card')?.classList.remove('map-view');
+  closeManagedModal(modal, options);
 }
 function itemDetailImageClass(kind){ return kind === 'weapons' || kind === 'weapon' ? 'weapon' : ''; }
 function formatLoadoutDescriptionBlocks(item){
@@ -4975,34 +5142,31 @@ function costText(value){
 
 function elevateItemDetailPopupLayer(){
   const modal = el('itemDetailModal');
-  if(!modal) return;
+  if(modal && modal.parentElement !== document.body) document.body.appendChild(modal);
+}
 
-  // Move the detail modal to the very end of <body> so it is not trapped
-  // behind the Live Feed global popup or any transformed parent stacking context.
-  if(modal.parentElement !== document.body || modal !== document.body.lastElementChild){
-    document.body.appendChild(modal);
-  }
-
-  modal.style.position = 'fixed';
-  modal.style.inset = '0';
-  modal.style.zIndex = '2147483000';
-
-  const backdrop = modal.querySelector('.item-detail-backdrop');
-  if(backdrop){
-    backdrop.style.position = 'fixed';
-    backdrop.style.inset = '0';
-    backdrop.style.zIndex = '2147483001';
-  }
-
-  const card = modal.querySelector('.item-detail-card');
-  if(card){
-    card.style.position = 'relative';
-    card.style.zIndex = '2147483002';
+let ITEM_DETAIL_CONTEXT = 'standalone';
+function configureItemDetailBack(kind, context='standalone'){
+  ITEM_DETAIL_CONTEXT = context || 'standalone';
+  const btn = el('itemDetailBack');
+  if(!btn) return;
+  if(context === 'resource' && isResourceModalOpen()){
+    const title = (RESOURCE_TITLES[kind] || [resourceKindSingular(kind)])[0];
+    btn.hidden = false;
+    btn.textContent = `← Back to ${title}`;
+  }else if(context === 'team' || isTeamModalOpen()){
+    btn.hidden = false;
+    btn.textContent = '← Back to Team Profile';
+  }else{
+    btn.hidden = true;
+    btn.textContent = '← Back';
   }
 }
+function handleItemDetailBack(){ closeItemDetailPopup(); }
 
 function openItemDetailPopup(item, kind, context='resource'){
   elevateItemDetailPopupLayer();
+  configureItemDetailBack(kind, context);
   if(!item) return;
   const raw = item.raw || item;
   const singular = resourceKindSingular(kind);
@@ -5028,9 +5192,7 @@ function openItemDetailPopup(item, kind, context='resource'){
         </div>
       </div>
     `;
-    el('itemDetailModal')?.classList.add('show');
-    el('itemDetailModal')?.setAttribute('aria-hidden','false');
-    document.body.classList.add('sb-open');
+    openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detailTitle} details opened` });
     return;
   }
 
@@ -5067,14 +5229,13 @@ function openItemDetailPopup(item, kind, context='resource'){
     </div>
     <div class="item-detail-extra">${metaPairs.map(([k,v]) => `<div class="item-detail-meta"><span>${escHtml(k)}</span><b title="${escHtml(v)}">${escHtml(v)}</b></div>`).join('')}</div>
   `;
-  el('itemDetailModal')?.classList.add('show');
-  el('itemDetailModal')?.setAttribute('aria-hidden','false');
-  document.body.classList.add('sb-open');
+  openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detailTitle} details opened` });
 }
 function pickResourceItem(item){
   if(!RESOURCE_PICK_TARGET || !item) return;
   applyPresetPick(RESOURCE_PICK_TARGET.kind, RESOURCE_PICK_TARGET.index, item);
-  closeResourcePopup();
+  closeResourcePopup({restoreFocus:false});
+  document.activeElement?.blur?.();
   openItemDetailPopup(item, RESOURCE_MODAL_KIND, 'preset');
 }
 
@@ -5214,6 +5375,7 @@ function wireResourceTools(){
   el('resourceBackBtn')?.addEventListener('click', () => switchResourcePopup(el('resourceBackBtn')?.dataset.kind || ''));
   el('resourceNextBtn')?.addEventListener('click', () => switchResourcePopup(el('resourceNextBtn')?.dataset.kind || ''));
   el('resourceSearch')?.addEventListener('input', e => renderResourceGrid(e.target.value || ''));
+  el('itemDetailBack')?.addEventListener('click', handleItemDetailBack);
   el('itemDetailClose')?.addEventListener('click', closeItemDetailPopup);
   el('itemDetailBackdrop')?.addEventListener('click', closeItemDetailPopup);
   el('presetResetBtn')?.addEventListener('click', resetMiniPreset);

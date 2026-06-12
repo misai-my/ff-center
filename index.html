@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles-team-selection-premium-v4.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body class="betting-experiment">
 
@@ -354,12 +354,15 @@
 
 <div class="team-modal" id="teamModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="teamTitle">
   <div class="team-modal-backdrop" id="teamModalBackdrop"></div>
-  <section class="team-modal-card" role="document">
-    <div class="team-modal-head">
-      <div>
-        <div class="eyebrow">Selected Team</div>
-        <h2 id="teamTitle">Team Overview</h2>
-        <div class="muted" id="modalTeamMeta">Choose a team to open details.</div>
+  <section class="team-modal-card" id="teamModalCard" role="document" tabindex="-1">
+    <div class="team-modal-head modal-premium-head">
+      <div class="modal-team-identity">
+        <div id="modalTeamLogo" class="modal-team-logo" aria-hidden="true"><span>—</span></div>
+        <div class="modal-heading-copy">
+          <div class="eyebrow">Selected Team</div>
+          <h2 id="teamTitle">Team Overview</h2>
+          <div class="muted" id="modalTeamMeta">Choose a team to open details.</div>
+        </div>
       </div>
       <div class="team-modal-actions">
         <label class="modal-team-picker" title="Switch selected team">
@@ -375,10 +378,10 @@
     </div>
 
     <div class="team-modal-tabs" role="tablist" aria-label="Team profile sections">
-      <button class="team-tab active" type="button" data-tab="overview">Overview</button>
-      <button class="team-tab" type="button" data-tab="players">Player</button>
-      <button class="team-tab" type="button" data-tab="skills">Skill + Loadout</button>
-      <button class="team-tab" type="button" data-tab="matches">Match Log</button>
+      <button class="team-tab active" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" tabindex="0" type="button" data-tab="overview">Overview</button>
+      <button class="team-tab" id="tab-players" role="tab" aria-selected="false" aria-controls="panel-players" tabindex="-1" type="button" data-tab="players">Player</button>
+      <button class="team-tab" id="tab-skills" role="tab" aria-selected="false" aria-controls="panel-skills" tabindex="-1" type="button" data-tab="skills">Skill + Loadout</button>
+      <button class="team-tab" id="tab-matches" role="tab" aria-selected="false" aria-controls="panel-matches" tabindex="-1" type="button" data-tab="matches">Match Log</button>
     </div>
 
     <div class="team-resource-strip" aria-label="Open reference popup over team profile">
@@ -400,7 +403,7 @@
     </div>
 
     <div class="team-modal-body">
-      <section class="team-tab-panel active" id="panel-overview" data-panel="overview">
+      <section class="team-tab-panel active" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0" data-panel="overview">
         <div id="teamProfileHero">Select a team.</div>
         <div class="card" style="margin-top:12px">
           <div class="insight-toolbar">
@@ -419,12 +422,12 @@
         <div class="card" style="margin-top:12px"><h3>Team Story</h3><div id="teamStory" class="small muted">—</div></div>
       </section>
 
-      <section class="team-tab-panel" id="panel-players" data-panel="players">
+      <section class="team-tab-panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players" tabindex="0" hidden data-panel="players">
         <div id="rosterCards" class="roster-grid">Select a team…</div>
         <div class="card"><h3>Players — Stats + Loadout <span class="muted" id="playersHint"></span></h3><div id="tblPlayers">Select a team…</div></div>
       </section>
 
-      <section class="team-tab-panel" id="panel-skills" data-panel="skills">
+      <section class="team-tab-panel" id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" tabindex="0" hidden data-panel="skills">
         <div class="skills-usage-grid">
           <div class="card"><h3>Team Active Skill Usage</h3><div id="tblActive">—</div></div>
           <div class="card"><h3>Team Passive Skill Usage</h3><div id="tblPassive">—</div></div>
@@ -432,7 +435,7 @@
         </div>
       </section>
 
-      <section class="team-tab-panel" id="panel-matches" data-panel="matches">
+      <section class="team-tab-panel" id="panel-matches" role="tabpanel" aria-labelledby="tab-matches" tabindex="0" hidden data-panel="matches">
         <div class="card"><h3>Match Log</h3><div id="teamMatchLog">—</div></div>
       </section>
 
@@ -470,8 +473,8 @@
 
 <div class="resource-modal" id="resourceModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="resourceModalTitle">
   <div class="resource-modal-backdrop" id="resourceModalBackdrop"></div>
-  <section class="resource-modal-card" role="document">
-    <div class="resource-modal-top">
+  <section class="resource-modal-card" id="resourceModalCard" role="document" tabindex="-1">
+    <div class="resource-modal-top modal-premium-head">
       <div style="min-width:0">
         <h3 id="resourceModalTitle">Resources</h3>
         <p id="resourceModalSub">Browse Free Fire reference data.</p>
@@ -482,7 +485,7 @@
     </div>
     <div class="resource-modal-body">
       <div class="resource-modal-controls">
-        <input class="resource-search" id="resourceSearch" type="search" placeholder="Search…" />
+        <input class="resource-search" id="resourceSearch" type="search" placeholder="Search…" aria-label="Search reference items" />
         <span class="chip" id="resourceCount">0 items</span>
       </div>
       <div class="resource-modal-nav" id="resourceModalNav" aria-label="Resource popup navigation">
@@ -490,27 +493,31 @@
         <div class="resource-modal-step" id="resourceStepLabel">Reference<b>Character</b></div>
         <button class="btn brand resource-nav-btn" id="resourceNextBtn" type="button">Next →</button>
       </div>
-      <div class="resource-grid" id="resourceGrid"></div>
+      <div class="resource-grid" id="resourceGrid" aria-live="polite"><div class="modal-state modal-state-loading"><span class="modal-spinner" aria-hidden="true"></span><b>Loading reference data…</b></div></div>
     </div>
   </section>
 </div>
 
 <div class="item-detail-modal" id="itemDetailModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="itemDetailTitle">
   <div class="item-detail-backdrop" id="itemDetailBackdrop"></div>
-  <section class="item-detail-card" role="document">
-    <div class="item-detail-top">
-      <div style="min-width:0">
+  <section class="item-detail-card" id="itemDetailCard" role="document" tabindex="-1">
+    <div class="item-detail-top modal-premium-head">
+      <div class="item-detail-heading" style="min-width:0">
         <h3 id="itemDetailTitle">Item Details</h3>
         <p id="itemDetailSub">Free Fire reference item</p>
       </div>
-      <button class="icon-btn" id="itemDetailClose" aria-label="Close item details" title="Close" type="button">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+      <div class="modal-head-actions">
+        <button class="btn secondary modal-back-btn" id="itemDetailBack" type="button" hidden>← Back</button>
+        <button class="icon-btn" id="itemDetailClose" aria-label="Close item details" title="Close" type="button">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="item-detail-body" id="itemDetailBody"></div>
+    <div class="item-detail-body" id="itemDetailBody" aria-live="polite"></div>
   </section>
 </div>
 
-<script src="assets/js/app-team-selection-premium-v4.js"></script>
+<div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<script src="assets/js/app.js"></script>
 </body>
 </html>
