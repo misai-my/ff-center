@@ -1,6 +1,6 @@
-# EWC Team Command Center
+# Free Fire Data Center
 
-Standalone repository build of the EWC Team Command Center. The dashboard UI and application behavior are preserved, while the reference JSON files and available image assets are bundled in this repository.
+Standalone repository build of the Free Fire Data Center. The dashboard UI and application behavior are preserved, while the reference JSON files and available image assets are bundled in this repository.
 
 ## Repository contents
 
@@ -214,3 +214,8 @@ Progression remains marked **PROVISIONAL** until the configured match count is r
 ## Login and logout
 
 The dashboard now includes an in-page Supabase email/password sign-in dialog. When a session is missing or the user logs out, the dialog opens automatically and the topbar action changes from **Logout** to **Login**.
+
+
+## Animated hero cover
+
+The homepage hero uses the bundled Kelly, Tatsuya, Orion, and Hayato transparent character assets. The character layers fly into position on first load and then use restrained floating motion. Reduced-motion preferences disable the animation automatically.
