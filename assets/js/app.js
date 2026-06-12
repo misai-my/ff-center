@@ -567,10 +567,7 @@ function closeTopManagedModal(){
   if(modal.id === 'itemDetailModal'){
     const mapCard = modal.querySelector('.item-detail-card.map-fullscreen');
     if(mapCard){
-      mapCard.classList.remove('map-fullscreen');
-      const expandBtn = mapCard.querySelector('[data-map-action="fullscreen"]');
-      expandBtn?.setAttribute('aria-pressed','false');
-      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      setMapViewerExpanded(mapCard, false);
       return;
     }
     closeItemDetailPopup();
@@ -5362,8 +5359,28 @@ function destroyMapDetailViewer(){
 function closeItemDetailPopup(options={}){
   destroyMapDetailViewer();
   const modal = el('itemDetailModal');
-  modal?.querySelector('.item-detail-card')?.classList.remove('map-view', 'loadout-view', 'map-fullscreen');
+  const detailCard = modal?.querySelector('.item-detail-card');
+  setMapViewerExpanded(detailCard, false);
+  detailCard?.classList.remove('map-view', 'loadout-view');
   closeManagedModal(modal, options);
+}
+
+function setMapViewerExpanded(card, expanded){
+  if(!card) return false;
+  const isExpanded = Boolean(expanded);
+  card.classList.toggle('map-fullscreen', isExpanded);
+  const btn = card.querySelector('[data-map-action="fullscreen"]');
+  if(btn){
+    btn.setAttribute('aria-pressed', isExpanded ? 'true' : 'false');
+    btn.setAttribute('aria-label', isExpanded ? 'Exit expanded map viewer' : 'Expand map viewer');
+    btn.title = isExpanded ? 'Exit expanded map viewer' : 'Expand map viewer';
+    const icon = btn.querySelector('[data-map-expand-icon]');
+    const label = btn.querySelector('[data-map-expand-label]');
+    if(icon) icon.textContent = isExpanded ? '⤢' : '⛶';
+    if(label) label.textContent = isExpanded ? 'Exit Expand' : 'Expand';
+  }
+  requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+  return isExpanded;
 }
 
 function initMapDetailViewer(root){
@@ -5388,10 +5405,20 @@ function initMapDetailViewer(root){
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const fittedImageSize = () => {
     const rect = viewport.getBoundingClientRect();
-    const nw = image.naturalWidth || rect.width || 1;
-    const nh = image.naturalHeight || rect.height || 1;
-    const ratio = Math.min(rect.width / nw, rect.height / nh);
-    return { width:nw * ratio, height:nh * ratio, viewportWidth:rect.width, viewportHeight:rect.height };
+    const viewportWidth = Math.max(1, viewport.clientWidth || rect.width || 1);
+    const viewportHeight = Math.max(1, viewport.clientHeight || rect.height || 1);
+    const naturalWidth = Math.max(1, image.naturalWidth || viewportWidth);
+    const naturalHeight = Math.max(1, image.naturalHeight || viewportHeight);
+    const fitRatio = Math.min(viewportWidth / naturalWidth, viewportHeight / naturalHeight);
+    const width = Math.max(1, naturalWidth * fitRatio);
+    const height = Math.max(1, naturalHeight * fitRatio);
+
+    // Size the actual image element to the full-map fitted dimensions. Zoom and
+    // pan are then calculated from this box rather than from the viewport box.
+    image.style.width = `${width}px`;
+    image.style.height = `${height}px`;
+
+    return { width, height, viewportWidth, viewportHeight, naturalWidth, naturalHeight };
   };
   const panBounds = (scale=state.scale) => {
     const size = fittedImageSize();
@@ -5551,9 +5578,13 @@ function initMapDetailViewer(root){
     else if(action === 'reset') reset();
     else if(action === 'fullscreen'){
       const card = root.closest('.item-detail-card');
-      card?.classList.toggle('map-fullscreen');
-      event.currentTarget.setAttribute('aria-pressed', card?.classList.contains('map-fullscreen') ? 'true' : 'false');
-      requestAnimationFrame(render);
+      const expanded = !card?.classList.contains('map-fullscreen');
+      setMapViewerExpanded(card, expanded);
+      requestAnimationFrame(() => {
+        fittedImageSize();
+        render();
+        viewport.focus({preventScroll:true});
+      });
     }
   };
 
@@ -5566,6 +5597,7 @@ function initMapDetailViewer(root){
   viewport.addEventListener('keydown', onKeyDown);
   viewport.addEventListener('dblclick', onDoubleClick);
   buttons.forEach(btn => btn.addEventListener('click', onButtonClick));
+  setMapViewerExpanded(root.closest('.item-detail-card'), false);
   if(image.complete && image.naturalWidth) reset();
   else image.addEventListener('load', reset, {once:true});
   image.addEventListener('dragstart', event => event.preventDefault());
@@ -5828,7 +5860,7 @@ function openItemDetailPopup(item, kind, context='resource'){
           </div>
           <div class="map-detail-toolbar-group">
             <button class="map-tool-btn map-tool-text" type="button" data-map-action="reset" title="Reset zoom and position">Reset</button>
-            <button class="map-tool-btn map-tool-fullscreen" type="button" data-map-action="fullscreen" aria-pressed="false" title="Expand map viewer"><span aria-hidden="true">⛶</span><span>Expand</span></button>
+            <button class="map-tool-btn map-tool-fullscreen" type="button" data-map-action="fullscreen" aria-pressed="false" aria-label="Expand map viewer" title="Expand map viewer"><span data-map-expand-icon aria-hidden="true">⛶</span><span data-map-expand-label>Expand</span></button>
           </div>
         </div>
         <div class="map-detail-viewport" tabindex="0" role="application" aria-label="Interactive ${escHtml(item.name || 'map')} image. Use mouse wheel or plus and minus to zoom, drag to pan, and press zero to reset.">

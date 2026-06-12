@@ -6522,3 +6522,58 @@ html[data-theme="light"] .map-detail-viewport{border-color:rgba(10,20,40,.14);ba
 @media (prefers-reduced-motion:reduce){
   .map-tool-btn,.map-gesture-hint{transition:none;}
 }
+
+
+/* ===== Map viewer fit and expand-state correction ===== */
+.item-detail-card.map-view{
+  height:min(920px,calc(100dvh - (var(--modal-edge,14px) * 2)))!important;
+  min-height:0!important;
+}
+.item-detail-card.map-view .item-detail-body{
+  display:flex!important;
+  flex-direction:column!important;
+  min-height:0!important;
+  overflow:hidden!important;
+}
+.item-detail-card.map-view .map-detail-view{
+  flex:1 1 auto;
+  width:100%;
+  height:auto!important;
+  min-height:0;
+}
+.map-detail-viewport{
+  min-width:0;
+  min-height:0;
+}
+.map-detail-canvas{
+  contain:layout paint;
+}
+.map-detail-zoom-image{
+  width:auto;
+  height:auto;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:fill;
+  flex:none;
+}
+.item-detail-card.map-view.map-fullscreen{
+  height:auto!important;
+  max-height:none!important;
+}
+.item-detail-card.map-view.map-fullscreen .item-detail-body,
+.item-detail-card.map-view.map-fullscreen .map-detail-view{
+  min-height:0!important;
+}
+/* Button text is controlled by JavaScript so it can never become inverted. */
+.item-detail-card.map-view.map-fullscreen .map-tool-fullscreen span:last-child{
+  font-size:inherit!important;
+}
+.item-detail-card.map-view.map-fullscreen .map-tool-fullscreen span:last-child::after{
+  content:none!important;
+}
+@media (max-width:680px){
+  .item-detail-card.map-view{
+    height:calc(100dvh - 12px)!important;
+  }
+  .map-tool-fullscreen [data-map-expand-label]{display:none;}
+}
