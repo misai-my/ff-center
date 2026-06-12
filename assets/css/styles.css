@@ -7107,9 +7107,9 @@ body.betting-experiment .free-fire-hero .hero-blue-panel p{
   bottom:-34px;
   display:block;
   transform-origin:50% 100%;
-  opacity:0;
+  opacity:1;
   filter:drop-shadow(0 20px 22px rgba(0,0,0,.56));
-  animation:ffdcCharacterEnter .92s cubic-bezier(.16,.85,.22,1.08) forwards;
+  animation:ffdcCharacterEnter .92s cubic-bezier(.16,.85,.22,1.08) both;
 }
 .hero-character-slot img{
   display:block;
@@ -7199,4 +7199,228 @@ body.betting-experiment .free-fire-hero .hero-blue-panel p{
 @media (prefers-reduced-motion:reduce){
   .hero-character-slot,.hero-character-slot img,.hero-energy-orbit,.hero-character-stage::before,body.betting-experiment .free-fire-hero .hero-blue-panel::before{animation:none!important;}
   .hero-character-slot{opacity:1;transform:none;filter:drop-shadow(0 20px 22px rgba(0,0,0,.56));}
+}
+
+
+/* ==========================================================================\n   Mobile Team Summary refinement\n   Compact standings cards with primary metrics first and expandable details.\n   ========================================================================== */
+.mobile-summary-toggle{display:none;}
+@media(max-width:680px){
+  #accOverall > summary{
+    min-height:48px;
+    padding:11px 12px!important;
+    font-size:.82rem!important;
+  }
+  #accOverall #overallHint{
+    max-width:48vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.62rem;
+  }
+  #accOverall .accordion-body{padding:8px!important;}
+
+  .standings-toolbar{
+    gap:8px!important;
+    padding:9px!important;
+    margin-bottom:9px!important;
+  }
+  .standings-controls{
+    grid-template-columns:minmax(0,1fr) 82px!important;
+    width:100%;
+  }
+  .standings-controls label:first-child{grid-column:1;}
+  .standings-controls #overallSortDir{grid-column:2;grid-row:1;width:100%;padding-inline:8px;}
+  .standings-controls #manualQualiControl{grid-column:1 / -1!important;}
+  .standings-controls .control-label,
+  .standings-controls label{font-size:.68rem!important;}
+  .standings-controls .input,
+  .standings-controls .btn{min-height:42px!important;height:42px!important;font-size:.74rem!important;}
+  #overallQualiCutoff{min-width:0!important;}
+  .quali-cutoff-help{
+    min-height:38px!important;
+    padding:7px 9px!important;
+    font-size:.61rem!important;
+  }
+  .rank-color-legend{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:5px!important;
+    width:100%;
+    padding:7px 8px;
+    border-radius:11px;
+    background:rgba(0,0,0,.13);
+  }
+  .rank-color-legend span{
+    min-width:0;
+    justify-content:center;
+    gap:4px!important;
+    font-size:.51rem!important;
+    white-space:nowrap;
+  }
+  .rank-swatch{width:7px!important;height:7px!important;}
+
+  #tblOverall tbody{gap:9px!important;}
+  #tblOverall tbody tr{
+    grid-template-columns:42px repeat(5,minmax(0,1fr))!important;
+    grid-template-rows:auto auto auto auto auto!important;
+    border-radius:15px!important;
+  }
+  #tblOverall tbody tr td{
+    min-height:48px!important;
+    padding:7px 6px!important;
+    gap:4px!important;
+    font-size:.72rem!important;
+  }
+  #tblOverall tbody tr td::before{
+    font-size:.43rem!important;
+    line-height:1.05!important;
+    letter-spacing:.065em!important;
+  }
+
+  #tblOverall td[data-key="display_rank"]{
+    grid-column:1!important;
+    grid-row:1 / span 5!important;
+    min-height:100%!important;
+  }
+  #tblOverall .premium-rank-badge{
+    width:32px!important;
+    height:42px!important;
+    font-size:.78rem!important;
+  }
+  #tblOverall td[data-key="team"]{
+    grid-column:2 / span 3!important;
+    grid-row:1!important;
+    min-height:58px!important;
+    padding:8px 6px!important;
+  }
+  #tblOverall .premium-team-cell{gap:6px!important;}
+  #tblOverall .team-summary-logo{width:32px!important;height:32px!important;min-width:32px!important;}
+  #tblOverall .team-name-copy{max-width:calc(100% - 94px);}
+  #tblOverall .team-name-copy strong{font-size:.75rem!important;}
+  #tblOverall .team-name-copy small{font-size:.42rem!important;}
+  #tblOverall .rank-move{
+    margin-left:3px!important;
+    min-width:25px!important;
+    height:19px!important;
+    padding-inline:4px!important;
+  }
+  #tblOverall td[data-key="total_score"]{
+    grid-column:5 / span 2!important;
+    grid-row:1!important;
+    min-height:58px!important;
+    align-items:center!important;
+    text-align:center!important;
+  }
+  #tblOverall td[data-key="total_score"]::before{text-align:center;}
+  #tblOverall .premium-total-score{font-size:.96rem!important;}
+
+  .mobile-summary-toggle{
+    appearance:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:3px;
+    flex:0 0 auto;
+    min-width:43px;
+    height:25px;
+    margin-left:auto;
+    padding:0 6px;
+    border:1px solid rgba(77,211,255,.18);
+    border-radius:8px;
+    background:rgba(77,211,255,.075);
+    color:#bcefff;
+    font:inherit;
+    font-size:.49rem;
+    font-weight:1000;
+    line-height:1;
+    cursor:pointer;
+  }
+  .mobile-summary-toggle-icon{font-size:.65rem;line-height:1;}
+  .mobile-summary-toggle[aria-expanded="true"]{
+    border-color:rgba(255,189,89,.24);
+    background:rgba(255,189,89,.09);
+    color:#ffe0a0;
+  }
+
+  /* Tournament status row. Any absent columns simply leave no blank visual box. */
+  #tblOverall td[data-key="group_code"]{grid-column:2 / span 2!important;grid-row:2!important;align-items:flex-start!important;text-align:left!important;}
+  #tblOverall td[data-key="group_rank"],
+  #tblOverall td[data-key="stage_rank"]{grid-column:4!important;grid-row:2!important;}
+  #tblOverall td[data-key="cr_points_needed"]{grid-column:4!important;grid-row:2!important;}
+  #tblOverall td[data-key="advancement_status"]{grid-column:5 / span 2!important;grid-row:2!important;align-items:center!important;text-align:center!important;}
+
+  /* Primary scoring row. */
+  #tblOverall td[data-key="matches"]{grid-column:2!important;grid-row:3!important;}
+  #tblOverall td[data-key="booyahs"]{grid-column:3!important;grid-row:3!important;}
+  #tblOverall td[data-key="elims"]{grid-column:4!important;grid-row:3!important;}
+  #tblOverall td[data-key="ranking_score"]{grid-column:5!important;grid-row:3!important;}
+  #tblOverall td[data-key="one_up"]{grid-column:6!important;grid-row:3!important;}
+
+  /* Qualification is always visible. */
+  #tblOverall td[data-key="quali_pts"]{
+    grid-column:2 / span 5!important;
+    grid-row:4!important;
+    min-height:43px!important;
+    align-items:flex-start!important;
+    text-align:left!important;
+    flex-direction:row!important;
+    justify-content:space-between!important;
+  }
+  #tblOverall td[data-key="quali_pts"]::before{align-self:center;}
+  #tblOverall .quali-pill{margin-left:auto;}
+
+  /* Detailed efficiency row stays collapsed until More is tapped. */
+  #tblOverall tbody tr:not(.mobile-stats-expanded) td[data-key="damage"],
+  #tblOverall tbody tr:not(.mobile-stats-expanded) td[data-key="elims_pm"],
+  #tblOverall tbody tr:not(.mobile-stats-expanded) td[data-key="ranking_score_pm"],
+  #tblOverall tbody tr:not(.mobile-stats-expanded) td[data-key="total_pm"],
+  #tblOverall tbody tr:not(.mobile-stats-expanded) td[data-key="dmg_pm"]{
+    display:none!important;
+  }
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="damage"]{grid-column:2 / span 5!important;grid-row:4!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="quali_pts"]{grid-column:2 / span 2!important;grid-row:5!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="damage"]{grid-column:4 / span 3!important;grid-row:5!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="elims_pm"]{grid-column:2!important;grid-row:6!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="ranking_score_pm"]{grid-column:3!important;grid-row:6!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="total_pm"]{grid-column:4!important;grid-row:6!important;}
+  #tblOverall tbody tr.mobile-stats-expanded td[data-key="dmg_pm"]{grid-column:5 / span 2!important;grid-row:6!important;}
+  #tblOverall tbody tr.mobile-stats-expanded{grid-template-rows:auto auto auto auto auto auto!important;}
+
+  #tblOverall .gap-pill,
+  #tblOverall .quali-pill,
+  #tblOverall .cr-points-pill,
+  #tblOverall .progression-status-pill,
+  #tblOverall .group-code-pill{
+    max-width:100%;
+    white-space:normal!important;
+    text-align:center;
+  }
+  #tblOverall tbody tr.at-quali-cutoff::after{
+    left:8px!important;
+    right:8px!important;
+    bottom:-10px!important;
+    font-size:.40rem!important;
+  }
+}
+
+@media(max-width:420px){
+  #accOverall .accordion-body{padding:6px!important;}
+  .standings-toolbar{padding:7px!important;}
+  .standings-controls{grid-template-columns:minmax(0,1fr) 70px!important;}
+  .rank-color-legend{grid-template-columns:repeat(3,minmax(0,1fr));}
+  .rank-color-legend span:nth-child(4),
+  .rank-color-legend span:nth-child(5){grid-column:auto;}
+  #tblOverall tbody tr{
+    grid-template-columns:39px repeat(5,minmax(0,1fr))!important;
+    border-radius:13px!important;
+  }
+  #tblOverall tbody tr td{padding:6px 4px!important;font-size:.68rem!important;}
+  #tblOverall .premium-rank-badge{width:29px!important;height:39px!important;font-size:.72rem!important;}
+  #tblOverall .team-summary-logo{width:29px!important;height:29px!important;min-width:29px!important;}
+  #tblOverall .team-name-copy{max-width:calc(100% - 76px);}
+  #tblOverall .team-name-copy strong{font-size:.70rem!important;}
+  #tblOverall .rank-move{display:none!important;}
+  .mobile-summary-toggle{min-width:35px;padding:0 5px;}
+  .mobile-summary-toggle-label{display:none;}
+  #tblOverall .premium-total-score{font-size:.88rem!important;}
 }

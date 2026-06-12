@@ -219,3 +219,13 @@ The dashboard now includes an in-page Supabase email/password sign-in dialog. Wh
 ## Animated hero cover
 
 The homepage hero uses the bundled Kelly, Tatsuya, Orion, and Hayato transparent character assets. The character layers fly into position on first load and then use restrained floating motion. Reduced-motion preferences disable the animation automatically.
+
+
+## Free Fire Data Center cover
+
+The homepage cover is rendered from bundled Kelly, Tatsuya, Orion, and Hayato PNG assets. Critical inline CSS and a runtime hero guard ensure the title and character layers appear even when a browser has cached an older stylesheet or an older HTML entry file is still deployed.
+
+
+## Mobile Team Summary
+
+On screens up to 680px, the standings table becomes touch-friendly team cards. Rank, team, total points, tournament progression, core scoring, 1UP, and qualification points remain visible. Damage and per-match efficiency metrics are available through each card's **More** button. Expanded-card state is retained locally.

@@ -3825,6 +3825,61 @@ function rankMovementHtml(row){
   return `<span class="rank-move same" title="No movement from the ${escHtml(ref)}">—</span>`;
 }
 
+
+const MOBILE_SUMMARY_EXPANDED_KEY = 'ff_mobile_summary_expanded_v1';
+function getMobileSummaryExpandedTeams(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(MOBILE_SUMMARY_EXPANDED_KEY) || '[]');
+    return new Set(Array.isArray(raw) ? raw.map(v => norm(v).toUpperCase()).filter(Boolean) : []);
+  }catch(_e){
+    return new Set();
+  }
+}
+function saveMobileSummaryExpandedTeams(set){
+  try{ localStorage.setItem(MOBILE_SUMMARY_EXPANDED_KEY, JSON.stringify([...set])); }catch(_e){}
+}
+function enhanceOverallMobileCards(){
+  const root = el('tblOverall');
+  if(!root) return;
+  const expandedTeams = getMobileSummaryExpandedTeams();
+
+  root.querySelectorAll('tbody tr').forEach(tr => {
+    const teamCell = tr.querySelector('td[data-key="team"]');
+    const team = norm(teamCell?.querySelector('.team-name-move')?.dataset?.teamCode || teamCell?.textContent).toUpperCase();
+    if(!team || !teamCell) return;
+
+    const expanded = expandedTeams.has(team);
+    tr.classList.toggle('mobile-stats-expanded', expanded);
+
+    let toggle = teamCell.querySelector('.mobile-summary-toggle');
+    if(!toggle){
+      toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'mobile-summary-toggle';
+      toggle.innerHTML = '<span class="mobile-summary-toggle-label">More</span><span class="mobile-summary-toggle-icon" aria-hidden="true">⌄</span>';
+      toggle.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        const next = !tr.classList.contains('mobile-stats-expanded');
+        tr.classList.toggle('mobile-stats-expanded', next);
+        toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+        toggle.querySelector('.mobile-summary-toggle-label').textContent = next ? 'Less' : 'More';
+        toggle.querySelector('.mobile-summary-toggle-icon').textContent = next ? '⌃' : '⌄';
+        if(next) expandedTeams.add(team); else expandedTeams.delete(team);
+        saveMobileSummaryExpandedTeams(expandedTeams);
+      });
+      const teamLine = teamCell.querySelector('.premium-team-cell') || teamCell;
+      teamLine.appendChild(toggle);
+    }
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    toggle.setAttribute('aria-label', `${expanded ? 'Hide' : 'Show'} additional statistics for ${team}`);
+    const label = toggle.querySelector('.mobile-summary-toggle-label');
+    const icon = toggle.querySelector('.mobile-summary-toggle-icon');
+    if(label) label.textContent = expanded ? 'Less' : 'More';
+    if(icon) icon.textContent = expanded ? '⌃' : '⌄';
+  });
+}
+
 function renderOverall(options = {}){
   const tm = teamMatchAgg(FILTERED);
   const rows = buildOverallRowsFromTeamMatches(tm);
@@ -3928,6 +3983,7 @@ function renderOverall(options = {}){
 
   applyColumnHeatmap('tblOverall', ['matches','booyahs','elims','ranking_score','total_score','damage','elims_pm','ranking_score_pm','total_pm','dmg_pm']);
   applyQualificationRowStyles(rows, qualificationCutoff);
+  enhanceOverallMobileCards();
 
   const currentSortKey = el('overallSortKey').value || 'total_score';
   const currentDir = el('overallSortDir').dataset.dir || 'desc';
@@ -7914,3 +7970,73 @@ async function init(){
   }catch(e){ if(loadWatchdog) clearTimeout(loadWatchdog); el('veil').classList.add('hide'); gerr('Fatal init error:\n\n' + (e?.message || e)); }
 }
 init();
+
+
+/* Free Fire Data Center hero runtime guard.
+   Rebuilds the cover when an older HTML entry file is still deployed. */
+(function ensureFreeFireDataCenterHero(){
+  function build(){
+    const hero = document.querySelector('.ewc-hero, .sportsbook-hero');
+    if (!hero) return;
+    hero.classList.add('sportsbook-hero','free-fire-hero');
+
+    let panel = hero.querySelector('.hero-blue-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'hero-blue-panel';
+      hero.prepend(panel);
+    }
+
+    let copy = panel.querySelector('.hero-copy');
+    if (!copy) {
+      copy = document.createElement('div');
+      copy.className = 'hero-copy';
+      panel.prepend(copy);
+    }
+    copy.innerHTML = '<div class="hero-kicker">Free Fire Esports Intelligence</div>' +
+      '<h2>FREE FIRE<br><span class="hero-title-accent">DATA CENTER</span></h2>' +
+      '<p>Track team pace, player impact, loadout identity, qualification paths, and match form in one broadcast-ready command page.</p>';
+
+    let stage = panel.querySelector('.hero-character-stage');
+    if (!stage) {
+      stage = document.createElement('div');
+      stage.className = 'hero-character-stage';
+      stage.setAttribute('aria-hidden','true');
+      panel.appendChild(stage);
+    }
+
+    const characters = [
+      ['hayato','Hayato'],
+      ['orion','Orion'],
+      ['tatsuya','Tatsuya'],
+      ['kelly','Kelly']
+    ];
+    stage.innerHTML = '<span class="hero-energy-orbit orbit-one"></span><span class="hero-energy-orbit orbit-two"></span>';
+    characters.forEach(([slug,name]) => {
+      const slot = document.createElement('span');
+      slot.className = `hero-character-slot hero-${slug}`;
+      const img = document.createElement('img');
+      img.src = `assets/img/characters/${slug}.png`;
+      img.alt = '';
+      img.draggable = false;
+      img.addEventListener('error', () => {
+        if (!img.dataset.svgTried) {
+          img.dataset.svgTried = '1';
+          img.src = `assets/img/characters/${slug}.svg`;
+        } else {
+          slot.hidden = true;
+        }
+      });
+      slot.appendChild(img);
+      stage.appendChild(slot);
+    });
+
+    document.title = 'Free Fire Data Center';
+    document.querySelectorAll('.page-title h1').forEach(el => { el.textContent = 'Free Fire Data Center'; });
+    document.querySelectorAll('.nav-label').forEach(el => {
+      if (/EWC Team Center/i.test(el.textContent || '')) el.textContent = 'Free Fire Data Center';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build, {once:true});
+  else build();
+})();
