@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Group Assignment Admin — Free Fire Data Center</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('ff_theme_v1');
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/admin-group-assignments.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <header class="admin-topbar">
+      <div class="admin-brand">
+        <div class="admin-logo">FF</div>
+        <div>
+          <p>Free Fire Data Center</p>
+          <h1>Group Assignment Admin</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn ghost" href="index.html">← Data Center</a>
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+        <div class="admin-user" id="adminUser">Checking access…</div>
+        <button class="btn danger" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <section class="notice" id="pageNotice" hidden></section>
+
+      <section class="panel setup-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Tournament setup</span>
+            <h2>Choose the event and group format</h2>
+            <p>Use an existing tournament/stage or type a new one for a future event.</p>
+          </div>
+          <span class="status-pill" id="assignmentStatus">Not loaded</span>
+        </div>
+
+        <div class="setup-grid">
+          <label class="field wide">
+            <span>Tournament</span>
+            <input id="tournamentInput" list="tournamentList" placeholder="Select or type tournament name" autocomplete="off" />
+            <datalist id="tournamentList"></datalist>
+          </label>
+          <label class="field wide">
+            <span>Stage</span>
+            <input id="stageInput" list="stageList" value="Group Stage" placeholder="Group Stage" autocomplete="off" />
+            <datalist id="stageList"></datalist>
+          </label>
+          <label class="field compact">
+            <span>Number of groups</span>
+            <input id="groupCountInput" type="number" min="1" max="52" value="2" inputmode="numeric" />
+          </label>
+          <label class="field compact">
+            <span>Teams per group</span>
+            <input id="teamsPerGroupInput" type="number" min="1" max="64" value="12" inputmode="numeric" />
+          </label>
+          <button class="btn primary load-btn" id="loadSetupBtn" type="button">Load Assignment Board</button>
+        </div>
+      </section>
+
+      <section class="panel toolbar-panel" id="assignmentToolbar" hidden>
+        <div class="toolbar-left">
+          <label class="search-field">
+            <span aria-hidden="true">⌕</span>
+            <input id="teamSearchInput" type="search" placeholder="Search teams…" />
+          </label>
+          <div class="summary-chips" id="summaryChips"></div>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn secondary" id="autoSplitBtn" type="button">Auto Split</button>
+          <button class="btn secondary" id="clearGroupsBtn" type="button">Clear Groups</button>
+          <button class="btn brand" id="addTeamBtn" type="button">＋ Add New Team</button>
+          <button class="btn secondary" id="saveDraftBtn" type="button">Save Draft</button>
+          <button class="btn primary" id="confirmLockBtn" type="button">Confirm & Lock</button>
+        </div>
+      </section>
+
+      <section class="validation" id="validationPanel" hidden></section>
+
+      <section class="assignment-board" id="assignmentBoard" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div class="modal" id="teamModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-team-modal></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="teamModalTitle">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Team directory</span>
+          <h2 id="teamModalTitle">Add New Team</h2>
+          <p>Create the team once, then reuse it in any tournament or group.</p>
+        </div>
+        <button class="icon-btn" id="teamModalClose" type="button" aria-label="Close">×</button>
+      </div>
+      <form id="teamForm" class="team-form">
+        <input id="teamRecordId" type="hidden" />
+        <div class="logo-editor">
+          <div class="logo-preview" id="teamLogoPreview"><span>LOGO</span></div>
+          <label class="upload-btn">
+            <input id="teamLogoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" />
+            Upload Logo
+          </label>
+          <small>The image is converted to PNG and renamed from the team tag.</small>
+          <div class="logo-path-card" aria-live="polite">
+            <span>Logo filename</span>
+            <strong id="teamLogoFilename">team-tag.png</strong>
+            <span>Repository path</span>
+            <code id="teamLogoRepoPath">assets/logo/team-tag.png</code>
+          </div>
+          <button class="btn ghost repo-download-btn" id="downloadRepoLogoBtn" type="button" disabled>Download PNG for Repository</button>
+        </div>
+
+        <div class="form-grid">
+          <label class="field required">
+            <span>Team code / tag</span>
+            <input id="teamCodeInput" maxlength="16" placeholder="BRU" required />
+          </label>
+          <label class="field required span-2">
+            <span>Official team name</span>
+            <input id="teamNameInput" maxlength="100" placeholder="Buriram United Esports" required />
+          </label>
+          <label class="field">
+            <span>Short display name</span>
+            <input id="teamShortNameInput" maxlength="40" placeholder="Buriram" />
+          </label>
+          <label class="field">
+            <span>Organization</span>
+            <input id="teamOrganizationInput" maxlength="100" placeholder="Organization name" />
+          </label>
+          <label class="field">
+            <span>Country code</span>
+            <input id="teamCountryInput" maxlength="3" placeholder="TH" />
+          </label>
+          <label class="field">
+            <span>Region</span>
+            <input id="teamRegionInput" maxlength="50" placeholder="Southeast Asia" />
+          </label>
+          <label class="field">
+            <span>Database team ID</span>
+            <input id="teamExternalIdInput" maxlength="100" placeholder="Optional match-data team ID" />
+          </label>
+          <label class="field span-2">
+            <span>Aliases</span>
+            <input id="teamAliasesInput" placeholder="Old name, alternate tag, previous organization" />
+            <small>Separate aliases with commas.</small>
+          </label>
+          <label class="field span-2">
+            <span>Notes</span>
+            <textarea id="teamNotesInput" rows="3" placeholder="Optional administrative notes"></textarea>
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn ghost" type="button" data-close-team-modal>Cancel</button>
+          <button class="btn primary" id="saveTeamBtn" type="submit">Save Team</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loader"></div>
+    <strong>Loading group assignment tools…</strong>
+  </div>
+
+  <script src="assets/js/admin-group-assignments.js"></script>
+</body>
+</html>

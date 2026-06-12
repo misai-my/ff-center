@@ -89,8 +89,9 @@ In the Supabase SQL Editor, run:
 
 1. `supabase/01_reference_tables.sql`
 2. `supabase/02_asset_metadata.sql`
+3. `supabase/03_group_assignment_admin.sql`
 
-The migrations create and seed the reference tables and add local image metadata and team-logo records.
+The first two migrations create the bundled reference tables and asset metadata. Migration 03 creates the official group-assignment tables, team directory, admin permissions, team-logo bucket, and the Group Assignment Admin RPCs. Run `04_tournament_progression.sql` later when you are ready to configure advancement and Champion Rush.
 
 The live dashboard still expects the existing backend resources used by the original page, including:
 
@@ -200,7 +201,7 @@ On a fresh load, the dashboard now selects the newest tournament represented in 
 
 The dashboard now supports grouped stages, automatic advancement paths, Survival Stage qualification, and Champion Rush.
 
-Run `supabase/03_tournament_progression.sql`, then configure the event using the exact tournament name stored in `ff_player_stats_raw`:
+After group assignments are working, run `supabase/04_tournament_progression.sql`, then configure the event using the exact tournament name stored in `ff_player_stats_raw`:
 
 ```sql
 select public.configure_two_group_champion_rush_format('YOUR EXACT TOURNAMENT NAME');
@@ -234,3 +235,32 @@ On screens up to 680px, the standings table becomes touch-friendly team cards. R
 ## iPhone portrait Team Summary
 
 At phone portrait widths (500px and below), Team Summary uses dedicated compact standings cards. Landscape and tablet layouts retain the wider standings presentation. Each portrait card keeps rank, team, score, progression, MP, Booyah, eliminations, placement, 1UP, and Quali Pts visible, with efficiency metrics behind More.
+
+## Group Assignment Admin
+
+Open `admin-group-assignments.html` to manage official tournament groups without editing rows manually.
+
+Before using it:
+
+1. Run `supabase/03_group_assignment_admin.sql` after migrations 01–02.
+2. Add your login to `app_admins` using the SQL example at the bottom of migration 03.
+3. Sign in to the Data Center and open **Group Assignments** from the sidebar.
+
+The page supports:
+
+- Existing or newly typed tournament and stage names
+- Configurable group counts from 1 to 52
+- Automatic Group A, B, C … Z, AA, AB labels
+- Configurable teams per group
+- Drag-and-drop assignment on desktop
+- Per-team group dropdowns for mobile and tablet
+- Auto Split, Clear Groups, Save Draft, and Confirm & Lock
+- Validation for unassigned teams and incorrect group sizes
+- Creating and editing teams before they appear in match data
+- Team logo uploads to the public `team-logos` Supabase Storage bucket
+- Every logo is converted to PNG and named from the lowercase team tag: `BRU → bru.png`, `FLCN → flcn.png`
+- Repository fallback paths are stored as `assets/logo/<team-tag>.png`
+- A **Download PNG for Repository** button creates the exact file to add to GitHub
+- Team code, official name, short name, organization, country, region, external match-data ID, aliases, and notes
+
+Migration 03 creates or upgrades `ff_teams`, `tournament_stage_config`, and `tournament_team_assignments`; synchronizes team-logo metadata into `ff_team_logos`; and saves all group assignments in one database transaction through `save_tournament_group_assignments`. The browser cannot directly commit files into GitHub without a protected server function, so the page stores the live image in Supabase Storage and provides the correctly named PNG for `assets/logo/`.
