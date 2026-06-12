@@ -12,7 +12,25 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles.css?cache-refresh=map-fullscreen-fix">
+  <link rel="stylesheet" href="assets/css/styles.css?v=global-search-layout-fix">
+
+  <!-- Critical search layout: keeps the global search compact even if a stale stylesheet is cached. -->
+  <style id="global-search-critical">
+    .topbar > .global-search{position:relative!important;flex:0 1 440px!important;width:clamp(250px,34vw,440px)!important;min-width:220px!important;max-width:440px!important;height:42px!important;align-self:center!important;z-index:45!important}
+    .topbar .global-search-field{box-sizing:border-box!important;width:100%!important;height:42px!important;min-height:42px!important;max-height:42px!important;display:grid!important;grid-template-columns:20px minmax(0,1fr) auto auto!important;align-items:center!important;gap:8px!important;padding:0 9px 0 11px!important;margin:0!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;background:rgba(0,0,0,.23)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important}
+    .topbar .global-search-field:focus-within{border-color:rgba(77,211,255,.42)!important;box-shadow:0 0 0 4px rgba(77,211,255,.10),inset 0 1px 0 rgba(255,255,255,.04)!important}
+    .topbar .global-search-icon{box-sizing:border-box!important;width:20px!important;height:20px!important;min-width:20px!important;max-width:20px!important;display:grid!important;place-items:center!important;overflow:hidden!important;color:var(--accent)!important;line-height:0!important}
+    .topbar .global-search-icon svg{box-sizing:border-box!important;display:block!important;width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;max-height:18px!important;margin:0!important;padding:0!important;overflow:visible!important}
+    .topbar #globalSearchInput{box-sizing:border-box!important;position:static!important;display:block!important;width:100%!important;min-width:0!important;height:38px!important;min-height:0!important;max-height:38px!important;margin:0!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;color:var(--ink)!important;box-shadow:none!important;font:750 .84rem/1.2 Roboto,system-ui,sans-serif!important}
+    .topbar #globalSearchInput::placeholder{color:rgba(170,177,197,.72)!important;font-weight:650!important}
+    .topbar .global-search-shortcut{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;height:24px!important;margin:0!important;padding:0 7px!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:8px!important;background:rgba(255,255,255,.055)!important;color:var(--muted)!important;font:700 .62rem/1 Roboto,system-ui,sans-serif!important;white-space:nowrap!important}
+    .topbar .global-search-clear{box-sizing:border-box!important;width:27px!important;height:27px!important;min-width:27px!important;max-width:27px!important;margin:0!important;padding:0!important;border:0!important;border-radius:9px!important;display:grid!important;place-items:center!important;background:rgba(255,255,255,.07)!important;color:var(--muted)!important;font:700 1rem/1 Arial,sans-serif!important;cursor:pointer!important}
+    .topbar .global-search-clear[hidden]{display:none!important}
+    html[data-theme="light"] .topbar .global-search-field{background:rgba(255,255,255,.76)!important;border-color:rgba(10,20,40,.13)!important}
+    @media(max-width:1120px){.topbar > .global-search{flex:1 1 280px!important;width:auto!important;min-width:200px!important;max-width:380px!important}.topbar .global-search-shortcut{display:none!important}}
+    @media(max-width:760px){.topbar > .global-search{flex:1 1 auto!important;width:auto!important;min-width:160px!important;max-width:none!important}.topbar .global-search-field{grid-template-columns:20px minmax(0,1fr) auto!important}.topbar #globalSearchInput{font-size:.78rem!important}}
+    @media(max-width:480px){.topbar > .global-search{min-width:132px!important}.topbar .global-search-icon{width:18px!important;min-width:18px!important}.topbar .global-search-icon svg{width:16px!important;height:16px!important;min-width:16px!important;max-width:16px!important}.topbar .global-search-field{padding-left:9px!important;gap:6px!important}}
+  </style>
 </head>
 <body class="betting-experiment">
 
@@ -209,12 +227,14 @@
       </button>
       <div class="page-title"><h1>EWC Team Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
       <div class="global-search" id="globalSearch">
-        <label class="global-search-field" for="globalSearchInput">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input id="globalSearchInput" type="search" placeholder="Search teams, players, skills, weapons, maps…" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="globalSearchResults" aria-expanded="false">
+        <div class="global-search-field">
+          <span class="global-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <input id="globalSearchInput" type="search" placeholder="Search teams, players, skills, weapons, maps…" aria-label="Search this dashboard" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="globalSearchResults" aria-expanded="false">
           <kbd class="global-search-shortcut" aria-hidden="true">Ctrl K</kbd>
           <button class="global-search-clear" id="globalSearchClear" type="button" aria-label="Clear search" title="Clear search" hidden>×</button>
-        </label>
+        </div>
       </div>
       <div class="top-actions">
         <div class="theme-palette" id="colorThemePalette" aria-label="Color theme selector">
@@ -537,6 +557,6 @@
 </div>
 
 <div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<script src="assets/js/app.js?cache-refresh=map-fullscreen-fix"></script>
+<script src="assets/js/app.js?v=global-search-layout-fix"></script>
 </body>
 </html>

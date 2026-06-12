@@ -6866,3 +6866,14 @@ html[data-theme="light"] .global-search-shortcut{background:rgba(10,20,40,.045);
   .global-search-result-type{display:none}
   .global-search-panel{border-radius:17px;max-height:70dvh}
 }
+
+
+/* ===== Global search compact layout correction ===== */
+.topbar > .global-search{position:relative;flex:0 1 440px;width:clamp(250px,34vw,440px);min-width:220px;max-width:440px;height:42px;align-self:center;z-index:45}
+.topbar .global-search-field{width:100%;height:42px;min-height:42px;max-height:42px;display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:0 9px 0 11px;overflow:hidden}
+.topbar .global-search-icon{width:20px;height:20px;min-width:20px;display:grid;place-items:center;overflow:hidden;color:var(--accent);line-height:0}
+.topbar .global-search-icon svg{display:block;width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;max-height:18px!important;margin:0!important;padding:0!important}
+.topbar #globalSearchInput{position:static!important;width:100%!important;min-width:0!important;height:38px!important;min-height:0!important;max-height:38px!important;margin:0!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important}
+@media(max-width:1120px){.topbar > .global-search{flex:1 1 280px;width:auto;min-width:200px;max-width:380px}.topbar .global-search-shortcut{display:none}}
+@media(max-width:760px){.topbar > .global-search{flex:1 1 auto;width:auto;min-width:160px;max-width:none}.topbar .global-search-field{grid-template-columns:20px minmax(0,1fr) auto}}
+@media(max-width:480px){.topbar > .global-search{min-width:132px}.topbar .global-search-field{padding-left:9px;gap:6px}}

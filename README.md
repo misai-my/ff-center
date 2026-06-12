@@ -185,3 +185,8 @@ The map viewer Fullscreen button uses the browser Fullscreen API. Browsers witho
 ## Global Search
 
 The top navigation includes a responsive dashboard search. It can open page sections, team profiles, player tabs, match logs, and direct detail modals for skills, pets, weapons, loadouts, and maps. Use `Ctrl/Cmd + K` or `/` to focus it, arrow keys to navigate, and Enter to open a result.
+
+
+## Global search layout correction
+
+The topbar search uses a fixed 42 px field and constrained icon sizing. Critical layout CSS is also embedded in both entry pages to prevent a stale external stylesheet from rendering the search icon at its browser-default size.
