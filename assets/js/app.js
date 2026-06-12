@@ -41,7 +41,9 @@ const DASHBOARD_DESIRED_COLS = [
   'id','match_id','Mode','Tournament','Stage','Year','Week','Day','MatchNumber',
   'booyah','eliminated_team_name','final','is_double_kill_score','is_eliminated','is_focus','kill_count','killing_score','ranking_score','win_rate',
   'team_id','team_name',
-  'player_stats_account_id','player_stats_nickname','player_stats_kills','player_stats_damage','player_stats_assists','player_stats_headshots','player_stats_shoots','player_stats_hits',
+  'player_stats_account_id','player_stats_id','player_stats_player_id','player_stats_role_id','player_stats_uid','player_stats_user_id',
+  'player_id','role_id','uid','user_id',
+  'player_stats_nickname','player_stats_kills','player_stats_damage','player_stats_assists','player_stats_headshots','player_stats_shoots','player_stats_hits',
   'player_stats_pet_skill_id','player_stats_pet_skill_name',
   'player_stats_skill_ids','player_stats_skill_ids_0','player_stats_skill_ids_1','player_stats_skill_ids_2','player_stats_skill_ids_3',
   'player_stats_skill_info','player_stats_skill_info_active_count','player_stats_skill_info_skill_active','player_stats_skill_info_skill_id','player_stats_skill_info_skill_name',
@@ -627,7 +629,7 @@ let FILTERED = [];
 let CURRENT_TEAM = null;
 let USED_CORE_SELECT = true;
 let KEYS = {
-  team:null, teamId:null, player:null, accountId:null,
+  team:null, teamId:null, player:null, accountId:null, playerIds:[],
   tournament:null, stage:null, year:null, week:null, day:null, matchNo:null, matchId:null, mode:null, dataSource:null, center:null,
   kills:null, damage:null, assists:null, headshots:null, shoots:null, hits:null, survivalTime:null,
   booyah:null, killCount:null, killingScore:null, rankingScore:null, winRate:null,
@@ -665,6 +667,8 @@ function detectSchema(sample){
   KEYS.teamId = pickKey(keys, [/^team_id$/i, /^player_stats_team_id$/i]);
   KEYS.player = pickKey(keys, [/^player_stats_nickname$/i, /^nickname$/i, /player.*name/i, /^name$/i]);
   KEYS.accountId = pickKey(keys, [/^player_stats_account_id$/i, /^account_id$/i, /account.*id/i]);
+  KEYS.playerIds = keys.filter(k => /^(player_stats_(?:account_id|id|player_id|role_id|uid|user_id)|account_id|player_id|role_id|uid|user_id)$/i.test(k));
+  if(KEYS.accountId && !KEYS.playerIds.includes(KEYS.accountId)) KEYS.playerIds.unshift(KEYS.accountId);
   KEYS.tournament = pickKey(keys, [/^Tournament$/, /^tournament$/i]);
   KEYS.stage = pickKey(keys, [/^Stage$/, /^stage$/i]);
   KEYS.year = pickKey(keys, [/^Year$/, /^year$/i]);
@@ -1775,6 +1779,15 @@ async function fetchAllRows(){
     if(available.has(optional) && !DASHBOARD_SELECT_COLS.includes(optional)) DASHBOARD_SELECT_COLS.push(optional);
   }
 
+  // Kill events sometimes reference a player UID/role ID instead of player_stats_account_id.
+  // Include those lightweight identifier columns when they exist so the live feed can resolve names.
+  for(const column of availableCols){
+    if(/^(player_stats_(?:account_id|id|player_id|role_id|uid|user_id)|account_id|player_id|role_id|uid|user_id)$/i.test(column)
+      && !DASHBOARD_SELECT_COLS.includes(column)){
+      DASHBOARD_SELECT_COLS.push(column);
+    }
+  }
+
   if(!DASHBOARD_SELECT_COLS.length){
     USED_CORE_SELECT = false;
     return [];
@@ -2235,6 +2248,57 @@ function dedupeLiveFeedKillEvents(events){
   });
   return out;
 }
+function liveFeedPlayerIdAliases(value){
+  const raw = norm(value);
+  if(!raw) return [];
+  const aliases = new Set();
+  const add = v => {
+    const id = normalizeLookupId(v);
+    if(id) aliases.add(id);
+  };
+  add(raw);
+  (raw.match(/\d+(?:\.0+)?/g) || []).forEach(token => {
+    add(token);
+    const clean = normalizeLookupId(token);
+    // APIs sometimes trim a player/account ID to a stable suffix.
+    if(/^\d+$/.test(clean)){
+      if(clean.length >= 6) aliases.add(`suffix:${clean.slice(-6)}`);
+      if(clean.length >= 8) aliases.add(`suffix:${clean.slice(-8)}`);
+      if(clean.length >= 10) aliases.add(`suffix:${clean.slice(-10)}`);
+    }
+  });
+  return [...aliases];
+}
+function registerLiveFeedPlayerId(map, value, entry){
+  liveFeedPlayerIdAliases(value).forEach(alias => {
+    if(!map.has(alias)) map.set(alias, entry);
+  });
+}
+function findLiveFeedPlayerById(map, value){
+  for(const alias of liveFeedPlayerIdAliases(value)){
+    const found = map.get(alias);
+    if(found) return found;
+  }
+  return null;
+}
+function liveFeedRowPlayerIds(row){
+  const values = [];
+  const keys = Array.isArray(KEYS.playerIds) && KEYS.playerIds.length
+    ? KEYS.playerIds
+    : [KEYS.accountId].filter(Boolean);
+  keys.forEach(key => {
+    const value = row?.[key];
+    if(value != null && norm(value)) values.push(value);
+  });
+  return [...new Set(values.map(norm).filter(Boolean))];
+}
+function liveFeedIdFallback(value, label='Player'){
+  const id = normalizeLookupId(value);
+  if(!id) return `Unknown ${label.toLowerCase()}`;
+  const short = /^\d+$/.test(id) && id.length > 8 ? id.slice(-8) : id;
+  return `${label} ${short}`;
+}
+
 function buildLiveFeedKillIndex(rows){
   const playerById = new Map();
   const playerByName = new Map();
@@ -2242,10 +2306,12 @@ function buildLiveFeedKillIndex(rows){
 
   rows.forEach(r => {
     const team = norm(getVal(r, KEYS.team)).toUpperCase() || 'UNKNOWN';
-    const accountId = normalizeLookupId(getVal(r, KEYS.accountId));
-    const playerName = norm(getVal(r, KEYS.player)) || norm(getVal(r, KEYS.accountId)) || '—';
-    const entry = { row:r, team, accountId, playerName };
-    if(accountId) playerById.set(accountId, entry);
+    const rawIds = liveFeedRowPlayerIds(r);
+    const accountId = normalizeLookupId(getVal(r, KEYS.accountId) || rawIds[0] || '');
+    const playerName = norm(getVal(r, KEYS.player)) || liveFeedIdFallback(accountId || rawIds[0]);
+    const entry = { row:r, team, accountId, playerName, rawIds };
+    rawIds.forEach(id => registerLiveFeedPlayerId(playerById, id, entry));
+    if(accountId) registerLiveFeedPlayerId(playerById, accountId, entry);
     const nameKey = assetLookupKey(playerName);
     if(nameKey) playerByName.set(nameKey, entry);
     if(!playerRowsByTeam.has(team)) playerRowsByTeam.set(team, []);
@@ -2318,10 +2384,10 @@ function buildLiveFeedKillIndex(rows){
       const victimId = normalizeLookupId(findFirstByPathPatterns(obj, victimIdPatterns));
       const victimNameRaw = norm(findFirstByPathPatterns(obj, victimNamePatterns));
       const victimNameKey = assetLookupKey(victimNameRaw);
-      const victimMatch = victimId ? playerById.get(victimId) : (victimNameKey ? playerByName.get(victimNameKey) : null);
+      const victimMatch = victimId ? findLiveFeedPlayerById(playerById, victimId) : (victimNameKey ? playerByName.get(victimNameKey) : null);
       const victimTeamRaw = norm(findFirstByPathPatterns(obj, victimTeamPatterns)).toUpperCase();
       const victimTeam = victimTeamRaw || victimMatch?.team || '';
-      const victimName = victimMatch?.playerName || victimNameRaw || (victimId ? victimId : 'Unknown player');
+      const victimName = victimMatch?.playerName || victimNameRaw || liveFeedIdFallback(victimId);
       const victimAccountId = victimMatch?.accountId || victimId || '';
 
       // Ignore objects that do not identify a real victim from this match.
@@ -2330,9 +2396,9 @@ function buildLiveFeedKillIndex(rows){
       const killerId = normalizeLookupId(findFirstByPathPatterns(obj, killerIdPatterns));
       const killerNameRaw = norm(findFirstByPathPatterns(obj, killerNamePatterns));
       const killerTeamRaw = norm(findFirstByPathPatterns(obj, killerTeamPatterns)).toUpperCase();
-      const killerMatch = killerId ? playerById.get(killerId) : (killerNameRaw ? playerByName.get(assetLookupKey(killerNameRaw)) : null);
+      const killerMatch = killerId ? findLiveFeedPlayerById(playerById, killerId) : (killerNameRaw ? playerByName.get(assetLookupKey(killerNameRaw)) : null);
       const killerTeam = killerTeamRaw || killerMatch?.team || killerFallbackTeam;
-      const killerName = killerMatch?.playerName || killerNameRaw || killerFallbackName;
+      const killerName = killerMatch?.playerName || killerNameRaw || killerFallbackName || liveFeedIdFallback(killerId);
       const weaponId = normalizeLookupId(findFirstByPathPatterns(obj, weaponIdPatterns));
       const weaponName = norm(findFirstByPathPatterns(obj, weaponNamePatterns));
       const timeRaw = findFirstByPathPatterns(obj, timePatterns);
@@ -2523,7 +2589,7 @@ function buildLiveFeedTeams(rows){
 }
 function liveFeedPlayerTag(team, name){
   const teamCode = norm(team).toUpperCase();
-  const cleanName = norm(name) || 'Unknown';
+  const cleanName = norm(name) || 'Unknown player';
   if(!teamCode) return cleanName;
   if(cleanName.toUpperCase().startsWith(`${teamCode}.`)) return cleanName;
   // If the API already returns a team-tagged IGN like BRU JOENA, keep it readable with a dot.
@@ -2555,12 +2621,14 @@ function liveFeedKillWeaponLabel(ev){
   const fromMatchApi = mapWeaponFromId(ev?.weaponId || '');
   const label = byName || fromMatchApi || '';
   const found = findClosestWeaponResourceItem(label, ev?.weaponId || '');
-  return norm(found?.name) || label || (ev?.weaponId ? `Weapon ${ev.weaponId}` : 'Elimination');
+  const resolved = norm(found?.name) || label;
+  if(resolved && !/^Weapon\s+\d+$/i.test(resolved)) return resolved;
+  return ev?.weaponId ? `Weapon #${normalizeLookupId(ev.weaponId)}` : 'Unknown weapon';
 }
 function liveFeedKillWeaponHtml(ev){
   const label = liveFeedKillWeaponLabel(ev);
-  const shortLabel = label.replace(/^Weapon\s+/i, '').replace(/\s*\([^)]*\)\s*/g, ' ').trim();
-  return `<span class="kill-weapon" title="${escHtml(label)}">${visualIconHtml('weapon', label, ev?.weaponId || '')}<span class="kill-weapon-name">${escHtml(shortLabel)}</span></span>`;
+  const shortLabel = label.replace(/^Weapon\s*/i, '').replace(/\s*\([^)]*\)\s*/g, ' ').trim() || 'Unknown';
+  return `<span class="kill-weapon" title="${escHtml(label)}" aria-label="Weapon: ${escHtml(label)}">${visualIconHtml('weapon', label, ev?.weaponId || '')}<span class="kill-weapon-name">${escHtml(shortLabel)}</span></span>`;
 }
 function liveFeedKillVictimHtml(ev){
   const victim = liveFeedPlayerTag(ev.victimTeam, ev.victimName);

@@ -6128,3 +6128,142 @@ html[data-theme="light"] .live-feed-order-note{color:#667089;}
 @media(prefers-reduced-motion:reduce){
   .live-feed-connection.checking .live-connection-dot{animation:none!important;}
 }
+
+/* ===== Live Feed player + weapon visibility fix =====
+   Compact team cards use two readable player lines and a persistent weapon label.
+   Expanded popups retain the full timestamp / killer / weapon / victim layout. */
+.live-feed-card > .live-feed-players .live-feed-kill-row{
+  grid-template-columns:40px minmax(0,1fr) minmax(82px,108px)!important;
+  grid-template-rows:22px 22px!important;
+  min-height:50px!important;
+  height:50px!important;
+  gap:2px 6px!important;
+  padding:3px 5px!important;
+  align-items:center!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-time{
+  grid-column:1!important;
+  grid-row:1 / span 2!important;
+  height:38px!important;
+  font-size:.52rem!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer{
+  grid-column:2!important;
+  grid-row:1!important;
+  justify-content:flex-start!important;
+  text-align:left!important;
+  height:20px!important;
+  color:#8dffb0!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim{
+  grid-column:2!important;
+  grid-row:2!important;
+  justify-content:flex-start!important;
+  text-align:left!important;
+  height:20px!important;
+  color:#ffb5c1!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer::before,
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim::before{
+  display:inline-grid;
+  place-items:center;
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+  border-radius:5px;
+  font-size:.46rem;
+  font-weight:1000;
+  line-height:1;
+  border:1px solid currentColor;
+  opacity:.82;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer::before{content:'K';}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim::before{content:'V';}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon{
+  grid-column:3!important;
+  grid-row:1 / span 2!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:42px!important;
+  min-height:42px!important;
+  display:grid!important;
+  grid-template-columns:36px minmax(0,1fr)!important;
+  place-items:center stretch!important;
+  gap:5px!important;
+  padding:3px 5px!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon .visual-icon-wrap{
+  width:34px!important;
+  min-width:34px!important;
+  height:27px!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon-name{
+  display:block!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font-size:.56rem!important;
+  line-height:1.05!important;
+  font-weight:900!important;
+  color:rgba(244,246,255,.92)!important;
+  text-align:left!important;
+}
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer-name,
+.live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim-name{
+  font-size:.58rem!important;
+  font-weight:900!important;
+}
+
+/* Do not hide the weapon name in the expanded modal on phones. */
+.live-feed-popup-players .live-feed-kill-row .kill-weapon-name{
+  display:block!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+
+@media(max-width:760px){
+  .live-feed-card > .live-feed-players .live-feed-kill-row{
+    grid-template-columns:36px minmax(0,1fr) minmax(76px,96px)!important;
+    min-height:48px!important;
+    height:48px!important;
+    gap:2px 4px!important;
+  }
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-time{
+    height:36px!important;
+    font-size:.46rem!important;
+  }
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon{
+    height:40px!important;
+    min-height:40px!important;
+    grid-template-columns:30px minmax(0,1fr)!important;
+    gap:4px!important;
+    padding:3px 4px!important;
+  }
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon .visual-icon-wrap{
+    width:29px!important;
+    min-width:29px!important;
+    height:24px!important;
+  }
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon-name,
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-killer-name,
+  .live-feed-card > .live-feed-players .live-feed-kill-row .kill-victim-name{
+    font-size:.52rem!important;
+  }
+  .live-feed-popup-players .live-feed-player-head.elims,
+  .live-feed-popup-players .live-feed-kill-row{
+    grid-template-columns:44px minmax(92px,1fr) minmax(86px,112px) minmax(92px,1fr)!important;
+  }
+  .live-feed-popup-players .live-feed-kill-row .kill-weapon{
+    min-width:0!important;
+    max-width:none!important;
+  }
+}
+
+html[data-theme="light"] .live-feed-card > .live-feed-players .live-feed-kill-row .kill-weapon-name{
+  color:#1c2942!important;
+}
