@@ -564,7 +564,17 @@ function ewcFocusableWithin(modal){
 function closeTopManagedModal(){
   const modal = ewcTopModal();
   if(!modal){ closeMobileSidebar(); return; }
-  if(modal.id === 'itemDetailModal') closeItemDetailPopup();
+  if(modal.id === 'itemDetailModal'){
+    const mapCard = modal.querySelector('.item-detail-card.map-fullscreen');
+    if(mapCard){
+      mapCard.classList.remove('map-fullscreen');
+      const expandBtn = mapCard.querySelector('[data-map-action="fullscreen"]');
+      expandBtn?.setAttribute('aria-pressed','false');
+      requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      return;
+    }
+    closeItemDetailPopup();
+  }
   else if(modal.id === 'resourceModal') closeResourcePopup();
   else if(modal.id === 'liveFeedTeamGlobalModal') closeLiveFeedTeamPopup(null, modal);
   else if(modal.id === 'teamModal') closeTeamModal();
@@ -5342,10 +5352,241 @@ function closeResourcePopup(options={}){
   el('teamModal')?.classList.remove('resource-stacked');
   closeManagedModal(modal, options);
 }
+let EWC_MAP_VIEWER_CLEANUP = null;
+function destroyMapDetailViewer(){
+  if(typeof EWC_MAP_VIEWER_CLEANUP === 'function'){
+    try{ EWC_MAP_VIEWER_CLEANUP(); }catch(err){ console.warn('Map viewer cleanup failed:', err); }
+  }
+  EWC_MAP_VIEWER_CLEANUP = null;
+}
 function closeItemDetailPopup(options={}){
+  destroyMapDetailViewer();
   const modal = el('itemDetailModal');
-  modal?.querySelector('.item-detail-card')?.classList.remove('map-view', 'loadout-view');
+  modal?.querySelector('.item-detail-card')?.classList.remove('map-view', 'loadout-view', 'map-fullscreen');
   closeManagedModal(modal, options);
+}
+
+function initMapDetailViewer(root){
+  destroyMapDetailViewer();
+  if(!root) return;
+  const viewport = root.querySelector('.map-detail-viewport');
+  const image = root.querySelector('.map-detail-zoom-image');
+  const zoomLabel = root.querySelector('[data-map-zoom-label]');
+  const buttons = [...root.querySelectorAll('[data-map-action]')];
+  if(!viewport || !image) return;
+
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 6;
+  const ZOOM_STEP = 0.35;
+  const pointers = new Map();
+  const state = { scale:1, x:0, y:0, dragging:false, moved:false };
+  let dragStart = null;
+  let pinchStart = null;
+  let lastTap = { time:0, x:0, y:0 };
+  let resizeObserver = null;
+
+  const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+  const fittedImageSize = () => {
+    const rect = viewport.getBoundingClientRect();
+    const nw = image.naturalWidth || rect.width || 1;
+    const nh = image.naturalHeight || rect.height || 1;
+    const ratio = Math.min(rect.width / nw, rect.height / nh);
+    return { width:nw * ratio, height:nh * ratio, viewportWidth:rect.width, viewportHeight:rect.height };
+  };
+  const panBounds = (scale=state.scale) => {
+    const size = fittedImageSize();
+    return {
+      x: Math.max(0, (size.width * scale - size.viewportWidth) / 2),
+      y: Math.max(0, (size.height * scale - size.viewportHeight) / 2)
+    };
+  };
+  const clampPan = () => {
+    const bounds = panBounds();
+    state.x = clamp(state.x, -bounds.x, bounds.x);
+    state.y = clamp(state.y, -bounds.y, bounds.y);
+    if(state.scale <= MIN_SCALE){ state.x = 0; state.y = 0; }
+  };
+  const render = () => {
+    clampPan();
+    image.style.transform = `translate3d(${state.x}px, ${state.y}px, 0) scale(${state.scale})`;
+    viewport.classList.toggle('is-zoomed', state.scale > 1.001);
+    viewport.classList.toggle('is-dragging', state.dragging);
+    if(zoomLabel) zoomLabel.textContent = `${Math.round(state.scale * 100)}%`;
+    buttons.forEach(btn => {
+      const action = btn.dataset.mapAction;
+      if(action === 'zoom-out') btn.disabled = state.scale <= MIN_SCALE + .001;
+      if(action === 'zoom-in') btn.disabled = state.scale >= MAX_SCALE - .001;
+      if(action === 'reset') btn.disabled = state.scale <= MIN_SCALE + .001 && Math.abs(state.x) < .5 && Math.abs(state.y) < .5;
+    });
+  };
+  const reset = () => {
+    state.scale = MIN_SCALE;
+    state.x = 0;
+    state.y = 0;
+    render();
+  };
+  const zoomAt = (nextScale, clientX, clientY) => {
+    const rect = viewport.getBoundingClientRect();
+    const oldScale = state.scale;
+    const scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+    if(Math.abs(scale - oldScale) < .0001) return;
+    const px = (clientX ?? rect.left + rect.width / 2) - rect.left - rect.width / 2;
+    const py = (clientY ?? rect.top + rect.height / 2) - rect.top - rect.height / 2;
+    const contentX = (px - state.x) / oldScale;
+    const contentY = (py - state.y) / oldScale;
+    state.scale = scale;
+    state.x = px - contentX * scale;
+    state.y = py - contentY * scale;
+    render();
+  };
+  const panBy = (dx, dy) => {
+    if(state.scale <= MIN_SCALE) return;
+    state.x += dx;
+    state.y += dy;
+    render();
+  };
+  const pointerDistance = () => {
+    const pts = [...pointers.values()];
+    if(pts.length < 2) return 0;
+    return Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+  };
+  const pointerMidpoint = () => {
+    const pts = [...pointers.values()];
+    if(pts.length < 2) return null;
+    return { x:(pts[0].x + pts[1].x)/2, y:(pts[0].y + pts[1].y)/2 };
+  };
+
+  const onWheel = event => {
+    event.preventDefault();
+    const multiplier = Math.exp(-event.deltaY * .0018);
+    zoomAt(state.scale * multiplier, event.clientX, event.clientY);
+  };
+  const onPointerDown = event => {
+    if(event.button != null && event.button !== 0 && event.pointerType === 'mouse') return;
+    viewport.setPointerCapture?.(event.pointerId);
+    pointers.set(event.pointerId, {x:event.clientX, y:event.clientY});
+    state.moved = false;
+    if(pointers.size === 1){
+      dragStart = { pointerX:event.clientX, pointerY:event.clientY, x:state.x, y:state.y };
+      state.dragging = state.scale > MIN_SCALE;
+    }else if(pointers.size === 2){
+      pinchStart = {
+        distance:pointerDistance() || 1,
+        scale:state.scale,
+        midpoint:pointerMidpoint(),
+        x:state.x,
+        y:state.y
+      };
+      state.dragging = true;
+    }
+    render();
+  };
+  const onPointerMove = event => {
+    if(!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, {x:event.clientX, y:event.clientY});
+    if(pointers.size >= 2 && pinchStart){
+      event.preventDefault();
+      const distance = pointerDistance() || pinchStart.distance;
+      const midpoint = pointerMidpoint();
+      const nextScale = clamp(pinchStart.scale * (distance / pinchStart.distance), MIN_SCALE, MAX_SCALE);
+      state.scale = pinchStart.scale;
+      state.x = pinchStart.x;
+      state.y = pinchStart.y;
+      zoomAt(nextScale, pinchStart.midpoint?.x, pinchStart.midpoint?.y);
+      if(midpoint && pinchStart.midpoint){
+        state.x += midpoint.x - pinchStart.midpoint.x;
+        state.y += midpoint.y - pinchStart.midpoint.y;
+      }
+      state.moved = true;
+      render();
+      return;
+    }
+    if(pointers.size === 1 && dragStart && state.scale > MIN_SCALE){
+      event.preventDefault();
+      const dx = event.clientX - dragStart.pointerX;
+      const dy = event.clientY - dragStart.pointerY;
+      if(Math.abs(dx) + Math.abs(dy) > 3) state.moved = true;
+      state.x = dragStart.x + dx;
+      state.y = dragStart.y + dy;
+      state.dragging = true;
+      render();
+    }
+  };
+  const finishPointer = event => {
+    const wasSingle = pointers.size === 1;
+    const point = pointers.get(event.pointerId) || {x:event.clientX, y:event.clientY};
+    pointers.delete(event.pointerId);
+    try{ if(viewport.hasPointerCapture?.(event.pointerId)) viewport.releasePointerCapture(event.pointerId); }catch{}
+    if(wasSingle && !state.moved && event.pointerType !== 'mouse'){
+      const now = Date.now();
+      const near = Math.hypot(point.x-lastTap.x, point.y-lastTap.y) < 34;
+      if(now-lastTap.time < 320 && near){ reset(); lastTap.time = 0; }
+      else lastTap = {time:now, x:point.x, y:point.y};
+    }
+    if(pointers.size === 1){
+      const remaining = [...pointers.values()][0];
+      dragStart = {pointerX:remaining.x, pointerY:remaining.y, x:state.x, y:state.y};
+    }else if(!pointers.size){
+      dragStart = null;
+      pinchStart = null;
+      state.dragging = false;
+      render();
+    }
+  };
+  const onKeyDown = event => {
+    const key = event.key;
+    if(key === '+' || key === '='){ event.preventDefault(); zoomAt(state.scale + ZOOM_STEP); }
+    else if(key === '-' || key === '_'){ event.preventDefault(); zoomAt(state.scale - ZOOM_STEP); }
+    else if(key === '0' || key === 'Home'){ event.preventDefault(); reset(); }
+    else if(key === 'ArrowLeft'){ event.preventDefault(); panBy(44,0); }
+    else if(key === 'ArrowRight'){ event.preventDefault(); panBy(-44,0); }
+    else if(key === 'ArrowUp'){ event.preventDefault(); panBy(0,44); }
+    else if(key === 'ArrowDown'){ event.preventDefault(); panBy(0,-44); }
+  };
+  const onDoubleClick = event => { event.preventDefault(); reset(); };
+  const onButtonClick = event => {
+    const action = event.currentTarget.dataset.mapAction;
+    if(action === 'zoom-in') zoomAt(state.scale + ZOOM_STEP);
+    else if(action === 'zoom-out') zoomAt(state.scale - ZOOM_STEP);
+    else if(action === 'reset') reset();
+    else if(action === 'fullscreen'){
+      const card = root.closest('.item-detail-card');
+      card?.classList.toggle('map-fullscreen');
+      event.currentTarget.setAttribute('aria-pressed', card?.classList.contains('map-fullscreen') ? 'true' : 'false');
+      requestAnimationFrame(render);
+    }
+  };
+
+  viewport.addEventListener('wheel', onWheel, {passive:false});
+  viewport.addEventListener('pointerdown', onPointerDown);
+  viewport.addEventListener('pointermove', onPointerMove, {passive:false});
+  viewport.addEventListener('pointerup', finishPointer);
+  viewport.addEventListener('pointercancel', finishPointer);
+  viewport.addEventListener('lostpointercapture', finishPointer);
+  viewport.addEventListener('keydown', onKeyDown);
+  viewport.addEventListener('dblclick', onDoubleClick);
+  buttons.forEach(btn => btn.addEventListener('click', onButtonClick));
+  if(image.complete && image.naturalWidth) reset();
+  else image.addEventListener('load', reset, {once:true});
+  image.addEventListener('dragstart', event => event.preventDefault());
+  if(window.ResizeObserver){
+    resizeObserver = new ResizeObserver(() => render());
+    resizeObserver.observe(viewport);
+  }
+  render();
+
+  EWC_MAP_VIEWER_CLEANUP = () => {
+    resizeObserver?.disconnect();
+    viewport.removeEventListener('wheel', onWheel);
+    viewport.removeEventListener('pointerdown', onPointerDown);
+    viewport.removeEventListener('pointermove', onPointerMove);
+    viewport.removeEventListener('pointerup', finishPointer);
+    viewport.removeEventListener('pointercancel', finishPointer);
+    viewport.removeEventListener('lostpointercapture', finishPointer);
+    viewport.removeEventListener('keydown', onKeyDown);
+    viewport.removeEventListener('dblclick', onDoubleClick);
+    buttons.forEach(btn => btn.removeEventListener('click', onButtonClick));
+  };
 }
 function itemDetailImageClass(kind){ return kind === 'weapons' || kind === 'weapon' ? 'weapon' : ''; }
 const TEAM_BOOSTER_ICON_MAP = {
@@ -5574,19 +5815,35 @@ function openItemDetailPopup(item, kind, context='resource'){
 
   if(kind === 'maps'){
     const mapImg = item.img
-      ? `<img src="${escHtml(item.img)}" alt="${escHtml(item.name || 'Map')}" loading="lazy">`
+      ? `<img class="map-detail-zoom-image" src="${escHtml(item.img)}" alt="${escHtml(item.name || 'Map')}" loading="eager" draggable="false">`
       : `<div class="map-detail-fallback">${escHtml(item.name || 'Map')}</div>`;
 
     body.innerHTML = `
-      <div class="map-detail-view">
-        <div class="map-detail-image">${mapImg}</div>
+      <div class="map-detail-view" data-map-viewer>
+        <div class="map-detail-toolbar" role="toolbar" aria-label="Map zoom controls">
+          <div class="map-detail-toolbar-group">
+            <button class="map-tool-btn" type="button" data-map-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
+            <output class="map-zoom-level" data-map-zoom-label aria-live="polite">100%</output>
+            <button class="map-tool-btn" type="button" data-map-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+          </div>
+          <div class="map-detail-toolbar-group">
+            <button class="map-tool-btn map-tool-text" type="button" data-map-action="reset" title="Reset zoom and position">Reset</button>
+            <button class="map-tool-btn map-tool-fullscreen" type="button" data-map-action="fullscreen" aria-pressed="false" title="Expand map viewer"><span aria-hidden="true">⛶</span><span>Expand</span></button>
+          </div>
+        </div>
+        <div class="map-detail-viewport" tabindex="0" role="application" aria-label="Interactive ${escHtml(item.name || 'map')} image. Use mouse wheel or plus and minus to zoom, drag to pan, and press zero to reset.">
+          <div class="map-detail-canvas">${mapImg}</div>
+          ${item.img ? `<div class="map-gesture-hint"><span class="desktop-hint">Wheel to zoom • drag to pan • double-click to reset</span><span class="touch-hint">Pinch to zoom • drag to pan • double-tap to reset</span></div>` : ''}
+        </div>
         <div class="map-detail-caption">
           <span class="item-detail-chip">${escHtml(singular)}</span>
           <span class="item-detail-chip">${escHtml(item.sub || 'Map Reference')}</span>
+          <span class="item-detail-chip map-keyboard-hint">Keyboard: + / − / arrows / 0</span>
         </div>
       </div>
     `;
-    openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detailTitle} details opened` });
+    openManagedModal(el('itemDetailModal'), { initialFocus:'.map-detail-viewport, #itemDetailClose', announce:`${detailTitle} interactive map opened` });
+    requestAnimationFrame(() => initMapDetailViewer(body.querySelector('[data-map-viewer]')));
     return;
   }
 

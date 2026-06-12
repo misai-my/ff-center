@@ -162,3 +162,7 @@ The elimination feed now resolves player names from all available player identif
 - `index.html` and `ewc-team-overview.html` are kept identical and load the same refreshed `styles.css` and `app.js` assets.
 - The accent color selector is collapsible. When closed, only the selected color and expand button remain visible.
 
+## Interactive map viewer
+
+The enlarged map modal supports mouse-wheel and button zoom, pointer drag/pan, mobile pinch zoom, double-click or double-tap reset, keyboard navigation (`+`, `-`, arrow keys, and `0`), and an expanded viewer mode. Controls and viewport sizing adapt to desktop, tablet, and mobile screens.
+
