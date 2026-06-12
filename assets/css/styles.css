@@ -6610,3 +6610,60 @@ html[data-theme="light"] .map-detail-viewport{border-color:rgba(10,20,40,.14);ba
   overflow:hidden!important;
 }
 .item-detail-card.map-view.map-fullscreen .map-tool-fullscreen [data-map-expand-label]::after{content:none!important;}
+
+
+/* ===== Real fullscreen map viewer ===== */
+.item-detail-card.map-view:fullscreen,
+.item-detail-card.map-view:-webkit-full-screen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:var(--panel2,#0b1020)!important;
+  box-shadow:none!important;
+}
+.item-detail-card.map-view:fullscreen::backdrop,
+.item-detail-card.map-view:-webkit-full-screen::backdrop{
+  background:#05070d;
+}
+.item-detail-card.map-view:fullscreen .item-detail-body,
+.item-detail-card.map-view:-webkit-full-screen .item-detail-body{
+  flex:1 1 0!important;
+  height:0!important;
+  min-height:0!important;
+}
+.item-detail-modal.map-expanded-fallback{
+  padding:0!important;
+  place-items:stretch!important;
+  align-items:stretch!important;
+  background:#05070d!important;
+}
+.item-detail-modal.map-expanded-fallback .item-detail-backdrop{display:none!important;}
+.item-detail-modal.map-expanded-fallback .item-detail-card.map-view.map-fullscreen{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  border-radius:0!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.item-detail-card.map-view.map-fullscreen .map-detail-view,
+.item-detail-card.map-view:fullscreen .map-detail-view,
+.item-detail-card.map-view:-webkit-full-screen .map-detail-view{
+  height:100%!important;
+  min-height:0!important;
+}
+@supports not (height:100dvh){
+  .item-detail-card.map-view:fullscreen,
+  .item-detail-card.map-view:-webkit-full-screen,
+  .item-detail-modal.map-expanded-fallback .item-detail-card.map-view.map-fullscreen{height:100vh!important;}
+}

@@ -176,3 +176,8 @@ The enlarged map opens in **Fit** mode, where the complete map image is visible.
 ## Map viewer visible-area correction
 
 The map viewer now measures the actually visible clipped viewport, permits panning at 100% whenever overflow exists, and uses fresh asset query strings to prevent older cached viewer code from loading. Map images may remain remote; local map files are optional for availability, not required for fit or panning.
+
+
+## Map fullscreen
+
+The map viewer Fullscreen button uses the browser Fullscreen API. Browsers without element-fullscreen support automatically use a full-viewport fallback.

@@ -5365,22 +5365,68 @@ function closeItemDetailPopup(options={}){
   closeManagedModal(modal, options);
 }
 
-function setMapViewerExpanded(card, expanded){
+function mapFullscreenElement(){
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+function requestMapFullscreen(element){
+  if(!element) return null;
+  const request = element.requestFullscreen || element.webkitRequestFullscreen;
+  return typeof request === 'function' ? request.call(element) : null;
+}
+function exitMapFullscreen(){
+  const exit = document.exitFullscreen || document.webkitExitFullscreen;
+  return typeof exit === 'function' ? exit.call(document) : null;
+}
+function setMapViewerExpanded(card, expanded, mode='fallback'){
   if(!card) return false;
   const isExpanded = Boolean(expanded);
+  const modal = card.closest('.item-detail-modal');
   card.classList.toggle('map-fullscreen', isExpanded);
+  card.dataset.mapExpandMode = isExpanded ? mode : '';
+  modal?.classList.toggle('map-expanded-fallback', isExpanded && mode === 'fallback');
   const btn = card.querySelector('[data-map-action="fullscreen"]');
   if(btn){
     btn.setAttribute('aria-pressed', isExpanded ? 'true' : 'false');
-    btn.setAttribute('aria-label', isExpanded ? 'Exit expanded map viewer' : 'Expand map viewer');
-    btn.title = isExpanded ? 'Exit expanded map viewer' : 'Expand map viewer';
+    btn.setAttribute('aria-label', isExpanded ? 'Exit fullscreen map viewer' : 'Open fullscreen map viewer');
+    btn.title = isExpanded ? 'Exit fullscreen' : 'Open fullscreen';
     const icon = btn.querySelector('[data-map-expand-icon]');
     const label = btn.querySelector('[data-map-expand-label]');
-    if(icon) icon.textContent = isExpanded ? '⤢' : '⛶';
-    if(label) label.textContent = isExpanded ? 'Exit Expand' : 'Expand';
+    if(icon) icon.textContent = isExpanded ? '⤡' : '⛶';
+    if(label) label.textContent = isExpanded ? 'Exit Fullscreen' : 'Fullscreen';
   }
   requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
   return isExpanded;
+}
+async function toggleMapViewerFullscreen(card){
+  if(!card) return false;
+  const active = mapFullscreenElement();
+  const ownsNativeFullscreen = active === card || card.contains(active);
+
+  if(ownsNativeFullscreen){
+    try{ await Promise.resolve(exitMapFullscreen()); }
+    catch(err){ console.warn('Could not exit fullscreen:', err); }
+    setMapViewerExpanded(card, false);
+    return false;
+  }
+
+  if(card.classList.contains('map-fullscreen')){
+    setMapViewerExpanded(card, false);
+    return false;
+  }
+
+  try{
+    const result = requestMapFullscreen(card);
+    if(result !== null){
+      await Promise.resolve(result);
+      setMapViewerExpanded(card, true, 'native');
+      return true;
+    }
+  }catch(err){
+    console.warn('Native fullscreen unavailable; using full-viewport mode:', err);
+  }
+
+  setMapViewerExpanded(card, true, 'fallback');
+  return true;
 }
 
 function initMapDetailViewer(root){
@@ -5635,12 +5681,23 @@ function initMapDetailViewer(root){
     else if(action === 'reset') reset();
     else if(action === 'fullscreen'){
       const card = root.closest('.item-detail-card');
-      const expanded = !card?.classList.contains('map-fullscreen');
-      setMapViewerExpanded(card, expanded);
-      scheduleFitReset();
-      requestAnimationFrame(() => viewport.focus({preventScroll:true}));
+      toggleMapViewerFullscreen(card).finally(() => {
+        scheduleFitReset();
+        requestAnimationFrame(() => viewport.focus({preventScroll:true}));
+      });
     }
   };
+
+  const card = root.closest('.item-detail-card');
+  const onFullscreenChange = () => {
+    const active = mapFullscreenElement();
+    const ownsNativeFullscreen = Boolean(card && (active === card || card.contains(active)));
+    if(ownsNativeFullscreen) setMapViewerExpanded(card, true, 'native');
+    else if(card?.dataset.mapExpandMode === 'native') setMapViewerExpanded(card, false);
+    scheduleFitReset();
+  };
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
   viewport.addEventListener('wheel', onWheel, {passive:false});
   viewport.addEventListener('pointerdown', onPointerDown);
@@ -5658,7 +5715,6 @@ function initMapDetailViewer(root){
   if(window.ResizeObserver){
     resizeObserver = new ResizeObserver(() => scheduleFitReset());
     resizeObserver.observe(viewport);
-    const card = root.closest('.item-detail-card');
     if(card) resizeObserver.observe(card);
   }
   scheduleFitReset();
@@ -5675,6 +5731,13 @@ function initMapDetailViewer(root){
     viewport.removeEventListener('keydown', onKeyDown);
     viewport.removeEventListener('dblclick', onDoubleClick);
     buttons.forEach(btn => btn.removeEventListener('click', onButtonClick));
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    const active = mapFullscreenElement();
+    if(card && (active === card || card.contains(active))){
+      try{ Promise.resolve(exitMapFullscreen()).catch(() => {}); }catch{}
+    }
+    setMapViewerExpanded(card, false);
   };
 }
 function itemDetailImageClass(kind){ return kind === 'weapons' || kind === 'weapon' ? 'weapon' : ''; }
@@ -5917,7 +5980,7 @@ function openItemDetailPopup(item, kind, context='resource'){
           </div>
           <div class="map-detail-toolbar-group">
             <button class="map-tool-btn map-tool-text" type="button" data-map-action="reset" title="Reset zoom and position">Reset</button>
-            <button class="map-tool-btn map-tool-fullscreen" type="button" data-map-action="fullscreen" aria-pressed="false" aria-label="Expand map viewer" title="Expand map viewer"><span data-map-expand-icon aria-hidden="true">⛶</span><span data-map-expand-label>Expand</span></button>
+            <button class="map-tool-btn map-tool-fullscreen" type="button" data-map-action="fullscreen" aria-pressed="false" aria-label="Open fullscreen map viewer" title="Open fullscreen"><span data-map-expand-icon aria-hidden="true">⛶</span><span data-map-expand-label>Fullscreen</span></button>
           </div>
         </div>
         <div class="map-detail-viewport" tabindex="0" role="application" aria-label="Interactive ${escHtml(item.name || 'map')} image. Use mouse wheel or plus and minus to zoom, drag to pan, and press zero to reset.">
