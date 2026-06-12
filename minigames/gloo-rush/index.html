@@ -81,7 +81,7 @@
 <div class="leaderboard-panel">
   <div class="leaderboard-head">
     <strong>ARCADE LEADERBOARD</strong>
-    <span>TOP 10 · ARCADE MODE</span>
+    <span id="leaderboardStatus">GLOBAL TOP 10 · CONNECTING</span>
   </div>
   <ol id="leaderboardList" class="leaderboard-list"></ol>
 </div>
@@ -178,6 +178,7 @@
     </footer>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__glooRushSupabaseFailed=true"></script>
   <script src="game.js"></script>
 </body>
 </html>

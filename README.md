@@ -269,3 +269,8 @@ Migration 03 creates or upgrades `ff_teams`, `tournament_stage_config`, and `tou
 
 
 Gloo Rush mobile movement now uses a floating analog joystick.
+
+
+## Gloo Rush global leaderboard
+
+Run `supabase/05_gloo_rush_global_leaderboard.sql` once in the Supabase SQL Editor. After that, every visitor sees the same live Top 10 and can submit validated three-character arcade scores. If the table/RPC is unavailable, the game clearly switches to a local-only fallback.

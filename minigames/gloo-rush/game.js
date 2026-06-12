@@ -32,6 +32,7 @@
     toast: document.getElementById("toast"),
     selectedDescription: document.getElementById("selectedDescription"),
     leaderboardList: document.getElementById("leaderboardList"),
+    leaderboardStatus: document.getElementById("leaderboardStatus"),
     gameOverInitials: document.getElementById("gameOverInitials"),
     gameOverSaveButton: document.getElementById("gameOverSaveButton"),
     gameOverSaveMessage: document.getElementById("gameOverSaveMessage"),
@@ -176,6 +177,17 @@ function cloneArenasForLevel(level) {
 
 
 
+
+const SUPABASE_URL = "https://ooutjrewmwsixghbouxi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg";
+const globalScoreClient = window.supabase?.createClient && !window.__glooRushSupabaseFailed
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    })
+  : null;
+let leaderboardCache = [];
+let leaderboardMode = "loading";
+
 const LEADERBOARD_KEY = "glooRushArcadeLeaderboard";
 const LEADERBOARD_LIMIT = 10;
 
@@ -183,7 +195,8 @@ function sanitizeInitials(value) {
   return (value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
 }
 
-function getLeaderboard() {
+
+function getLocalLeaderboard() {
   try {
     const raw = localStorage.getItem(LEADERBOARD_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
@@ -193,7 +206,7 @@ function getLeaderboard() {
   }
 }
 
-function saveLeaderboard(entries) {
+function saveLocalLeaderboard(entries) {
   localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, LEADERBOARD_LIMIT)));
 }
 
@@ -203,34 +216,84 @@ function scoreSort(a, b) {
   return (a.time || 99999) - (b.time || 99999);
 }
 
+function normalizeGlobalEntry(row) {
+  return {
+    id: row.id,
+    initials: row.initials,
+    score: Number(row.score || 0),
+    enemies: Number(row.enemies || 0),
+    time: Number(row.run_seconds || 0),
+    level: Number(row.level_reached || 1),
+    result: row.result || "run",
+    character: row.character || "kelly",
+    savedAt: row.created_at || ""
+  };
+}
+
+function setLeaderboardStatus(mode, text) {
+  leaderboardMode = mode;
+  if (!ui.leaderboardStatus) return;
+  ui.leaderboardStatus.dataset.mode = mode;
+  ui.leaderboardStatus.textContent = text;
+}
+
+async function refreshLeaderboard() {
+  setLeaderboardStatus("loading", "GLOBAL TOP 10 · LOADING");
+  if (globalScoreClient) {
+    try {
+      const { data, error } = await globalScoreClient
+        .from("gloo_rush_scores")
+        .select("id, initials, score, enemies, run_seconds, level_reached, result, character, created_at")
+        .order("score", { ascending: false })
+        .order("level_reached", { ascending: false })
+        .order("run_seconds", { ascending: true })
+        .limit(100);
+      if (error) throw error;
+      leaderboardCache = (data || []).map(normalizeGlobalEntry).sort(scoreSort);
+      setLeaderboardStatus("global", "GLOBAL TOP 10 · LIVE");
+      renderLeaderboard();
+      return true;
+    } catch (error) {
+      console.warn("Global Gloo Rush leaderboard unavailable:", error);
+    }
+  }
+  leaderboardCache = getLocalLeaderboard().sort(scoreSort);
+  setLeaderboardStatus("local", "LOCAL FALLBACK · DATABASE SETUP NEEDED");
+  renderLeaderboard();
+  return false;
+}
+
 function getCharacterBest(character) {
-  return getLeaderboard().filter((entry) => entry.character === character).sort(scoreSort)[0] || null;
+  return leaderboardCache.filter((entry) => entry.character === character).sort(scoreSort)[0] || null;
 }
 
 function renderAttractBanner() {
   if (!ui.attractBanner) return;
-  const board = getLeaderboard().sort(scoreSort).slice(0, 3);
+  const board = leaderboardCache.slice().sort(scoreSort).slice(0, 3);
   if (!board.length) {
-    ui.attractBanner.innerHTML = `<strong>ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">NO HIGH SCORE YET</span><span class="attract-sub">Press DROP IN and set the first record.</span></div>`;
+    const modeText = leaderboardMode === "global" ? "Global leaderboard is live." : "Leaderboard database is not connected.";
+    ui.attractBanner.innerHTML = `<strong>ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">NO HIGH SCORE YET</span><span class="attract-sub">${modeText} Press DROP IN and set the first record.</span></div>`;
     return;
   }
   const top = board[0];
   const rivals = board.slice(1).map((entry) => `${entry.initials} ${entry.score.toLocaleString()}`).join(" · ");
-  ui.attractBanner.innerHTML = `<strong>ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">HIGH SCORE ${top.score.toLocaleString()}</span><span class="attract-sub">${top.initials} · ${top.character.toUpperCase()} · Lv ${top.level}/5${rivals ? ` · Rivals ${rivals}` : ""}</span></div>`;
+  const scope = leaderboardMode === "global" ? "GLOBAL" : "LOCAL";
+  ui.attractBanner.innerHTML = `<strong>${scope} ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">HIGH SCORE ${top.score.toLocaleString()}</span><span class="attract-sub">${top.initials} · ${top.character.toUpperCase()} · Lv ${top.level}/5${rivals ? ` · Rivals ${rivals}` : ""}</span></div>`;
 }
 
 function updateCharacterBestLine() {
   if (!ui.characterBestLine) return;
   const best = getCharacterBest(selectedCharacter);
+  const scope = leaderboardMode === "global" ? "GLOBAL" : "LOCAL";
   if (!best) {
-    ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} BEST:</strong> No saved score yet.`;
+    ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} ${scope} BEST:</strong> No saved score yet.`;
     return;
   }
-  ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} BEST:</strong> ${best.score.toLocaleString()} pts by ${best.initials} · Reached map ${best.level}/5 in ${formatTime(best.time || 0)}.`;
+  ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} ${scope} BEST:</strong> ${best.score.toLocaleString()} pts by ${best.initials} · Reached map ${best.level}/5 in ${formatTime(best.time || 0)}.`;
 }
 
 function renderLeaderboard() {
-  const board = getLeaderboard().sort(scoreSort).slice(0, LEADERBOARD_LIMIT);
+  const board = leaderboardCache.slice().sort(scoreSort).slice(0, LEADERBOARD_LIMIT);
   if (!ui.leaderboardList) return;
   if (!board.length) {
     ui.leaderboardList.innerHTML = '<li class="lb-empty">No scores saved yet. Be the first to set the mark.</li>';
@@ -243,6 +306,7 @@ function renderLeaderboard() {
   renderAttractBanner();
   updateCharacterBestLine();
 }
+
 
 
   const keys = Object.create(null);
@@ -511,11 +575,39 @@ function resetScoreSaveUI() {
   setSaveMessage("Save your arcade run to the leaderboard.");
 }
 
-function saveCurrentScore(rawInitials) {
+
+async function saveCurrentScore(rawInitials) {
   const initials = sanitizeInitials(rawInitials);
   if (initials.length !== 3) return { ok: false, message: "Use exactly 3 letters or numbers." };
   if (scoreSavedThisRun) return { ok: false, message: "This run has already been saved." };
-  const board = getLeaderboard();
+
+  const payload = {
+    p_initials: initials,
+    p_score: Math.max(0, Math.floor(score)),
+    p_enemies: Math.max(0, Math.floor(defeated)),
+    p_run_seconds: Math.max(0, Math.floor(elapsed)),
+    p_level_reached: clamp(currentLevelIndex + 1, 1, 5),
+    p_result: currentRunResult || "run",
+    p_character: selectedCharacter
+  };
+
+  if (globalScoreClient) {
+    try {
+      const { data, error } = await globalScoreClient.rpc("submit_gloo_rush_score", payload);
+      if (error) throw error;
+      scoreSavedThisRun = true;
+      [ui.gameOverInitials, ui.victoryInitials].forEach((input) => { if (input) input.disabled = true; });
+      [ui.gameOverSaveButton, ui.victorySaveButton].forEach((button) => { if (button) button.disabled = true; });
+      await refreshLeaderboard();
+      const returned = Array.isArray(data) ? data[0] : data;
+      const rank = returned?.rank_position || leaderboardCache.findIndex((item) => item.id === returned?.score_id) + 1;
+      return { ok: true, message: `Global score saved!${rank ? ` Rank #${rank}.` : ""}`, rank, global: true };
+    } catch (error) {
+      console.warn("Global score submission failed:", error);
+    }
+  }
+
+  const localBoard = getLocalLeaderboard();
   const entry = {
     initials,
     score,
@@ -526,24 +618,35 @@ function saveCurrentScore(rawInitials) {
     character: selectedCharacter,
     savedAt: Date.now()
   };
-  board.push(entry);
-  board.sort(scoreSort);
-  saveLeaderboard(board);
+  localBoard.push(entry);
+  localBoard.sort(scoreSort);
+  saveLocalLeaderboard(localBoard);
+  leaderboardCache = localBoard;
+  setLeaderboardStatus("local", "LOCAL FALLBACK · DATABASE SETUP NEEDED");
   renderLeaderboard();
   scoreSavedThisRun = true;
   [ui.gameOverInitials, ui.victoryInitials].forEach((input) => { if (input) input.disabled = true; });
   [ui.gameOverSaveButton, ui.victorySaveButton].forEach((button) => { if (button) button.disabled = true; });
-  const rank = getLeaderboard().findIndex((item) => item.savedAt === entry.savedAt) + 1;
-  return { ok: true, message: `Score saved! Rank #${rank || "-"}.`, rank };
+  return { ok: true, message: "Saved locally only. Run supabase/05_gloo_rush_global_leaderboard.sql to enable the shared Top 10.", global: false };
 }
 
-function handleSaveScore(which) {
+async function handleSaveScore(which) {
   const input = which === "victory" ? ui.victoryInitials : ui.gameOverInitials;
-  const result = saveCurrentScore(input ? input.value : "");
+  const button = which === "victory" ? ui.victorySaveButton : ui.gameOverSaveButton;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SAVING...";
+  }
+  const result = await saveCurrentScore(input ? input.value : "");
   setSaveMessage(result.message, result.ok ? "success" : "error");
+  if (button && !scoreSavedThisRun) {
+    button.disabled = false;
+    button.textContent = "SAVE SCORE";
+  }
   if (result.ok) beep(520, .12, "square", .04, 120);
   else beep(110, .07, "square", .025, -20);
 }
+
 
   function startGame() {
     ensureAudio();
@@ -573,7 +676,7 @@ function handleSaveScore(which) {
     });
     ui.selectedDescription.innerHTML = CHARACTER_DATA[selectedCharacter].description;
     resetScoreSaveUI();
-    renderLeaderboard();
+    refreshLeaderboard();
     resetGame();
     lastTime = performance.now();
     showToast("SELECT A SURVIVOR", 700);
@@ -2345,13 +2448,13 @@ function drawHUD() {
   if (ui.exitDataCenterButton) ui.exitDataCenterButton.addEventListener("click", exitToDataCenter);
 
   ui.startButton.addEventListener("click",startGame);
-  ui.gameOverSaveButton.addEventListener("click", () => handleSaveScore("gameover"));
-  ui.victorySaveButton.addEventListener("click", () => handleSaveScore("victory"));
+  ui.gameOverSaveButton.addEventListener("click", () => { void handleSaveScore("gameover"); });
+  ui.victorySaveButton.addEventListener("click", () => { void handleSaveScore("victory"); });
   [ui.gameOverInitials, ui.victoryInitials].forEach((input) => {
     if (!input) return;
     input.addEventListener("input", () => { input.value = sanitizeInitials(input.value); });
     input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") handleSaveScore(input === ui.victoryInitials ? "victory" : "gameover");
+      if (event.key === "Enter") void handleSaveScore(input === ui.victoryInitials ? "victory" : "gameover");
     });
   });
   ui.resumeButton.addEventListener("click",()=>pauseGame(false));

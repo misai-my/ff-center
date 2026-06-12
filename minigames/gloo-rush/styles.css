@@ -675,3 +675,8 @@ footer {
   .attract-banner .attract-score { font-size: 18px; }
   .character-best-line { font-size: 11px; }
 }
+
+
+#leaderboardStatus[data-mode="global"] { color: #7ff0b0; }
+#leaderboardStatus[data-mode="loading"] { color: #ffd574; }
+#leaderboardStatus[data-mode="local"] { color: #ff9aab; }
