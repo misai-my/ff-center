@@ -1874,15 +1874,79 @@ function refreshCascadeOptions(changed){
     if(KEYS.matchNo) setSelectOptions(el('fMatchNo'), uniqSorted(rD.map(r=>getVal(r,KEYS.matchNo))), false);
   }
 }
-function latestKeyFrom(rows){
-  let best = null;
-  for(const r of rows){
-    const y=n(getVal(r,KEYS.year)), w=n(getVal(r,KEYS.week)), d=n(getVal(r,KEYS.day)), m=n(getVal(r,KEYS.matchNo));
-    const pulled = Date.parse(norm(r.pulled_at || '')) || 0;
-    const key=(y*1e10)+(w*1e8)+(d*1e6)+(m*1e4)+Math.min(9999, Math.floor(pulled/100000000));
-    if(!best || key > best.key) best={key,y:norm(getVal(r,KEYS.year)),w:norm(getVal(r,KEYS.week)),d:norm(getVal(r,KEYS.day)),m:norm(getVal(r,KEYS.matchNo))};
+function latestRowTimestamp(r){
+  const candidates = [
+    r?.pulled_at,
+    r?.updated_at,
+    r?.created_at,
+    r?.inserted_at,
+    r?.snapshot_at,
+    r?.match_date,
+    r?.date
+  ];
+  let best = 0;
+  for(const value of candidates){
+    const parsed = Date.parse(norm(value));
+    if(Number.isFinite(parsed) && parsed > best) best = parsed;
   }
   return best;
+}
+function latestRowTuple(r){
+  return [
+    n(getVal(r, KEYS.year)),
+    latestRowTimestamp(r),
+    n(getVal(r, KEYS.week)),
+    n(getVal(r, KEYS.day)),
+    n(getVal(r, KEYS.matchNo)),
+    n(r?.id)
+  ];
+}
+function compareLatestRows(a, b){
+  const aa = latestRowTuple(a), bb = latestRowTuple(b);
+  for(let i=0;i<aa.length;i++){
+    if(aa[i] !== bb[i]) return aa[i] - bb[i];
+  }
+  return 0;
+}
+function latestContextFromRows(rows){
+  const usable = (rows || []).filter(Boolean);
+  if(!usable.length) return null;
+  let row = usable[0];
+  for(let i=1;i<usable.length;i++){
+    if(compareLatestRows(usable[i], row) > 0) row = usable[i];
+  }
+  return {
+    row,
+    tournament: norm(getVal(row, KEYS.tournament)),
+    stage: norm(getVal(row, KEYS.stage)),
+    mode: norm(getVal(row, KEYS.mode)).toUpperCase(),
+    source: norm(getVal(row, KEYS.dataSource)),
+    year: norm(getVal(row, KEYS.year)),
+    week: norm(getVal(row, KEYS.week)),
+    day: norm(getVal(row, KEYS.day)),
+    match: norm(getVal(row, KEYS.matchNo))
+  };
+}
+function findLatestTournamentFromRows(){
+  if(!KEYS.tournament) return '';
+  const groups = new Map();
+  for(const row of RAW){
+    const tournament = norm(getVal(row, KEYS.tournament));
+    if(!tournament) continue;
+    if(!groups.has(tournament)) groups.set(tournament, []);
+    groups.get(tournament).push(row);
+  }
+  let bestTournament = '';
+  let bestRow = null;
+  for(const [tournament, rows] of groups){
+    const context = latestContextFromRows(rows);
+    if(!context?.row) continue;
+    if(!bestRow || compareLatestRows(context.row, bestRow) > 0){
+      bestTournament = tournament;
+      bestRow = context.row;
+    }
+  }
+  return bestTournament;
 }
 function populateTopDropdowns(){
   if(KEYS.tournament) setSelectOptions(el('fTournament'), uniqSorted(RAW.map(r=>getVal(r,KEYS.tournament))), false);
@@ -1890,33 +1954,51 @@ function populateTopDropdowns(){
   if(KEYS.mode) setSelectOptions(el('fMode'), uniqSorted(RAW.map(r=>String(getVal(r,KEYS.mode)).toUpperCase())), false);
   if(KEYS.dataSource) setSelectOptions(el('fSource'), uniqSorted(RAW.map(r=>getVal(r,KEYS.dataSource))), false);
 }
-function findEwcTournamentOption(){
-  const opts = [...el('fTournament').options].map(o => o.value).filter(v => v && v !== '__all__');
-  return opts.find(v => /\bEWC\b|Esports World Cup/i.test(v)) || '';
-}
 function resetToLatest(){
   populateTopDropdowns();
 
-  // Because this is the EWC page, default to the first tournament containing
-  // "EWC" or "Esports World Cup" when that data exists. If not, fall back to all data.
-  const ewcTournament = findEwcTournamentOption();
-  if(ewcTournament && [...el('fTournament').options].some(o=>o.value===ewcTournament)){
-    el('fTournament').value = ewcTournament;
+  // Reset non-temporal filters to All so the latest match is not hidden by an
+  // older mode/source choice. Then select the newest tournament represented by
+  // the database rows and cascade down to its newest stage/week/day/match.
+  for(const id of ['fStage','fMode','fSource','fYear','fWeek','fDay','fMatchNo']){
+    if(el(id)) el(id).value = '__all__';
   }
 
-  const tRows = (el('fTournament').value !== '__all__' && KEYS.tournament)
-    ? RAW.filter(r => norm(getVal(r, KEYS.tournament)) === el('fTournament').value)
-    : RAW.slice();
+  const latestTournament = findLatestTournamentFromRows();
+  if(latestTournament && optionExists('fTournament', latestTournament)){
+    el('fTournament').value = latestTournament;
+  }else if(el('fTournament')){
+    el('fTournament').value = '__all__';
+  }
 
-  const latest = latestKeyFrom(tRows);
   refreshCascadeOptions('tournament');
-  if(latest?.y && [...el('fYear').options].some(o=>o.value===latest.y)) el('fYear').value = latest.y;
+
+  const tournamentRows = (latestTournament && KEYS.tournament)
+    ? RAW.filter(r => norm(getVal(r, KEYS.tournament)) === latestTournament)
+    : RAW.slice();
+  let latest = latestContextFromRows(tournamentRows);
+
+  if(latest?.stage && optionExists('fStage', latest.stage)){
+    el('fStage').value = latest.stage;
+  }
+  refreshCascadeOptions('stage');
+
+  // Re-evaluate after selecting the latest stage in case week/day numbering
+  // restarts between stages.
+  const latestStageRows = tournamentRows.filter(r => {
+    if(!latest?.stage || !KEYS.stage) return true;
+    return norm(getVal(r, KEYS.stage)) === latest.stage;
+  });
+  latest = latestContextFromRows(latestStageRows) || latest;
+
+  if(latest?.year && optionExists('fYear', latest.year)) el('fYear').value = latest.year;
   refreshCascadeOptions('year');
-  if(latest?.w && [...el('fWeek').options].some(o=>o.value===latest.w)) el('fWeek').value = latest.w;
+  if(latest?.week && optionExists('fWeek', latest.week)) el('fWeek').value = latest.week;
   refreshCascadeOptions('week');
-  if(latest?.d && [...el('fDay').options].some(o=>o.value===latest.d)) el('fDay').value = latest.d;
+  if(latest?.day && optionExists('fDay', latest.day)) el('fDay').value = latest.day;
   refreshCascadeOptions('day');
-  el('fMatchNo').value = '__all__';
+  if(latest?.match && optionExists('fMatchNo', latest.match)) el('fMatchNo').value = latest.match;
+
   applyFilters();
 }
 function refreshOpenTeamModalFromLiveData(){
@@ -6553,7 +6635,7 @@ function wire(){
 
 
 /* ===== Saved filters + team-card filters + color theme controls ===== */
-const EWC_FILTER_STATE_KEY = 'ewc_team_center_filter_state_v3';
+const EWC_FILTER_STATE_KEY = 'ewc_team_center_filter_state_v4';
 const EWC_COLOR_THEME_KEY = 'ewc_team_center_color_theme_v1';
 function readSelectValue(id){ return el(id)?.value || '__all__'; }
 function getFilterState(){
@@ -6710,7 +6792,7 @@ function wireTeamCardFilterControls(){
    - Manual UI changes are saved to localStorage.
    - Live auto-refresh never writes over saved view state.
    - Reloading the page restores the dashboard view, not just the data. */
-const EWC_VIEW_STATE_KEY = 'ewc_team_center_view_state_v1';
+const EWC_VIEW_STATE_KEY = 'ewc_team_center_view_state_v2';
 let EWC_RESTORING_VIEW_STATE = false;
 let EWC_VIEW_SAVE_TIMER = null;
 let EWC_VIEW_STATE_WIRED = false;

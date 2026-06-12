@@ -190,3 +190,7 @@ The top navigation includes a responsive dashboard search. It can open page sect
 ## Global search layout correction
 
 The topbar search uses a fixed 42 px field and constrained icon sizing. Critical layout CSS is also embedded in both entry pages to prevent a stale external stylesheet from rendering the search icon at its browser-default size.
+
+## Latest-filter behavior
+
+On a fresh load, the dashboard now selects the newest tournament represented in `ff_player_stats_raw`. **Reset to Latest** restores the newest available stage, year, week, day, and match within that tournament. Mode and source return to **All** so they cannot hide the newest match. Filter selections made afterward continue to be saved locally.
