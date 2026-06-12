@@ -88,3 +88,8 @@ assets/js/admin-group-assignments.js
 ```
 
 If it displays an admin setup error, run `supabase/03_group_assignment_admin.sql` in the same Supabase project configured in `assets/js/admin-group-assignments.js`, then add your login account to `public.app_admins`.
+
+
+## Loading-screen recovery
+
+The admin page now times out stalled authentication/database requests instead of remaining behind the loading overlay. Use **Retry loading** when the network or Supabase session check fails.

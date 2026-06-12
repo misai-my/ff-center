@@ -2,15 +2,36 @@
 
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
+const noWaitAuthLock = async (_name, _acquireTimeout, fn) => await fn();
 const client = window.supabase?.createClient
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        lock: noWaitAuthLock
+      }
     })
   : null;
 
+function withTimeout(promise, ms, label = 'Request') {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)} seconds.`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
+}
+
+function setLoading(message = 'Loading group assignment tools…', visible = true) {
+  if (!els.loading) return;
+  const text = els.loading.querySelector('strong');
+  if (text) text.textContent = message;
+  els.loading.classList.toggle('hide', !visible);
+}
+
 const $ = (id) => document.getElementById(id);
 const els = {
-  loading: $('loadingScreen'), notice: $('pageNotice'), adminUser: $('adminUser'), themeToggle: $('themeToggle'), logout: $('logoutBtn'),
+  loading: $('loadingScreen'), notice: $('pageNotice'), retry: $('retryInitBtn'), adminUser: $('adminUser'), themeToggle: $('themeToggle'), logout: $('logoutBtn'),
   tournament: $('tournamentInput'), tournamentList: $('tournamentList'), stage: $('stageInput'), stageList: $('stageList'),
   groupCount: $('groupCountInput'), teamsPerGroup: $('teamsPerGroupInput'), load: $('loadSetupBtn'), status: $('assignmentStatus'),
   toolbar: $('assignmentToolbar'), search: $('teamSearchInput'), summary: $('summaryChips'), board: $('assignmentBoard'), validation: $('validationPanel'),
@@ -112,7 +133,7 @@ function setLoginMessage(message, type = '') {
 }
 
 function showAdminLogin(message = '') {
-  els.loading?.classList.add('hide');
+  setLoading('', false);
   els.loginModal?.classList.add('show');
   els.loginModal?.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
@@ -161,20 +182,46 @@ async function requireAdmin() {
     showAdminLogin('Supabase library is unavailable.');
     return false;
   }
-  const { data: { session }, error } = await client.auth.getSession();
+
+  setLoading('Checking your sign-in…', true);
+  let authResult;
+  try {
+    authResult = await withTimeout(client.auth.getSession(), 8000, 'Session check');
+  } catch (error) {
+    console.error(error);
+    showNotice(`${error.message} Sign in again or press Retry.`, 'error');
+    showAdminLogin('The saved session could not be checked. Please sign in again.');
+    return false;
+  }
+
+  const { data: { session }, error } = authResult;
   if (error) throw error;
   if (!session) {
     showAdminLogin();
     return false;
   }
+
   state.session = session;
   els.adminUser.textContent = session.user.email || 'Signed in';
-  const { data, error: adminError } = await client.rpc('is_app_admin');
-  if (adminError) throw new Error(`Admin check failed: ${adminError.message}. Run supabase/03_group_assignment_admin.sql in the same Supabase project used by this page.`);
+  setLoading('Confirming administrator access…', true);
+
+  let adminResult;
+  try {
+    adminResult = await withTimeout(client.rpc('is_app_admin'), 8000, 'Administrator check');
+  } catch (error) {
+    throw new Error(`${error.message} Confirm that supabase/03_group_assignment_admin.sql was run in this Supabase project.`);
+  }
+
+  const { data, error: adminError } = adminResult;
+  if (adminError) {
+    throw new Error(`Admin check failed: ${adminError.message}. Run supabase/03_group_assignment_admin.sql in the same Supabase project used by this page.`);
+  }
   if (!data) {
     showNotice('This account is not listed in app_admins. Add it through the Supabase SQL Editor before using this page.', 'error');
-    els.loading.classList.add('hide');
-    document.querySelectorAll('button,input,textarea,select').forEach((node) => { if (!['themeToggle', 'logoutBtn'].includes(node.id)) node.disabled = true; });
+    setLoading('', false);
+    document.querySelectorAll('button,input,textarea,select').forEach((node) => {
+      if (!['themeToggle', 'logoutBtn', 'retryInitBtn'].includes(node.id)) node.disabled = true;
+    });
     return false;
   }
   return true;
@@ -789,6 +836,11 @@ function bindEvents() {
       setBusy(els.saveTeam, false);
     }
   });
+  els.retry?.addEventListener('click', async () => {
+    els.retry.hidden = true;
+    showNotice('');
+    await initializeAdminPage();
+  });
   window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && els.modal.classList.contains('show')) closeTeamModal(); });
 }
 
@@ -797,25 +849,50 @@ async function initializeAdminPage() {
     const allowed = await requireAdmin();
     if (!allowed) return;
     hideAdminLogin();
-    await Promise.all([loadTournamentIndex(), loadDirectory()]);
+    setLoading('Loading tournaments and teams…', true);
+    await Promise.all([
+      withTimeout(loadTournamentIndex(), 15000, 'Tournament loading'),
+      withTimeout(loadDirectory(), 15000, 'Team-directory loading')
+    ]);
     showNotice('');
   } catch (error) {
     console.error(error);
     showNotice(error.message || 'Unable to initialize the admin page.', 'error');
+    if (els.retry) els.retry.hidden = false;
   } finally {
-    els.loading?.classList.add('hide');
+    setLoading('', false);
   }
 }
 
 async function init() {
-  bindEvents();
-  updateLogoPathPreview();
-  if (!client || window.__ffdcSupabaseFailed) {
-    showNotice('Supabase failed to load. Check that cdn.jsdelivr.net is allowed by your site and browser.', 'error');
-    showAdminLogin('Supabase library is unavailable.');
-    return;
+  try {
+    bindEvents();
+    updateLogoPathPreview();
+    if (!client || window.__ffdcSupabaseFailed) {
+      showNotice('Supabase failed to load. Check that cdn.jsdelivr.net is allowed by your site and browser.', 'error');
+      showAdminLogin('Supabase library is unavailable.');
+      return;
+    }
+    await initializeAdminPage();
+  } catch (error) {
+    console.error(error);
+    setLoading('', false);
+    showNotice(error.message || 'The Group Assignment page failed to start.', 'error');
+    if (els.retry) els.retry.hidden = false;
   }
-  await initializeAdminPage();
 }
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  setLoading('', false);
+  showNotice(event.reason?.message || 'An unexpected request error occurred.', 'error');
+  if (els.retry) els.retry.hidden = false;
+});
+window.addEventListener('error', (event) => {
+  console.error('Page error:', event.error || event.message);
+  setLoading('', false);
+  showNotice(event.error?.message || event.message || 'An unexpected page error occurred.', 'error');
+  if (els.retry) els.retry.hidden = false;
+});
 
 init();

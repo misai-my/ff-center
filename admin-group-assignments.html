@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/admin-group-assignments.css?v=20260612-admin-fix" />
+  <link rel="stylesheet" href="assets/css/admin-group-assignments.css?v=20260612-admin-loading-fix" />
 </head>
 <body>
   <div class="admin-shell">
@@ -37,6 +37,7 @@
 
     <main class="admin-main">
       <section class="notice" id="pageNotice" hidden></section>
+      <button class="btn secondary retry-init" id="retryInitBtn" type="button" hidden>Retry loading</button>
 
       <section class="panel setup-panel">
         <div class="panel-heading">
@@ -209,6 +210,22 @@
     <strong>Loading group assignment tools…</strong>
   </div>
 
-  <script src="assets/js/admin-group-assignments.js?v=20260612-admin-fix"></script>
+  <script>
+    window.__groupAdminBootWatchdog = window.setTimeout(() => {
+      const loading = document.getElementById('loadingScreen');
+      const notice = document.getElementById('pageNotice');
+      const retry = document.getElementById('retryInitBtn');
+      loading?.classList.add('hide');
+      if (notice) {
+        notice.hidden = false;
+        notice.className = 'notice error';
+        notice.textContent = 'The admin tools did not finish starting. Press Retry loading, then sign in again if prompted.';
+      }
+      if (retry) retry.hidden = false;
+    }, 12000);
+  </script>
+  <script src="assets/js/admin-group-assignments.js?v=20260612-admin-loading-fix"
+    onload="window.clearTimeout(window.__groupAdminBootWatchdog)"
+    onerror="window.clearTimeout(window.__groupAdminBootWatchdog);document.getElementById('loadingScreen')?.classList.add('hide');document.getElementById('pageNotice').hidden=false;document.getElementById('pageNotice').className='notice error';document.getElementById('pageNotice').textContent='admin-group-assignments.js could not be loaded. Upload the updated JavaScript file to assets/js/.';document.getElementById('retryInitBtn').hidden=false;"></script>
 </body>
 </html>

@@ -67,3 +67,6 @@ body.modal-open{overflow:hidden}
 .auth-actions{margin-top:2px}
 .modal-head code{font-size:.75rem;color:var(--accent)}
 @media(max-width:520px){.auth-modal{align-items:center;padding:10px}.auth-card{border-radius:20px}.password-field{grid-template-columns:1fr}.password-toggle{width:100%}}
+
+.retry-init{display:block;margin:-4px 0 14px auto}.retry-init[hidden]{display:none!important}
+.loading-screen.hide{display:none!important;pointer-events:none!important;visibility:hidden!important}
