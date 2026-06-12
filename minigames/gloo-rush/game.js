@@ -393,6 +393,7 @@ function resetGame() {
   }
 
   function showCharacterSelect() {
+    if (typeof resetJoystick === "function") resetJoystick();
     state = "menu";
     document.body.classList.remove("game-running");
     touchState = Object.create(null);
@@ -411,6 +412,7 @@ function resetGame() {
 
   function pauseGame(toggle = true) {
     if (state === "playing" && toggle) {
+      if (typeof resetJoystick === "function") resetJoystick();
       state = "paused";
       setVisible(ui.pause, true);
     } else if (state === "paused") {
@@ -421,6 +423,7 @@ function resetGame() {
   }
 
   function endGame(victory) {
+    if (typeof resetJoystick === "function") resetJoystick();
     state = victory ? "victory" : "gameover";
     document.body.classList.remove("game-running");
     const stats = `Score ${score.toLocaleString()} · ${defeated} enemies · ${formatTime(elapsed)}`;
@@ -831,18 +834,21 @@ function resetGame() {
       const wall = wallBlocksSegment(oldX, player.y, player.x, player.y);
       if (wall) player.x = oldX;
     } else if (player.hitStun <= 0) {
-      let mx = 0, my = 0;
+      let mx = Number(touchState.joyX || 0);
+      let my = Number(touchState.joyY || 0);
       if (keys.ArrowLeft || keys.KeyA || touchState.left) mx--;
       if (keys.ArrowRight || keys.KeyD || touchState.right) mx++;
       if (keys.ArrowUp || keys.KeyW || touchState.up) my--;
       if (keys.ArrowDown || keys.KeyS || touchState.down) my++;
-      if (mx || my) {
+      const inputMagnitude = Math.min(1, Math.hypot(mx, my));
+      if (inputMagnitude > .08) {
         const len = Math.hypot(mx,my);
         mx /= len; my /= len;
         const speed = data.speed * (player.boostTimer > 0 ? 1.72 : 1);
         const oldX = player.x, oldY = player.y;
-        player.x += mx * speed * dt;
-        player.y += my * speed * .72 * dt;
+        const analogSpeed = inputMagnitude < .98 ? Math.max(.38, inputMagnitude) : 1;
+        player.x += mx * speed * analogSpeed * dt;
+        player.y += my * speed * .72 * analogSpeed * dt;
         if (mx) player.dir = sign(mx);
         player.state = "run";
         const wall = wallBlocksSegment(oldX, oldY, player.x, player.y);
@@ -2033,6 +2039,73 @@ function drawHUD() {
     if((e.code==="Escape"||e.code==="KeyP") && (state==="playing"||state==="paused")) pauseGame(true);
   });
   window.addEventListener("keyup",e=>{keys[e.code]=false;});
+
+
+  const joystickZone = document.getElementById("joystickZone");
+  const floatingJoystick = document.getElementById("floatingJoystick");
+  const joystickKnob = document.getElementById("joystickKnob");
+  const joystick = {
+    pointerId: null,
+    centerX: 0,
+    centerY: 0,
+    radius: 42
+  };
+
+  function resetJoystick() {
+    joystick.pointerId = null;
+    touchState.joyX = 0;
+    touchState.joyY = 0;
+    if (joystickKnob) joystickKnob.style.transform = "translate(-50%, -50%)";
+    if (floatingJoystick) floatingJoystick.classList.remove("visible");
+    if (joystickZone) joystickZone.classList.remove("active");
+  }
+
+  function moveJoystick(clientX, clientY) {
+    const dx = clientX - joystick.centerX;
+    const dy = clientY - joystick.centerY;
+    const distance = Math.hypot(dx, dy);
+    const limited = Math.min(joystick.radius, distance);
+    const angle = Math.atan2(dy, dx);
+    const knobX = Math.cos(angle) * limited;
+    const knobY = Math.sin(angle) * limited;
+    const deadZone = .14;
+    const rawMagnitude = Math.min(1, distance / joystick.radius);
+    const magnitude = rawMagnitude <= deadZone ? 0 : (rawMagnitude - deadZone) / (1 - deadZone);
+    touchState.joyX = distance ? Math.cos(angle) * magnitude : 0;
+    touchState.joyY = distance ? Math.sin(angle) * magnitude : 0;
+    joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+  }
+
+  if (joystickZone && floatingJoystick && joystickKnob) {
+    joystickZone.addEventListener("pointerdown", event => {
+      if (state !== "playing" || joystick.pointerId !== null) return;
+      event.preventDefault();
+      ensureAudio();
+      joystick.pointerId = event.pointerId;
+      joystickZone.setPointerCapture?.(event.pointerId);
+      const zoneRect = joystickZone.getBoundingClientRect();
+      joystick.centerX = event.clientX;
+      joystick.centerY = event.clientY;
+      floatingJoystick.style.left = `${event.clientX - zoneRect.left}px`;
+      floatingJoystick.style.top = `${event.clientY - zoneRect.top}px`;
+      floatingJoystick.classList.add("visible");
+      joystickZone.classList.add("active");
+      moveJoystick(event.clientX, event.clientY);
+    });
+
+    joystickZone.addEventListener("pointermove", event => {
+      if (event.pointerId !== joystick.pointerId) return;
+      event.preventDefault();
+      moveJoystick(event.clientX, event.clientY);
+    });
+
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach(type => {
+      joystickZone.addEventListener(type, event => {
+        if (joystick.pointerId !== null && event.pointerId !== undefined && event.pointerId !== joystick.pointerId) return;
+        resetJoystick();
+      });
+    });
+  }
 
   document.querySelectorAll("[data-touch]").forEach(btn=>{
     const name=btn.dataset.touch;

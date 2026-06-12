@@ -66,3 +66,10 @@ Each combat wave now activates a visible zone that closes toward the current bat
 - Original pixel-art backgrounds inspired by each map
 - More detailed character, weapon, and enemy sprites
 - Level-to-level progression while keeping your score
+
+
+## Mobile joystick update
+
+- The directional buttons were replaced with a floating analog joystick.
+- Touch anywhere in the left movement area; the joystick appears under the thumb.
+- Drag direction and distance control movement direction and speed.

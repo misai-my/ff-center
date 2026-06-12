@@ -118,12 +118,14 @@
       </section>
 
       <section class="touch-controls" aria-label="Mobile game controls">
-        <div class="dpad" aria-label="Movement pad">
-          <button data-touch="up" aria-label="Move up">▲</button>
-          <div>
-            <button data-touch="left" aria-label="Move left">◀</button>
-            <button data-touch="down" aria-label="Move down">▼</button>
-            <button data-touch="right" aria-label="Move right">▶</button>
+        <div id="joystickZone" class="joystick-zone" aria-label="Floating movement joystick">
+          <div class="joystick-idle-hint" aria-hidden="true">
+            <span></span>
+            <small>MOVE</small>
+          </div>
+          <div id="floatingJoystick" class="floating-joystick" aria-hidden="true">
+            <div class="joystick-ring"></div>
+            <div id="joystickKnob" class="joystick-knob"></div>
           </div>
         </div>
         <div class="action-pad" aria-label="Action buttons">
