@@ -1,7 +1,7 @@
 {
   "version": 2,
   "generated_from": "Uploaded JSON datasets plus user-provided img.zip",
-  "generated_at": "2026-06-11T22:46:52.118155+00:00",
+  "generated_at": "2026-06-12T00:23:38.151537+00:00",
   "assets": [
     {
       "kind": "character",
@@ -2032,6 +2032,66 @@
       "included": true,
       "placeholder": "assets/logo/wag.svg",
       "target_base": "assets/logo/wag"
+    },
+    {
+      "kind": "team_booster",
+      "name": "HP/EP Recovery",
+      "slug": "recover",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/recover.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/recover"
+    },
+    {
+      "kind": "team_booster",
+      "name": "Speed Up",
+      "slug": "speed-up",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/speed-up.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/speed-up"
+    },
+    {
+      "kind": "team_booster",
+      "name": "Extra Heal",
+      "slug": "extra-heal",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/extra-heal.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/extra-heal"
+    },
+    {
+      "kind": "team_booster",
+      "name": "Out-Zone Buff",
+      "slug": "out-zone-buff",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/out-zone-buff.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/out-zone-buff"
+    },
+    {
+      "kind": "team_booster",
+      "name": "Gloo Wall",
+      "slug": "gloo-wall",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/gloo-wall.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/gloo-wall"
+    },
+    {
+      "kind": "team_booster",
+      "name": "Armor",
+      "slug": "armor",
+      "remote_url": "",
+      "local_path": "assets/img/team-boosters/armor.png",
+      "included": true,
+      "placeholder": "",
+      "target_base": "assets/img/team-boosters/armor"
     }
   ]
 }

@@ -143,3 +143,8 @@ Active assets:
 
 - `assets/css/styles.css`
 - `assets/js/app.js`
+
+
+## Loadout modal
+
+The Loadout detail popup uses separate Battle Royale and Clash Squad description panels, structured cost/unlock cards, and a dedicated Team Booster grid. Six Team Booster icons are bundled under `assets/img/team-boosters/`; Helper Bot uses an inline fallback icon because no separate image was supplied.

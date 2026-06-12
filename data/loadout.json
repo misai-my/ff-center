@@ -406,7 +406,8 @@
         "effect": "Restore 2 EP and 1 HP every second.",
         "effect_ms": "Pulihkan 2 EP dan 1 HP setiap saat.",
         "effect_ob51": "Restore 2 EP and 1 HP every second.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/recover.png"
       },
       {
         "id": "speed_up",
@@ -423,7 +424,8 @@
         "effect_ob51": "Move 7% faster after not firing or not taking damage for 4s.",
         "changed_in": "OB52",
         "change_note": "Out-of-combat sprint speed buff reduced from 7% to 4%.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/speed-up.png"
       },
       {
         "id": "extra_heal",
@@ -438,7 +440,8 @@
         "effect": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
         "effect_ms": "Terima 10% lebih banyak penyembuhan. Kesan hilang 2s selepas menerima damage di luar zon.",
         "effect_ob51": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/extra-heal.png"
       },
       {
         "id": "out_zone_buff",
@@ -455,7 +458,8 @@
         "effect_ob51": "When outside the Safe Zone, EP conversion rate +200% and move 7% faster.",
         "changed_in": "OB52",
         "change_note": "EP conversion changed from +200% to +100%; movement speed changed from +7% to +12%.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/out-zone-buff.png"
       },
       {
         "id": "gloo_wall",
@@ -470,7 +474,8 @@
         "effect": "Increase Gloo Wall's HP by 100.",
         "effect_ms": "Tingkatkan HP Gloo Wall sebanyak 100.",
         "effect_ob51": "Increase Gloo Wall's HP by 100.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/gloo-wall.png"
       },
       {
         "id": "armor",
@@ -485,7 +490,8 @@
         "effect": "Restore 3% armor durability every second.",
         "effect_ms": "Pulihkan 3% ketahanan armor setiap saat.",
         "effect_ob51": "Restore 3% armor durability every second.",
-        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+        "logo_note": "Bundled Team Booster icon included in the repository.",
+        "icon_url": "assets/img/team-boosters/armor.png"
       },
       {
         "id": "helper_bot",
@@ -506,7 +512,7 @@
     "logo_sources": {
       "main_loadout_image": "https://i.imgur.com/RAG1acC.png",
       "official_patch_image_contains_loadout_logo": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg",
-      "standalone_booster_icons_status": "Standalone official booster icon files were not publicly available in the checked sources; this JSON uses icon_key/icon_label fallbacks for UI rendering.",
+      "standalone_booster_icons_status": "Six Battle Royale Team Booster icons are bundled locally; Helper Bot uses the built-in fallback icon.",
       "official_loadout_system_image": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg"
     },
     "patch_history": [

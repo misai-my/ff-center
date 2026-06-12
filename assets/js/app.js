@@ -5109,17 +5109,175 @@ function closeResourcePopup(options={}){
 }
 function closeItemDetailPopup(options={}){
   const modal = el('itemDetailModal');
-  modal?.querySelector('.item-detail-card')?.classList.remove('map-view');
+  modal?.querySelector('.item-detail-card')?.classList.remove('map-view', 'loadout-view');
   closeManagedModal(modal, options);
 }
 function itemDetailImageClass(kind){ return kind === 'weapons' || kind === 'weapon' ? 'weapon' : ''; }
+const TEAM_BOOSTER_ICON_MAP = {
+  hp_ep_recovery:'assets/img/team-boosters/recover.png',
+  recover:'assets/img/team-boosters/recover.png',
+  speed_up:'assets/img/team-boosters/speed-up.png',
+  speed:'assets/img/team-boosters/speed-up.png',
+  extra_heal:'assets/img/team-boosters/extra-heal.png',
+  out_zone_buff:'assets/img/team-boosters/out-zone-buff.png',
+  out_zone:'assets/img/team-boosters/out-zone-buff.png',
+  buff:'assets/img/team-boosters/out-zone-buff.png',
+  gloo_wall:'assets/img/team-boosters/gloo-wall.png',
+  armor:'assets/img/team-boosters/armor.png'
+};
+function firstLoadoutParagraph(value){
+  const text = tidyBlock(value);
+  if(!text) return '';
+  return text.split(/\n\s*\n|\n(?=[-•])/)[0].replace(/\s+/g,' ').trim();
+}
+function trimTeamBoosterDuplicateList(text, raw, mode){
+  if(!Array.isArray(raw?.boosters) || !raw.boosters.length || mode !== 'br') return text;
+  const lines = tidyBlock(text).split('\n');
+  const cut = lines.findIndex(line => /^current\s+br\s+boost\s+values/i.test(line.trim()));
+  return tidyBlock((cut >= 0 ? lines.slice(0, cut) : lines).join('\n'));
+}
+function loadoutRichTextHtml(value){
+  const text = tidyBlock(value);
+  if(!text) return '<p class="loadout-empty-copy">No description available.</p>';
+  const lines = text.split('\n').map(line => line.trim());
+  const output = [];
+  let paragraphs = [];
+  let bullets = [];
+  const flushParagraph = () => {
+    if(!paragraphs.length) return;
+    output.push(`<p>${escHtml(paragraphs.join(' '))}</p>`);
+    paragraphs = [];
+  };
+  const flushBullets = () => {
+    if(!bullets.length) return;
+    output.push(`<ul>${bullets.map(line => `<li>${escHtml(line)}</li>`).join('')}</ul>`);
+    bullets = [];
+  };
+  for(const line of lines){
+    if(!line){ flushParagraph(); flushBullets(); continue; }
+    const bullet = line.match(/^[-•]\s*(.+)$/);
+    if(bullet){ flushParagraph(); bullets.push(bullet[1]); continue; }
+    if(/^[^.!?]{3,90}:$/.test(line)){
+      flushParagraph(); flushBullets();
+      output.push(`<h5>${escHtml(line.replace(/:$/,''))}</h5>`);
+      continue;
+    }
+    flushBullets();
+    paragraphs.push(line);
+  }
+  flushParagraph(); flushBullets();
+  return output.join('');
+}
 function formatLoadoutDescriptionBlocks(item){
+  const raw = item?.raw || item || {};
   const parts = getLoadoutDescParts(item);
   const blocks = [];
-  if(parts.br) blocks.push(`<div class="item-detail-desc-block"><b>BR DESCRIPTION</b><div>${escHtml(parts.br)}</div></div>`);
-  if(parts.cs) blocks.push(`<div class="item-detail-desc-block"><b>CS DESCRIPTION</b><div>${escHtml(parts.cs)}</div></div>`);
-  if(blocks.length) return blocks.join('');
-  return `<p class="item-detail-desc">${escHtml(item?.desc || 'No loadout description yet.')}</p>`;
+  const modeData = [
+    ['br','Battle Royale','BR',trimTeamBoosterDuplicateList(parts.br, raw, 'br')],
+    ['cs','Clash Squad','CS',parts.cs]
+  ];
+  for(const [modeKey,label,shortLabel,text] of modeData){
+    if(!text) continue;
+    blocks.push(`
+      <section class="loadout-mode-panel loadout-mode-${modeKey}">
+        <div class="loadout-mode-head"><span>${shortLabel}</span><div><b>${label}</b><small>${modeKey === 'br' ? 'Battle Royale mechanics and usage' : 'Clash Squad mechanics and usage'}</small></div></div>
+        <div class="loadout-rich-text">${loadoutRichTextHtml(text)}</div>
+      </section>`);
+  }
+  if(!blocks.length) return `<p class="item-detail-desc">${escHtml(item?.desc || 'No loadout description yet.')}</p>`;
+  return `<div class="loadout-description-grid">${blocks.join('')}</div>`;
+}
+function loadoutCostValue(entry, currency=''){
+  if(entry?.cost_text) return entry.cost_text;
+  if(entry?.cost === 0) return 'Free';
+  if(entry?.cost == null || entry.cost === '') return 'Not listed';
+  return `${entry.cost}${currency ? ` ${currency}` : ''}`;
+}
+function loadoutCostNote(entry){
+  const notes = [entry?.unlock, entry?.earn_rule, entry?.availability, entry?.usage, entry?.effect, entry?.note].filter(Boolean);
+  if(entry?.purchase_limit != null) notes.push(`Purchase limit: ${entry.purchase_limit}`);
+  if(entry?.duration) notes.push(`Duration: ${entry.duration}`);
+  if(entry?.cooldown) notes.push(`Cooldown: ${entry.cooldown}`);
+  return notes.join(' • ');
+}
+function formatLoadoutCostSections(raw){
+  const source = raw?.cost;
+  if(!source || typeof source !== 'object') return '';
+  const modes = [];
+  for(const modeKey of ['br','cs']){
+    const meta = source[modeKey];
+    if(!meta || typeof meta !== 'object') continue;
+    const currency = meta.currency || '';
+    const entries = Array.isArray(meta.slot_unlocks) && meta.slot_unlocks.length ? meta.slot_unlocks : (Array.isArray(meta.items) ? meta.items : []);
+    const cards = entries.map(entry => {
+      const previous = entry.previous_cost != null ? `<small class="loadout-cost-history">Previous: ${escHtml(`${entry.previous_cost}${currency ? ` ${currency}` : ''}`)}${entry.changed_in ? ` • ${escHtml(entry.changed_in)}` : ''}</small>` : '';
+      const note = loadoutCostNote(entry);
+      return `<article class="loadout-cost-card"><div class="loadout-cost-card-head"><b>${escHtml(entry.name || entry.id || 'Item')}</b><span>${escHtml(loadoutCostValue(entry,currency))}</span></div>${note ? `<p>${escHtml(note)}</p>` : ''}${previous}</article>`;
+    }).join('');
+    modes.push(`<section class="loadout-cost-mode"><div class="loadout-section-subhead"><b>${modeKey.toUpperCase()} Costs & Unlocks</b><span>${escHtml(currency || 'No currency listed')}</span></div>${cards ? `<div class="loadout-cost-grid">${cards}</div>` : ''}${meta.note ? `<p class="loadout-mode-note">${escHtml(meta.note)}</p>` : ''}</section>`);
+  }
+  return modes.length ? `<section class="loadout-section"><div class="loadout-section-title"><span>₵</span><div><b>Costs & Unlocks</b><small>Structured by game mode</small></div></div><div class="loadout-cost-modes">${modes.join('')}</div></section>` : '';
+}
+function boosterFallbackSvg(key,label=''){
+  const common = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  const map = {
+    recover:`<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M20.8 5.8a5 5 0 0 0-7.1 0L12 7.5l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-8.1a5 5 0 0 0 0-7.1Z"/><path ${common} d="M6 12h3l1-2 2 5 1.5-3H18"/></svg>`,
+    speed:`<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M4 17h8M4 12h12M4 7h8"/><path ${common} d="M15 5l5 7-5 7"/></svg>`,
+    extra_heal:`<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M12 3v18M3 12h18"/></svg>`,
+    out_zone:`<svg viewBox="0 0 24 24" aria-hidden="true"><circle ${common} cx="12" cy="12" r="8"/><path ${common} d="M12 4v3M12 17v3M4 12h3M17 12h3"/></svg>`,
+    gloo_wall:`<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M5 20V9l7-5 7 5v11M5 13h14M9 20v-7M15 20v-7"/></svg>`,
+    armor:`<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6l8-3Z"/><path ${common} d="M9 12l2 2 4-5"/></svg>`,
+    helper_bot:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect ${common} x="5" y="7" width="14" height="11" rx="3"/><path ${common} d="M12 7V4M9 12h.01M15 12h.01M9 16h6"/></svg>`
+  };
+  return map[key] || `<span>${escHtml(String(label || 'BOOST').slice(0,5))}</span>`;
+}
+function boosterIconPath(boost){
+  return normalizeImageUrl(boost?.icon_url || TEAM_BOOSTER_ICON_MAP[boost?.id] || TEAM_BOOSTER_ICON_MAP[boost?.icon_key] || '');
+}
+function formatLoadoutBoosterSections(raw){
+  const boosters = Array.isArray(raw?.boosters) ? raw.boosters : [];
+  if(!boosters.length) return '';
+  const groups = [];
+  for(const modeKey of ['br','cs']){
+    const list = boosters.filter(boost => !boost.mode || boost.mode === modeKey);
+    if(!list.length) continue;
+    const cards = list.map(boost => {
+      const icon = boosterIconPath(boost);
+      const fallback = boosterFallbackSvg(boost.icon_key, boost.icon_label || boost.short_name || boost.name);
+      const iconHtml = icon ? `<img src="${escHtml(icon)}" alt="${escHtml(boost.name || 'Team Booster')}" loading="lazy" onerror="this.remove();this.parentElement.classList.add('fallback')"><span class="booster-icon-fallback">${fallback}</span>` : `<span class="booster-icon-fallback always">${fallback}</span>`;
+      const cost = boost.cost_text || (boost.cost === 0 ? 'Included' : (boost.cost != null ? `${boost.cost} ${boost.currency || ''}`.trim() : ''));
+      return `<article class="team-booster-card"><div class="team-booster-icon">${iconHtml}</div><div class="team-booster-copy"><div class="team-booster-name"><b>${escHtml(boost.name || 'Team Boost')}</b>${cost ? `<span>${escHtml(cost)}</span>` : ''}</div><p>${escHtml(boost.effect || boost.effect_ms || 'No effect description available.')}</p>${boost.change_note ? `<small>${escHtml(boost.change_note)}</small>` : ''}</div></article>`;
+    }).join('');
+    groups.push(`<section class="team-booster-mode"><div class="loadout-section-subhead"><b>${modeKey === 'br' ? 'Battle Royale Boosts' : 'Clash Squad Utility'}</b><span>${list.length} option${list.length === 1 ? '' : 's'}</span></div><div class="team-booster-grid">${cards}</div></section>`);
+  }
+  return `<section class="loadout-section team-booster-section"><div class="loadout-section-title"><span>✦</span><div><b>Team Booster Effects</b><small>Official values from the bundled loadout reference</small></div></div>${groups.join('')}</section>`;
+}
+function formatLoadoutPatchHistory(raw){
+  const history = Array.isArray(raw?.patch_history) ? raw.patch_history : [];
+  if(!history.length) return '';
+  return `<section class="loadout-section loadout-history"><div class="loadout-section-title"><span>↻</span><div><b>Patch History</b><small>Recent loadout changes</small></div></div><div class="loadout-history-list">${history.map(entry => `<article><b>${escHtml(entry.version || 'Update')}</b><p>${escHtml(entry.change || '')}</p></article>`).join('')}</div></section>`;
+}
+function renderLoadoutDetailBody(item, raw, singular){
+  const overview = firstLoadoutParagraph(raw?.short_description || raw?.tagline || item?.desc || getGalleryDesc(raw,'loadouts'));
+  const metaPairs = [
+    ['Type', item.sub || singular],
+    ['ID / Code', raw.loadout_id || raw.id || raw.code || '—'],
+    ['Category', raw.category || raw.type || '—']
+  ];
+  return `
+    <div class="loadout-detail-hero">
+      <div class="item-detail-thumb">${resourceImageHtml(item, 'loadouts')}</div>
+      <div class="loadout-detail-intro">
+        <div class="item-detail-badges"><span class="item-detail-chip">${escHtml(singular)}</span><span class="item-detail-chip">${escHtml(item.sub || 'Reference')}</span><span class="item-detail-chip">BR + CS</span></div>
+        ${overview ? `<p>${escHtml(overview)}</p>` : ''}
+        <div class="loadout-quick-meta">${metaPairs.map(([key,value]) => `<div><span>${escHtml(key)}</span><b>${escHtml(value)}</b></div>`).join('')}</div>
+      </div>
+    </div>
+    <section class="loadout-section loadout-description-section"><div class="loadout-section-title"><span>≡</span><div><b>Mode Description</b><small>Separated for easier reading</small></div></div>${formatLoadoutDescriptionBlocks(item)}</section>
+    ${formatLoadoutCostSections(raw)}
+    ${formatLoadoutBoosterSections(raw)}
+    ${formatLoadoutPatchHistory(raw)}
+  `;
 }
 function costText(value){
   if(value == null) return '';
@@ -5177,6 +5335,7 @@ function openItemDetailPopup(item, kind, context='resource'){
   const body = el('itemDetailBody');
   const detailCard = el('itemDetailModal')?.querySelector('.item-detail-card');
   detailCard?.classList.toggle('map-view', kind === 'maps');
+  detailCard?.classList.toggle('loadout-view', kind === 'loadouts');
 
   if(kind === 'maps'){
     const mapImg = item.img
@@ -5196,6 +5355,12 @@ function openItemDetailPopup(item, kind, context='resource'){
     return;
   }
 
+  if(kind === 'loadouts'){
+    body.innerHTML = renderLoadoutDetailBody(item, raw, singular);
+    openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detailTitle} details opened` });
+    return;
+  }
+
   const imgCls = itemDetailImageClass(kind);
   const skillNameBlock = kind === 'skills' && getSkillAbilityName(item)
     ? `<div class="item-detail-desc-block"><b>SKILL NAME</b><div>${escHtml(getSkillAbilityName(item))}</div></div>`
@@ -5203,16 +5368,13 @@ function openItemDetailPopup(item, kind, context='resource'){
   const petSkillNameBlock = kind === 'pets' && getPetSkillName(item)
     ? `<div class="item-detail-desc-block"><b>PET SKILL</b><div>${escHtml(getPetSkillName(item))}</div></div>`
     : '';
-  const descHtml = kind === 'loadouts'
-    ? formatLoadoutDescriptionBlocks(item)
-    : `${skillNameBlock}${petSkillNameBlock}<p class="item-detail-desc">${escHtml(item.desc || getGalleryDesc(raw, kind) || 'No description yet.')}</p>`;
+  const descHtml = `${skillNameBlock}${petSkillNameBlock}<p class="item-detail-desc">${escHtml(item.desc || getGalleryDesc(raw, kind) || 'No description yet.')}</p>`;
   const metaPairs = [
     ['Type', item.sub || singular],
     kind === 'skills' ? ['Skill Name', getSkillAbilityName(item) || '—'] : null,
     kind === 'pets' ? ['Pet Skill', getPetSkillName(item) || '—'] : null,
     ['ID / Code', raw.loadout_id || raw.id || raw.code || raw.skill_id || raw.pet_id || raw.weapon_id || '—'],
     ['Category', raw.category || raw.type || raw.role || '—'],
-    kind === 'loadouts' ? ['Cost / Notes', costText(raw.cost) || raw.cost_note || raw.note || '—'] : null,
     kind === 'weapons' ? ['Special', raw.special_attributes || raw.special || raw.perk || raw.attribute || '—'] : null
   ].filter(Boolean);
   body.innerHTML = `
@@ -5222,7 +5384,6 @@ function openItemDetailPopup(item, kind, context='resource'){
         <div class="item-detail-badges">
           <span class="item-detail-chip">${escHtml(singular)}</span>
           <span class="item-detail-chip">${escHtml(item.sub || 'Reference')}</span>
-          ${kind === 'loadouts' ? '<span class="item-detail-chip">BR + CS</span>' : ''}
         </div>
         ${descHtml}
       </div>
