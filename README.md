@@ -166,3 +166,13 @@ The elimination feed now resolves player names from all available player identif
 
 The enlarged map modal supports mouse-wheel and button zoom, pointer drag/pan, mobile pinch zoom, double-click or double-tap reset, keyboard navigation (`+`, `-`, arrow keys, and `0`), and an expanded viewer mode. Controls and viewport sizing adapt to desktop, tablet, and mobile screens.
 
+
+
+## Map viewer behavior
+
+The enlarged map opens in **Fit** mode, where the complete map image is visible. Zooming uses the fitted image dimensions, so every edge remains reachable by panning. The expand control reads **Expand** before expansion and **Exit Expand** while expanded.
+
+
+## Map viewer visible-area correction
+
+The map viewer now measures the actually visible clipped viewport, permits panning at 100% whenever overflow exists, and uses fresh asset query strings to prevent older cached viewer code from loading. Map images may remain remote; local map files are optional for availability, not required for fit or panning.

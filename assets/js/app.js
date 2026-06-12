@@ -5401,42 +5401,83 @@ function initMapDetailViewer(root){
   let pinchStart = null;
   let lastTap = { time:0, x:0, y:0 };
   let resizeObserver = null;
+  let fitFrame = 0;
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+  // Use the actually visible portion of the viewport. This remains correct when
+  // a modal/card/body clips a taller CSS grid row.
+  const visibleViewportRect = () => {
+    const raw = viewport.getBoundingClientRect();
+    let left = raw.left;
+    let top = raw.top;
+    let right = raw.right;
+    let bottom = raw.bottom;
+
+    const clippingNodes = [
+      viewport.parentElement,
+      root,
+      root.closest('.item-detail-body'),
+      root.closest('.item-detail-card'),
+      root.closest('.item-detail-modal')
+    ].filter(Boolean);
+
+    clippingNodes.forEach(node => {
+      const style = getComputedStyle(node);
+      const clipsX = /(hidden|clip|auto|scroll)/.test(`${style.overflowX} ${style.overflow}`);
+      const clipsY = /(hidden|clip|auto|scroll)/.test(`${style.overflowY} ${style.overflow}`);
+      if(!clipsX && !clipsY) return;
+      const rect = node.getBoundingClientRect();
+      if(clipsX){ left = Math.max(left, rect.left); right = Math.min(right, rect.right); }
+      if(clipsY){ top = Math.max(top, rect.top); bottom = Math.min(bottom, rect.bottom); }
+    });
+
+    return {
+      left, top, right, bottom,
+      width:Math.max(1, right-left),
+      height:Math.max(1, bottom-top)
+    };
+  };
+
   const fittedImageSize = () => {
-    const rect = viewport.getBoundingClientRect();
-    const viewportWidth = Math.max(1, viewport.clientWidth || rect.width || 1);
-    const viewportHeight = Math.max(1, viewport.clientHeight || rect.height || 1);
+    const rect = visibleViewportRect();
+    const viewportWidth = Math.max(1, rect.width);
+    const viewportHeight = Math.max(1, rect.height);
     const naturalWidth = Math.max(1, image.naturalWidth || viewportWidth);
     const naturalHeight = Math.max(1, image.naturalHeight || viewportHeight);
     const fitRatio = Math.min(viewportWidth / naturalWidth, viewportHeight / naturalHeight);
     const width = Math.max(1, naturalWidth * fitRatio);
     const height = Math.max(1, naturalHeight * fitRatio);
 
-    // Size the actual image element to the full-map fitted dimensions. Zoom and
-    // pan are then calculated from this box rather than from the viewport box.
     image.style.width = `${width}px`;
     image.style.height = `${height}px`;
-
-    return { width, height, viewportWidth, viewportHeight, naturalWidth, naturalHeight };
+    return { width, height, viewportWidth, viewportHeight, naturalWidth, naturalHeight, rect };
   };
+
   const panBounds = (scale=state.scale) => {
     const size = fittedImageSize();
     return {
-      x: Math.max(0, (size.width * scale - size.viewportWidth) / 2),
-      y: Math.max(0, (size.height * scale - size.viewportHeight) / 2)
+      x:Math.max(0, (size.width * scale - size.viewportWidth) / 2),
+      y:Math.max(0, (size.height * scale - size.viewportHeight) / 2)
     };
   };
+
   const clampPan = () => {
     const bounds = panBounds();
     state.x = clamp(state.x, -bounds.x, bounds.x);
     state.y = clamp(state.y, -bounds.y, bounds.y);
-    if(state.scale <= MIN_SCALE){ state.x = 0; state.y = 0; }
+    // Do not force x/y to zero at 100%. If CSS clipping leaves any overflow,
+    // users must still be able to pan to every edge.
+    if(bounds.x < .5) state.x = 0;
+    if(bounds.y < .5) state.y = 0;
   };
+
   const render = () => {
     clampPan();
+    const bounds = panBounds();
+    const canPan = bounds.x > .5 || bounds.y > .5;
     image.style.transform = `translate3d(${state.x}px, ${state.y}px, 0) scale(${state.scale})`;
-    viewport.classList.toggle('is-zoomed', state.scale > 1.001);
+    viewport.classList.toggle('is-zoomed', state.scale > 1.001 || canPan);
     viewport.classList.toggle('is-dragging', state.dragging);
     if(zoomLabel) zoomLabel.textContent = `${Math.round(state.scale * 100)}%`;
     buttons.forEach(btn => {
@@ -5446,14 +5487,23 @@ function initMapDetailViewer(root){
       if(action === 'reset') btn.disabled = state.scale <= MIN_SCALE + .001 && Math.abs(state.x) < .5 && Math.abs(state.y) < .5;
     });
   };
+
   const reset = () => {
     state.scale = MIN_SCALE;
     state.x = 0;
     state.y = 0;
     render();
   };
+
+  const scheduleFitReset = () => {
+    cancelAnimationFrame(fitFrame);
+    fitFrame = requestAnimationFrame(() => {
+      fitFrame = requestAnimationFrame(() => reset());
+    });
+  };
+
   const zoomAt = (nextScale, clientX, clientY) => {
-    const rect = viewport.getBoundingClientRect();
+    const rect = visibleViewportRect();
     const oldScale = state.scale;
     const scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
     if(Math.abs(scale - oldScale) < .0001) return;
@@ -5466,12 +5516,15 @@ function initMapDetailViewer(root){
     state.y = py - contentY * scale;
     render();
   };
+
   const panBy = (dx, dy) => {
-    if(state.scale <= MIN_SCALE) return;
+    const bounds = panBounds();
+    if(bounds.x <= .5 && bounds.y <= .5) return;
     state.x += dx;
     state.y += dy;
     render();
   };
+
   const pointerDistance = () => {
     const pts = [...pointers.values()];
     if(pts.length < 2) return 0;
@@ -5493,9 +5546,11 @@ function initMapDetailViewer(root){
     viewport.setPointerCapture?.(event.pointerId);
     pointers.set(event.pointerId, {x:event.clientX, y:event.clientY});
     state.moved = false;
+    const bounds = panBounds();
+    const canPan = bounds.x > .5 || bounds.y > .5;
     if(pointers.size === 1){
       dragStart = { pointerX:event.clientX, pointerY:event.clientY, x:state.x, y:state.y };
-      state.dragging = state.scale > MIN_SCALE;
+      state.dragging = canPan;
     }else if(pointers.size === 2){
       pinchStart = {
         distance:pointerDistance() || 1,
@@ -5528,7 +5583,9 @@ function initMapDetailViewer(root){
       render();
       return;
     }
-    if(pointers.size === 1 && dragStart && state.scale > MIN_SCALE){
+    const bounds = panBounds();
+    const canPan = bounds.x > .5 || bounds.y > .5;
+    if(pointers.size === 1 && dragStart && canPan){
       event.preventDefault();
       const dx = event.clientX - dragStart.pointerX;
       const dy = event.clientY - dragStart.pointerY;
@@ -5580,11 +5637,8 @@ function initMapDetailViewer(root){
       const card = root.closest('.item-detail-card');
       const expanded = !card?.classList.contains('map-fullscreen');
       setMapViewerExpanded(card, expanded);
-      requestAnimationFrame(() => {
-        fittedImageSize();
-        render();
-        viewport.focus({preventScroll:true});
-      });
+      scheduleFitReset();
+      requestAnimationFrame(() => viewport.focus({preventScroll:true}));
     }
   };
 
@@ -5598,16 +5652,19 @@ function initMapDetailViewer(root){
   viewport.addEventListener('dblclick', onDoubleClick);
   buttons.forEach(btn => btn.addEventListener('click', onButtonClick));
   setMapViewerExpanded(root.closest('.item-detail-card'), false);
-  if(image.complete && image.naturalWidth) reset();
-  else image.addEventListener('load', reset, {once:true});
+  if(image.complete && image.naturalWidth) scheduleFitReset();
+  else image.addEventListener('load', scheduleFitReset, {once:true});
   image.addEventListener('dragstart', event => event.preventDefault());
   if(window.ResizeObserver){
-    resizeObserver = new ResizeObserver(() => render());
+    resizeObserver = new ResizeObserver(() => scheduleFitReset());
     resizeObserver.observe(viewport);
+    const card = root.closest('.item-detail-card');
+    if(card) resizeObserver.observe(card);
   }
-  render();
+  scheduleFitReset();
 
   EWC_MAP_VIEWER_CLEANUP = () => {
+    cancelAnimationFrame(fitFrame);
     resizeObserver?.disconnect();
     viewport.removeEventListener('wheel', onWheel);
     viewport.removeEventListener('pointerdown', onPointerDown);
