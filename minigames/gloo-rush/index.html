@@ -26,12 +26,15 @@
 
       <section id="startScreen" class="overlay visible">
         <div class="panel wide">
+          <div class="screen-title">GLOO RUSH</div>
           <div class="kicker">CHOOSE YOUR SURVIVOR</div>
           <h2>Select your survivor and battle through 5 iconic maps</h2>
           <p class="intro">
             A fan-made browser prototype inspired by classic 1990s side-scrolling
             arcade brawlers, with five map-themed stages, character skills, and deployable gloo walls.
           </p>
+
+          <div id="attractBanner" class="attract-banner"></div>
 
           <div id="roster" class="roster">
             <button class="fighter selected" data-character="kelly"><span class="selected-badge">SELECTED</span>
@@ -61,6 +64,7 @@
           </div>
 
           <div id="selectedDescription" class="selected-description"></div>
+          <div id="characterBestLine" class="character-best-line"></div>
 
           <div class="controls-grid">
             <span><b>MOVE</b> WASD / Arrows</span>
@@ -71,7 +75,16 @@
             <span><b>PAUSE</b> P / Esc</span>
           </div>
 
-          <button id="startButton" class="primary" type="button">DROP IN</button>
+          
+<button id="startButton" class="primary" type="button">DROP IN</button>
+
+<div class="leaderboard-panel">
+  <div class="leaderboard-head">
+    <strong>ARCADE LEADERBOARD</strong>
+    <span>TOP 10 · ARCADE MODE</span>
+  </div>
+  <ol id="leaderboardList" class="leaderboard-list"></ol>
+</div>
         </div>
       </section>
 
@@ -91,7 +104,16 @@
         <div class="panel compact">
           <div class="kicker danger">MISSION FAILED</div>
           <h2>Survivor eliminated</h2>
-          <p id="gameOverStats"></p>
+          
+<p id="gameOverStats"></p>
+<div class="score-save-card">
+  <label for="gameOverInitials">ENTER 3-LETTER INITIALS</label>
+  <div class="score-save-row">
+    <input id="gameOverInitials" class="initials-input" type="text" maxlength="3" placeholder="AAA" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+    <button id="gameOverSaveButton" class="menu-button save-button" type="button">SAVE SCORE</button>
+  </div>
+  <p id="gameOverSaveMessage" class="save-message">Save your arcade run to the leaderboard.</p>
+</div>
           <div class="menu-actions">
             <button id="restartButton" class="primary" type="button">RETRY SAME SURVIVOR</button>
             <button id="gameOverChangeButton" class="menu-button character-button" type="button">CHANGE SURVIVOR</button>
@@ -103,7 +125,16 @@
         <div class="panel compact">
           <div class="kicker success">BOOYAH!</div>
           <h2>District secured</h2>
-          <p id="victoryStats"></p>
+          
+<p id="victoryStats"></p>
+<div class="score-save-card">
+  <label for="victoryInitials">ENTER 3-LETTER INITIALS</label>
+  <div class="score-save-row">
+    <input id="victoryInitials" class="initials-input" type="text" maxlength="3" placeholder="AAA" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+    <button id="victorySaveButton" class="menu-button save-button" type="button">SAVE SCORE</button>
+  </div>
+  <p id="victorySaveMessage" class="save-message">Save your arcade run to the leaderboard.</p>
+</div>
           <div class="menu-actions">
             <button id="replayButton" class="primary" type="button">REPLAY SAME SURVIVOR</button>
             <button id="victoryChangeButton" class="menu-button character-button" type="button">CHANGE SURVIVOR</button>

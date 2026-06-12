@@ -30,7 +30,16 @@
     fullscreenButton: document.getElementById("fullscreenButton"),
     exitDataCenterButton: document.getElementById("exitDataCenterButton"),
     toast: document.getElementById("toast"),
-    selectedDescription: document.getElementById("selectedDescription")
+    selectedDescription: document.getElementById("selectedDescription"),
+    leaderboardList: document.getElementById("leaderboardList"),
+    gameOverInitials: document.getElementById("gameOverInitials"),
+    gameOverSaveButton: document.getElementById("gameOverSaveButton"),
+    gameOverSaveMessage: document.getElementById("gameOverSaveMessage"),
+    victoryInitials: document.getElementById("victoryInitials"),
+    victorySaveButton: document.getElementById("victorySaveButton"),
+    victorySaveMessage: document.getElementById("victorySaveMessage"),
+    attractBanner: document.getElementById("attractBanner"),
+    characterBestLine: document.getElementById("characterBestLine")
   };
 
   const CHARACTER_DATA = {
@@ -84,55 +93,71 @@
   };
 
 
+
 const LEVELS = [
   {
     key: "bermuda",
     name: "Level 1 - Bermuda",
     short: "Bermuda",
-    worldWidth: 4200,
+    worldWidth: 7800,
     arenas: [
-      { trigger: 720, left: 520, right: 1360, label: "SHIPYARD PUSH", units:[["thug",4],["gunner",1]] },
-      { trigger: 2050, left: 1760, right: 3140, label: "CLOCK TOWER ROAD", units:[["thug",5],["gunner",2],["brute",1]] }
+      { trigger: 650, left: 500, right: 1320, label: "WAVE 1 · RIVERSIDE ENTRY", units:[["thug",4],["gunner",1]] },
+      { trigger: 1780, left: 1600, right: 2480, label: "WAVE 2 · SHIPYARD LANE", units:[["thug",4],["gunner",2],["brute",1]] },
+      { trigger: 3040, left: 2860, right: 3780, label: "WAVE 3 · CLOCK TOWER", units:[["thug",5],["gunner",2],["brute",1]] },
+      { trigger: 4400, left: 4200, right: 5200, label: "WAVE 4 · HANGAR PUSH", units:[["thug",5],["gunner",3],["brute",2]] },
+      { trigger: 5900, left: 5700, right: 6850, label: "BOSS WAVE · CAPE STANDOFF", units:[["thug",4],["gunner",2],["brute",1],["boss",1]] }
     ]
   },
   {
     key: "purgatory",
     name: "Level 2 - Purgatory",
     short: "Purgatory",
-    worldWidth: 4300,
+    worldWidth: 7900,
     arenas: [
-      { trigger: 760, left: 540, right: 1460, label: "CLIFFSIDE SKIRMISH", units:[["thug",5],["gunner",2]] },
-      { trigger: 2120, left: 1840, right: 3200, label: "BRIDGE APPROACH", units:[["thug",4],["gunner",3],["brute",2]] }
+      { trigger: 650, left: 520, right: 1360, label: "WAVE 1 · MOUNTAIN PASS", units:[["thug",4],["gunner",2]] },
+      { trigger: 1820, left: 1650, right: 2550, label: "WAVE 2 · LAKESIDE ROAD", units:[["thug",4],["gunner",2],["brute",1]] },
+      { trigger: 3160, left: 2980, right: 3920, label: "WAVE 3 · BRIDGE WATCH", units:[["thug",5],["gunner",3],["brute",1]] },
+      { trigger: 4560, left: 4380, right: 5400, label: "WAVE 4 · CLIFFSIDE RUN", units:[["thug",5],["gunner",3],["brute",2]] },
+      { trigger: 6060, left: 5860, right: 7050, label: "BOSS WAVE · CENTRAL ISLE", units:[["thug",3],["gunner",3],["brute",2],["boss",1]] }
     ]
   },
   {
     key: "kalahari",
     name: "Level 3 - Kalahari",
     short: "Kalahari",
-    worldWidth: 4300,
+    worldWidth: 7900,
     arenas: [
-      { trigger: 760, left: 560, right: 1480, label: "DUSTBOWL RUN", units:[["thug",6],["gunner",2]] },
-      { trigger: 2140, left: 1860, right: 3240, label: "RUINS STANDOFF", units:[["thug",4],["gunner",3],["brute",2]] }
+      { trigger: 650, left: 520, right: 1380, label: "WAVE 1 · CANYON EDGE", units:[["thug",5],["gunner",2]] },
+      { trigger: 1840, left: 1660, right: 2580, label: "WAVE 2 · DUST YARD", units:[["thug",4],["gunner",3],["brute",1]] },
+      { trigger: 3220, left: 3040, right: 3980, label: "WAVE 3 · ROCKY WASTE", units:[["thug",5],["gunner",3],["brute",1]] },
+      { trigger: 4620, left: 4440, right: 5460, label: "WAVE 4 · RUINS LANE", units:[["thug",5],["gunner",3],["brute",2]] },
+      { trigger: 6120, left: 5920, right: 7110, label: "BOSS WAVE · COMMAND DUNE", units:[["thug",3],["gunner",3],["brute",2],["boss",1]] }
     ]
   },
   {
     key: "nexterra",
     name: "Level 4 - NexTerra",
     short: "NexTerra",
-    worldWidth: 4300,
+    worldWidth: 8000,
     arenas: [
-      { trigger: 760, left: 560, right: 1480, label: "NEON GATE", units:[["thug",4],["gunner",4],["brute",1]] },
-      { trigger: 2140, left: 1860, right: 3240, label: "PLASMA DISTRICT", units:[["thug",4],["gunner",4],["brute",2]] }
+      { trigger: 650, left: 520, right: 1400, label: "WAVE 1 · NEON GATE", units:[["thug",4],["gunner",3]] },
+      { trigger: 1880, left: 1700, right: 2640, label: "WAVE 2 · DATA STRIP", units:[["thug",4],["gunner",3],["brute",1]] },
+      { trigger: 3280, left: 3100, right: 4080, label: "WAVE 3 · CORE PLAZA", units:[["thug",5],["gunner",3],["brute",1]] },
+      { trigger: 4740, left: 4560, right: 5620, label: "WAVE 4 · PLASMA LOOP", units:[["thug",5],["gunner",4],["brute",2]] },
+      { trigger: 6280, left: 6080, right: 7240, label: "BOSS WAVE · SKY NODE", units:[["thug",3],["gunner",4],["brute",2],["boss",1]] }
     ]
   },
   {
     key: "solara",
     name: "Level 5 - Solara",
     short: "Solara",
-    worldWidth: 4500,
+    worldWidth: 8100,
     arenas: [
-      { trigger: 760, left: 560, right: 1580, label: "COASTAL SQUARE", units:[["thug",5],["gunner",3],["brute",1]] },
-      { trigger: 2280, left: 2000, right: 3460, label: "CENTRAL PLAZA", units:[["thug",4],["gunner",3],["brute",2],["boss",1]] }
+      { trigger: 650, left: 520, right: 1400, label: "WAVE 1 · VILLA ROAD", units:[["thug",5],["gunner",2]] },
+      { trigger: 1880, left: 1700, right: 2660, label: "WAVE 2 · SOLAR WALK", units:[["thug",4],["gunner",3],["brute",1]] },
+      { trigger: 3320, left: 3140, right: 4120, label: "WAVE 3 · GARDEN MARKET", units:[["thug",5],["gunner",3],["brute",1]] },
+      { trigger: 4800, left: 4620, right: 5700, label: "WAVE 4 · COASTAL PLAZA", units:[["thug",5],["gunner",4],["brute",2]] },
+      { trigger: 6360, left: 6160, right: 7360, label: "BOSS WAVE · SUNSET CITADEL", units:[["thug",3],["gunner",4],["brute",2],["boss",1]] }
     ]
   }
 ];
@@ -148,6 +173,77 @@ function cloneArenasForLevel(level) {
     units: arena.units.map(([type, count]) => [type, count])
   }));
 }
+
+
+
+const LEADERBOARD_KEY = "glooRushArcadeLeaderboard";
+const LEADERBOARD_LIMIT = 10;
+
+function sanitizeInitials(value) {
+  return (value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 3);
+}
+
+function getLeaderboard() {
+  try {
+    const raw = localStorage.getItem(LEADERBOARD_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveLeaderboard(entries) {
+  localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(entries.slice(0, LEADERBOARD_LIMIT)));
+}
+
+function scoreSort(a, b) {
+  if (b.score !== a.score) return b.score - a.score;
+  if ((b.level || 0) !== (a.level || 0)) return (b.level || 0) - (a.level || 0);
+  return (a.time || 99999) - (b.time || 99999);
+}
+
+function getCharacterBest(character) {
+  return getLeaderboard().filter((entry) => entry.character === character).sort(scoreSort)[0] || null;
+}
+
+function renderAttractBanner() {
+  if (!ui.attractBanner) return;
+  const board = getLeaderboard().sort(scoreSort).slice(0, 3);
+  if (!board.length) {
+    ui.attractBanner.innerHTML = `<strong>ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">NO HIGH SCORE YET</span><span class="attract-sub">Press DROP IN and set the first record.</span></div>`;
+    return;
+  }
+  const top = board[0];
+  const rivals = board.slice(1).map((entry) => `${entry.initials} ${entry.score.toLocaleString()}`).join(" · ");
+  ui.attractBanner.innerHTML = `<strong>ARCADE ATTRACT MODE</strong><div class="attract-main"><span class="attract-score">HIGH SCORE ${top.score.toLocaleString()}</span><span class="attract-sub">${top.initials} · ${top.character.toUpperCase()} · Lv ${top.level}/5${rivals ? ` · Rivals ${rivals}` : ""}</span></div>`;
+}
+
+function updateCharacterBestLine() {
+  if (!ui.characterBestLine) return;
+  const best = getCharacterBest(selectedCharacter);
+  if (!best) {
+    ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} BEST:</strong> No saved score yet.`;
+    return;
+  }
+  ui.characterBestLine.innerHTML = `<strong>${CHARACTER_DATA[selectedCharacter].name} BEST:</strong> ${best.score.toLocaleString()} pts by ${best.initials} · Reached map ${best.level}/5 in ${formatTime(best.time || 0)}.`;
+}
+
+function renderLeaderboard() {
+  const board = getLeaderboard().sort(scoreSort).slice(0, LEADERBOARD_LIMIT);
+  if (!ui.leaderboardList) return;
+  if (!board.length) {
+    ui.leaderboardList.innerHTML = '<li class="lb-empty">No scores saved yet. Be the first to set the mark.</li>';
+  } else {
+    ui.leaderboardList.innerHTML = board.map((entry, index) => {
+      const stage = `${entry.level || 1}/5`;
+      return `<li><strong>${String(index + 1).padStart(2, "0")}. ${entry.initials}</strong> — ${entry.score.toLocaleString()} pts · Lv ${stage} · ${entry.character.toUpperCase()}</li>`;
+    }).join("");
+  }
+  renderAttractBanner();
+  updateCharacterBestLine();
+}
+
 
   const keys = Object.create(null);
   const pressed = Object.create(null);
@@ -166,6 +262,10 @@ function cloneArenasForLevel(level) {
   let elapsed = 0;
   let combo = 0;
   let comboTimer = 0;
+  let scoreSavedThisRun = false;
+  let currentRunResult = null;
+  let waveBonus = 0;
+  let bossBonus = 0;
   let activeArena = -1;
   let arenaLocked = false;
   let arenaRight = 0;
@@ -248,6 +348,11 @@ function cloneArenasForLevel(level) {
 
   function playSkill() {
     beep(260, .16, "sawtooth", .04, 340);
+  }
+
+  function getDifficultyScale(extraWaveOffset = 0) {
+    const waveIndex = activeArena >= 0 ? activeArena : extraWaveOffset;
+    return 1 + currentLevelIndex * 0.18 + Math.max(0, waveIndex) * 0.08;
   }
 
 
@@ -375,12 +480,74 @@ function resetGame() {
   elapsed = 0;
   combo = 0;
   comboTimer = 0;
+  waveBonus = 0;
+  bossBonus = 0;
   nextId = 1;
   loadLevel(0, true);
 }
 
+
+function setSaveMessage(message, kind = "") {
+  [ui.gameOverSaveMessage, ui.victorySaveMessage].forEach((el) => {
+    if (!el) return;
+    el.textContent = message;
+    el.classList.remove("success", "error");
+    if (kind) el.classList.add(kind);
+  });
+}
+
+function resetScoreSaveUI() {
+  scoreSavedThisRun = false;
+  currentRunResult = null;
+  [ui.gameOverInitials, ui.victoryInitials].forEach((input) => {
+    if (!input) return;
+    input.value = "";
+    input.disabled = false;
+  });
+  [ui.gameOverSaveButton, ui.victorySaveButton].forEach((button) => {
+    if (!button) return;
+    button.disabled = false;
+  });
+  setSaveMessage("Save your arcade run to the leaderboard.");
+}
+
+function saveCurrentScore(rawInitials) {
+  const initials = sanitizeInitials(rawInitials);
+  if (initials.length !== 3) return { ok: false, message: "Use exactly 3 letters or numbers." };
+  if (scoreSavedThisRun) return { ok: false, message: "This run has already been saved." };
+  const board = getLeaderboard();
+  const entry = {
+    initials,
+    score,
+    enemies: defeated,
+    time: Math.floor(elapsed),
+    level: currentLevelIndex + 1,
+    result: currentRunResult || "run",
+    character: selectedCharacter,
+    savedAt: Date.now()
+  };
+  board.push(entry);
+  board.sort(scoreSort);
+  saveLeaderboard(board);
+  renderLeaderboard();
+  scoreSavedThisRun = true;
+  [ui.gameOverInitials, ui.victoryInitials].forEach((input) => { if (input) input.disabled = true; });
+  [ui.gameOverSaveButton, ui.victorySaveButton].forEach((button) => { if (button) button.disabled = true; });
+  const rank = getLeaderboard().findIndex((item) => item.savedAt === entry.savedAt) + 1;
+  return { ok: true, message: `Score saved! Rank #${rank || "-"}.`, rank };
+}
+
+function handleSaveScore(which) {
+  const input = which === "victory" ? ui.victoryInitials : ui.gameOverInitials;
+  const result = saveCurrentScore(input ? input.value : "");
+  setSaveMessage(result.message, result.ok ? "success" : "error");
+  if (result.ok) beep(520, .12, "square", .04, 120);
+  else beep(110, .07, "square", .025, -20);
+}
+
   function startGame() {
     ensureAudio();
+    resetScoreSaveUI();
     resetGame();
     state = "playing";
     document.body.classList.add("game-running");
@@ -405,6 +572,8 @@ function resetGame() {
       btn.classList.toggle("selected", btn.dataset.character === selectedCharacter);
     });
     ui.selectedDescription.innerHTML = CHARACTER_DATA[selectedCharacter].description;
+    resetScoreSaveUI();
+    renderLeaderboard();
     resetGame();
     lastTime = performance.now();
     showToast("SELECT A SURVIVOR", 700);
@@ -425,8 +594,10 @@ function resetGame() {
   function endGame(victory) {
     if (typeof resetJoystick === "function") resetJoystick();
     state = victory ? "victory" : "gameover";
+    currentRunResult = victory ? "victory" : "gameover";
     document.body.classList.remove("game-running");
-    const stats = `Score ${score.toLocaleString()} · ${defeated} enemies · ${formatTime(elapsed)}`;
+    const stats = `Score ${score.toLocaleString()} · ${defeated} enemies · ${formatTime(elapsed)} · Cleared ${currentLevelIndex + 1}/5 maps · Wave Bonus ${waveBonus.toLocaleString()} · Boss Bonus ${bossBonus.toLocaleString()}`;
+    setSaveMessage("Enter 3-letter initials to save your score.");
     if (victory) {
       ui.victoryStats.textContent = stats;
       setVisible(ui.victory, true);
@@ -482,7 +653,7 @@ function resetGame() {
       }
       if (zone.progress >= 1) {
         zone.closing = false;
-        showToast("SAFE ZONE LOCKED", 850);
+        showToast("PLAY ZONE LOCKED", 850);
         beep(270, .12, "square", .035, 90);
       }
     } else if (zone.visible && zone.releasing) {
@@ -504,7 +675,7 @@ function resetGame() {
     arenaLocked = true;
     arenaRight = arena.right;
     beginClosingZone(arena);
-    showToast(`${arena.label} · ZONE CLOSING`, 1500);
+    showToast(`${arena.label} · ZONE SHRINKING`, 1500);
     let slot = 0;
     arena.units.forEach(([type, count]) => {
       for (let i = 0; i < count; i++) {
@@ -517,11 +688,16 @@ function resetGame() {
 
   function spawnEnemy(type, x, y, delay = 0) {
     const d = ENEMY_DATA[type];
+    const diff = getDifficultyScale();
+    const hp = Math.round(d.hp * diff * (type === "boss" ? 1.12 : 1));
+    const speed = d.speed * (1 + (diff - 1) * 0.28);
+    const damage = d.damage * (1 + (diff - 1) * 0.35);
+    const scoreValue = Math.round(d.score * (1 + (diff - 1) * 0.55));
     enemies.push({
       id: nextId++,
       type, x, y, vx:0, vy:0, dir:-1,
-      hp:d.hp, maxHp:d.hp, speed:d.speed, damage:d.damage,
-      score:d.score, size:d.size, color:d.color, accent:d.accent,
+      hp:hp, maxHp:hp, speed:speed, damage:damage,
+      score:scoreValue, size:d.size, color:d.color, accent:d.accent,
       state:"spawn", stateTime:0, spawnDelay:delay,
       attackCooldown:rand(.25,.8), shootCooldown:rand(.9,1.5),
       hitStun:0, invuln:0, knockX:0, knockY:0,
@@ -724,7 +900,11 @@ function resetGame() {
     shake = Math.max(shake, enemy.type === "boss" ? 18 : 8);
     radialBurst(enemy.x, enemy.y-40*enemy.size, enemy.accent, enemy.type === "boss" ? 55 : 20);
     if (enemy.type === "boss") {
-      showToast("BOSS ELIMINATED", 1700);
+      const bonus = 3000 * (currentLevelIndex + 1);
+      bossBonus += bonus;
+      score += bonus;
+      addFloatingText(enemy.x, enemy.y - 130 * enemy.size, `BOSS BONUS +${bonus}`, "#ffd574");
+      showToast(`BOSS ELIMINATED · BONUS +${bonus}`, 1700);
     } else if (Math.random() < .23) {
       spawnPickup(enemy.x, enemy.y);
     }
@@ -988,14 +1168,19 @@ function resetGame() {
   if (arenaLocked && activeArena >= 0) {
     const alive = enemies.some(e => !e.dead);
     if (!alive && !levelTransitioning) {
-      const arena = arenas[activeArena];
-      arena.cleared = true;
-      arenaLocked = false;
-      releaseClosingZone();
-      score += 500 * (activeArena + 1);
-      if (player.gloo < player.glooMax) player.gloo++;
-      showToast(activeArena === arenas.length - 1 ? "SECTION CLEAR" : "AREA CLEAR · GLOO +1", 1500);
-      activeArena = -1;
+const arena = arenas[activeArena];
+arena.cleared = true;
+const clearedWave = activeArena;
+arenaLocked = false;
+releaseClosingZone();
+const clearBonus = 500 * (clearedWave + 1);
+const endWaveBonus = (750 + clearedWave * 250) * (currentLevelIndex + 1);
+score += clearBonus + endWaveBonus;
+waveBonus += endWaveBonus;
+if (player.gloo < player.glooMax) player.gloo++;
+addFloatingText(player.x, player.y - 120, `WAVE BONUS +${endWaveBonus}`, "#8df1ff");
+showToast(clearedWave === arenas.length - 1 ? `BOSS WAVE CLEAR · BONUS +${endWaveBonus}` : `WAVE CLEAR · BONUS +${endWaveBonus}`, 1650);
+activeArena = -1;
 
       if (arenas.every(a => a.cleared)) {
         if (currentLevelIndex < LEVELS.length - 1) {
@@ -1357,7 +1542,7 @@ function drawSolaraBackground(cam) {
       ctx.fillStyle = "#ff728b";
       ctx.font = "900 11px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("PLAY AREA", x, FLOOR_TOP + 31);
+      ctx.fillText("PLAY ZONE", x, FLOOR_TOP + 31);
       for (let y = FLOOR_TOP + 72; y < FLOOR_BOTTOM; y += 72) {
         ctx.fillStyle = "#ffd0d8";
         ctx.beginPath();
@@ -1449,7 +1634,7 @@ function drawSolaraBackground(cam) {
     ctx.fillStyle = "#ff728f";
     ctx.font = "900 11px monospace";
     ctx.textAlign = "center";
-    ctx.fillText(zone.closing ? "ZONE MOVING" : "ZONE EDGE", x, FLOOR_TOP + 32);
+    ctx.fillText(zone.closing ? "ZONE SHRINKING" : "ZONE EDGE", x, FLOOR_TOP + 32);
 
     for (let y = FLOOR_TOP + 76; y < FLOOR_BOTTOM; y += 66) {
       const shift = Math.sin(t * 5 + y) * 4;
@@ -1481,7 +1666,7 @@ function drawSolaraBackground(cam) {
     ctx.fillStyle = `rgba(255, 220, 227, ${.72 + intensity * .28})`;
     ctx.font = "900 13px monospace";
     ctx.textAlign = leftSide ? "left" : "right";
-    ctx.fillText("⚠ ZONE EDGE", leftSide ? 28 : W - 28, H / 2);
+    ctx.fillText("⚠ PLAY ZONE EDGE", leftSide ? 28 : W - 28, H / 2);
   }
 
   function drawShadow(x,y,scale=1,alpha=.34) {
@@ -1917,64 +2102,76 @@ function drawProjectiles() {
   }
 
 
+
 function drawHUD() {
-  const d = CHARACTER_DATA[player.character];
-  ctx.fillStyle = "rgba(5,10,16,.84)"; ctx.fillRect(20, 18, 420, 104);
-  ctx.strokeStyle = "#41546a"; ctx.lineWidth = 2; ctx.strokeRect(20, 18, 420, 104);
-  ctx.fillStyle = d.palette.top; ctx.fillRect(31, 29, 64, 80);
-  ctx.fillStyle = d.palette.skin; ctx.fillRect(48, 42, 29, 27);
-  ctx.fillStyle = d.palette.hair; ctx.fillRect(44, 31, 36, 13);
-  if (player.character === "hayato") { ctx.fillStyle = "#eee"; ctx.fillRect(58, 28, 8, 19); }
-  ctx.fillStyle = "#fff"; ctx.font = "900 23px monospace"; ctx.textAlign = "left"; ctx.fillText(d.name, 108, 45);
-  ctx.fillStyle = "#9fc4e0"; ctx.font = "700 11px monospace"; ctx.fillText(currentLevel ? currentLevel.name.toUpperCase() : "", 108, 58);
-  ctx.fillStyle = "#231219"; ctx.fillRect(108, 66, 294, 19);
-  ctx.fillStyle = player.hp / player.maxHp < .3 ? "#ff3b55" : "#4ce39a"; ctx.fillRect(108, 66, 294 * (player.hp / player.maxHp), 19);
-  ctx.fillStyle = "#fff"; ctx.font = "900 12px monospace"; ctx.fillText(`HP ${Math.ceil(player.hp)} / ${player.maxHp}`, 116, 80);
-  ctx.fillStyle = "#141d28"; ctx.fillRect(108, 92, 190, 22);
-  ctx.fillStyle = "#183528"; ctx.fillRect(306, 92, 96, 22);
-  ctx.fillStyle = "#d9e5ef"; ctx.font = "700 10px monospace";
-  const sig = player.character === "tatsuya"
-    ? `K ${d.signature} ${player.rebelCharges}/2`
-    : `K ${d.signature} ${player.skillCooldown > 0 ? player.skillCooldown.toFixed(1) : "READY"}`;
-  ctx.fillText(sig.slice(0, 28), 114, 107);
-  ctx.fillStyle = "#91f1b3"; ctx.fillText(`I MED x${player.medkits}`, 314, 107);
+    const d = CHARACTER_DATA[player.character];
+    const leftPanelW = 436;
+    const rightPanelX = W - 404;
+    const rightTextX = W - 76;
+    ctx.fillStyle = "rgba(5,10,16,.84)"; ctx.fillRect(20, 18, leftPanelW, 104);
+    ctx.strokeStyle = "#41546a"; ctx.lineWidth = 2; ctx.strokeRect(20, 18, leftPanelW, 104);
 
-  ctx.fillStyle = "rgba(5,10,16,.84)"; ctx.fillRect(W - 355, 18, 335, 104);
-  ctx.strokeStyle = "#41546a"; ctx.strokeRect(W - 355, 18, 335, 104);
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#fff"; ctx.font = "900 20px monospace"; ctx.fillText(score.toString().padStart(7, "0"), W - 35, 42);
-  ctx.fillStyle = "#9fb0c2"; ctx.font = "700 11px monospace"; ctx.fillText(`${defeated} KOs · ${formatTime(elapsed)}`, W - 35, 58);
-  ctx.fillStyle = "#ffd574"; ctx.fillText(`MAP ${currentLevelIndex + 1}/5 · ${currentLevel ? currentLevel.short.toUpperCase() : ""}`, W - 35, 74);
-  ctx.fillStyle = "#8df1ff"; ctx.fillText(`L GLOO ${"◆".repeat(player.gloo)}${"◇".repeat(player.glooMax - player.gloo)}`, W - 35, 92);
-  ctx.fillStyle = "#d7ecff"; ctx.fillText(`J GUN · K SKILL`, W - 35, 107);
+    const portraitSource = document.querySelector(`[data-portrait="${player.character}"]`);
+    if (portraitSource) {
+      ctx.drawImage(portraitSource, 31, 29, 64, 80);
+      ctx.strokeStyle = "rgba(255,255,255,.12)";
+      ctx.strokeRect(31, 29, 64, 80);
+    }
 
-  if (combo > 1 && comboTimer > 0) {
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#fff"; ctx.font = "900 25px monospace"; ctx.fillText(`${combo} HIT COMBO`, W / 2, 53);
-    ctx.fillStyle = "#ffcb42"; ctx.font = "900 12px monospace"; ctx.fillText(`+${Math.round(combo * 1.5)} STYLE`, W / 2, 72);
+    ctx.fillStyle = "#fff"; ctx.font = "900 23px monospace"; ctx.textAlign = "left"; ctx.fillText(d.name, 108, 45);
+    ctx.fillStyle = "#9fc4e0"; ctx.font = "700 11px monospace"; ctx.fillText(currentLevel ? currentLevel.name.toUpperCase() : "", 108, 58);
+    const waveText = arenaLocked && activeArena >= 0 ? `WAVE ${activeArena + 1}/${arenas.length}` : `WAVES CLEARED ${arenas.filter(a => a.cleared).length}/${arenas.length}`;
+    ctx.fillStyle = "#ffd574"; ctx.fillText(waveText, 300, 58);
+    ctx.fillStyle = "#231219"; ctx.fillRect(108, 66, 314, 19);
+    ctx.fillStyle = player.hp / player.maxHp < .3 ? "#ff3b55" : "#4ce39a"; ctx.fillRect(108, 66, 314 * (player.hp / player.maxHp), 19);
+    ctx.fillStyle = "#fff"; ctx.font = "900 12px monospace"; ctx.fillText(`HP ${Math.ceil(player.hp)} / ${player.maxHp}`, 116, 80);
+    ctx.fillStyle = "#141d28"; ctx.fillRect(108, 92, 206, 22);
+    ctx.fillStyle = "#183528"; ctx.fillRect(320, 92, 102, 22);
+    ctx.fillStyle = "#d9e5ef"; ctx.font = "700 10px monospace";
+    const sig = player.character === "tatsuya"
+      ? `K ${d.signature} ${player.rebelCharges}/2`
+      : `K ${d.signature} ${player.skillCooldown > 0 ? player.skillCooldown.toFixed(1) : "READY"}`;
+    ctx.fillText(sig.slice(0, 30), 114, 107);
+    ctx.fillStyle = "#91f1b3"; ctx.fillText(`I MED x${player.medkits}`, 327, 107);
+
+    ctx.fillStyle = "rgba(5,10,16,.84)"; ctx.fillRect(rightPanelX, 18, 328, 104);
+    ctx.strokeStyle = "#41546a"; ctx.strokeRect(rightPanelX, 18, 328, 104);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#fff"; ctx.font = "900 20px monospace"; ctx.fillText(score.toString().padStart(7, "0"), rightTextX, 42);
+    ctx.fillStyle = "#9fb0c2"; ctx.font = "700 11px monospace"; ctx.fillText(`${defeated} KOs · ${formatTime(elapsed)}`, rightTextX, 58);
+    ctx.fillStyle = "#ffd574"; ctx.fillText(`MAP ${currentLevelIndex + 1}/5 · ${currentLevel ? currentLevel.short.toUpperCase() : ""}`, rightTextX, 74);
+    ctx.fillStyle = "#9fb0c2"; ctx.fillText(`DIFF x${getDifficultyScale(arenas.filter(a => a.cleared).length).toFixed(2)}`, rightTextX, 86);
+    ctx.fillStyle = "#8df1ff"; ctx.fillText(`L GLOO ${"◆".repeat(player.gloo)}${"◇".repeat(player.glooMax - player.gloo)}`, rightTextX, 98);
+    ctx.fillStyle = "#d7ecff"; ctx.fillText(`J GUN · K SKILL`, rightTextX, 112);
+
+    if (combo > 1 && comboTimer > 0) {
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#fff"; ctx.font = "900 25px monospace"; ctx.fillText(`${combo} HIT COMBO`, W / 2, 53);
+      ctx.fillStyle = "#ffcb42"; ctx.font = "900 12px monospace"; ctx.fillText(`+${Math.round(combo * 1.5)} STYLE`, W / 2, 72);
+    }
+
+    if (arenaLocked && activeArena >= 0) {
+      const alive = enemies.filter(e => !e.dead).length;
+      const zoneSeconds = Math.max(0, Math.ceil(zone.duration * (1 - zone.progress)));
+      const zoneStatus = zone.closing ? `ZONE SHRINKING · ${zoneSeconds}s` : "PLAY ZONE LOCKED";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "rgba(5,10,16,.86)"; ctx.fillRect(W / 2 - 160, H - 96, 320, 30);
+      ctx.fillStyle = "#ff6b87"; ctx.font = "900 12px monospace"; ctx.fillText(zoneStatus, W / 2, H - 77);
+      ctx.fillStyle = "#32131d"; ctx.fillRect(W / 2 - 142, H - 70, 284, 5);
+      ctx.fillStyle = "#ff3e68"; ctx.fillRect(W / 2 - 142, H - 70, 284 * clamp(zone.progress, 0, 1), 5);
+      ctx.fillStyle = "rgba(5,10,16,.82)"; ctx.fillRect(W / 2 - 180, H - 58, 360, 34);
+      ctx.fillStyle = "#ff9caf"; ctx.font = "900 14px monospace"; ctx.fillText(`${arenas[activeArena].label} · ${alive} REMAIN`, W / 2, H - 36);
+    }
+
+    const boss = enemies.find(e => e.type === "boss" && !e.dead);
+    if (boss) {
+      ctx.fillStyle = "rgba(5,10,16,.88)"; ctx.fillRect(W / 2 - 280, 126, 560, 36);
+      ctx.fillStyle = "#33131c"; ctx.fillRect(W / 2 - 260, 143, 520, 10);
+      ctx.fillStyle = "#ff425e"; ctx.fillRect(W / 2 - 260, 143, 520 * (boss.hp / boss.maxHp), 10);
+      ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "900 13px monospace"; ctx.fillText(`${currentLevel ? currentLevel.short.toUpperCase() : ""} FINAL BOSS`, W / 2, 139);
+    }
   }
 
-  if (arenaLocked && activeArena >= 0) {
-    const alive = enemies.filter(e => !e.dead).length;
-    const zoneSeconds = Math.max(0, Math.ceil(zone.duration * (1 - zone.progress)));
-    const zoneStatus = zone.closing ? `ZONE CLOSING · ${zoneSeconds}s` : "SAFE ZONE LOCKED";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "rgba(5,10,16,.86)"; ctx.fillRect(W / 2 - 150, H - 96, 300, 30);
-    ctx.fillStyle = "#ff6b87"; ctx.font = "900 12px monospace"; ctx.fillText(zoneStatus, W / 2, H - 77);
-    ctx.fillStyle = "#32131d"; ctx.fillRect(W / 2 - 132, H - 70, 264, 5);
-    ctx.fillStyle = "#ff3e68"; ctx.fillRect(W / 2 - 132, H - 70, 264 * clamp(zone.progress, 0, 1), 5);
-    ctx.fillStyle = "rgba(5,10,16,.82)"; ctx.fillRect(W / 2 - 150, H - 58, 300, 34);
-    ctx.fillStyle = "#ff9caf"; ctx.font = "900 14px monospace"; ctx.fillText(`${arenas[activeArena].label} · ${alive} REMAIN`, W / 2, H - 36);
-  }
-
-  const boss = enemies.find(e => e.type === "boss" && !e.dead);
-  if (boss) {
-    ctx.fillStyle = "rgba(5,10,16,.88)"; ctx.fillRect(W / 2 - 280, 126, 560, 36);
-    ctx.fillStyle = "#33131c"; ctx.fillRect(W / 2 - 260, 143, 520, 10);
-    ctx.fillStyle = "#ff425e"; ctx.fillRect(W / 2 - 260, 143, 520 * (boss.hp / boss.maxHp), 10);
-    ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.font = "900 13px monospace"; ctx.fillText("HORIZON ENFORCER", W / 2, 139);
-  }
-}
 
   function render() {
     const sx=shake?rand(-shake,shake):0, sy=shake?rand(-shake*.45,shake*.45):0;
@@ -2148,6 +2345,15 @@ function drawHUD() {
   if (ui.exitDataCenterButton) ui.exitDataCenterButton.addEventListener("click", exitToDataCenter);
 
   ui.startButton.addEventListener("click",startGame);
+  ui.gameOverSaveButton.addEventListener("click", () => handleSaveScore("gameover"));
+  ui.victorySaveButton.addEventListener("click", () => handleSaveScore("victory"));
+  [ui.gameOverInitials, ui.victoryInitials].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", () => { input.value = sanitizeInitials(input.value); });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") handleSaveScore(input === ui.victoryInitials ? "victory" : "gameover");
+    });
+  });
   ui.resumeButton.addEventListener("click",()=>pauseGame(false));
   ui.pauseRestartButton.addEventListener("click",startGame);
   ui.pauseChangeButton.addEventListener("click",showCharacterSelect);
