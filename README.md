@@ -181,3 +181,7 @@ The map viewer now measures the actually visible clipped viewport, permits panni
 ## Map fullscreen
 
 The map viewer Fullscreen button uses the browser Fullscreen API. Browsers without element-fullscreen support automatically use a full-viewport fallback.
+
+## Global Search
+
+The top navigation includes a responsive dashboard search. It can open page sections, team profiles, player tabs, match logs, and direct detail modals for skills, pets, weapons, loadouts, and maps. Use `Ctrl/Cmd + K` or `/` to focus it, arrow keys to navigate, and Enter to open a result.

@@ -208,6 +208,14 @@
         <svg viewBox="0 0 24 24" fill="none"><path id="sbTogglePath" d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
       <div class="page-title"><h1>EWC Team Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
+      <div class="global-search" id="globalSearch">
+        <label class="global-search-field" for="globalSearchInput">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="globalSearchInput" type="search" placeholder="Search teams, players, skills, weapons, maps…" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="globalSearchResults" aria-expanded="false">
+          <kbd class="global-search-shortcut" aria-hidden="true">Ctrl K</kbd>
+          <button class="global-search-clear" id="globalSearchClear" type="button" aria-label="Clear search" title="Clear search" hidden>×</button>
+        </label>
+      </div>
       <div class="top-actions">
         <div class="theme-palette" id="colorThemePalette" aria-label="Color theme selector">
           <div class="theme-palette-swatches" id="colorThemeOptions" role="radiogroup" aria-label="Color theme">
@@ -223,6 +231,13 @@
         <div class="userchip"><div class="avatar"></div><div class="usertext"><b id="user-info">Checking login…</b><span id="connection-status">Connection checking…</span></div></div>
         <button class="logout" id="logoutBtn">Logout</button>
       </div>
+    </div>
+    <div class="global-search-panel" id="globalSearchPanel" hidden>
+      <div class="global-search-panel-head">
+        <span id="globalSearchSummary">Search this dashboard</span>
+        <small>↑↓ navigate · Enter open · Esc close</small>
+      </div>
+      <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results"></div>
     </div>
 
 <div id="veil"><div class="box">Loading EWC team data…</div></div>

@@ -6191,6 +6191,280 @@ function wireResourceTools(){
   renderMiniPresetBuilder();
 }
 
+
+/* ===== Global dashboard search ===== */
+let GLOBAL_SEARCH_RESULTS = [];
+let GLOBAL_SEARCH_ACTIVE_INDEX = -1;
+
+function globalSearchNormalize(value){
+  return String(value ?? '')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function globalSearchInitials(value){
+  const words = String(value || '').trim().split(/\s+/).filter(Boolean);
+  return words.length > 1 ? `${words[0][0]}${words[1][0]}`.toUpperCase() : (words[0] || '?').slice(0,2).toUpperCase();
+}
+function globalSearchResourceLabel(kind){
+  return ({skills:'Skill',pets:'Pet',weapons:'Weapon',loadouts:'Loadout',maps:'Map'})[kind] || 'Reference';
+}
+function globalSearchStaticEntries(){
+  return [
+    {type:'section',title:'Filters',subtitle:'Tournament, stage, mode, source, year, week, day and match filters',keywords:'filter scope tournament stage mode source year week day match reset latest',sectionId:'accFilters',icon:'FL'},
+    {type:'section',title:'Overall Team Summary',subtitle:'Standings, rankings, qualification cutoff, 1UP and Quali Pts',keywords:'overall summary standings leaderboard ranking rank points qualification cutoff 1up quali pts booyah eliminations damage',sectionId:'accOverall',icon:'ST'},
+    {type:'section',title:'Quick Popups',subtitle:'Open skill, pet, weapon, loadout and map references',keywords:'quick popup reference library skills pets weapons loadouts maps',sectionId:'quickPopupsSection',icon:'QP'},
+    {type:'section',title:'Team Selection',subtitle:'Browse and open team profiles',keywords:'team selection profiles roster choose team',sectionId:'teamSelectionTitle',icon:'TM'},
+    {type:'section',title:'Latest Match Live Feed',subtitle:'Stats, preset, eliminations and team elimination timeline',keywords:'latest match live feed stats preset elims eliminations kills weapon player timestamp',sectionId:'accLiveFeed',icon:'LV'},
+    {type:'section',title:'Mini Preset Builder',subtitle:'Build a four-player skill, pet and loadout preset',keywords:'mini preset builder active passive pet loadout slots',sectionId:'miniPresetBuilder',icon:'PB'},
+    {type:'team-tab',title:'Current Team — Overview',subtitle:'Open the selected team overview',keywords:'current team overview profile kpi insight story',tab:'overview',icon:'OV'},
+    {type:'team-tab',title:'Current Team — Players',subtitle:'Open player stats and roster cards for the selected team',keywords:'current team players player stats roster damage kills assists headshots',tab:'players',icon:'PL'},
+    {type:'team-tab',title:'Current Team — Skill + Loadout',subtitle:'Open skill, pet and loadout usage for the selected team',keywords:'current team skill loadout pet active passive usage',tab:'skills',icon:'SK'},
+    {type:'team-tab',title:'Current Team — Match Log',subtitle:'Open the selected team match history',keywords:'current team match log history day match score',tab:'matches',icon:'ML'}
+  ];
+}
+function buildGlobalSearchEntries(){
+  const out = [...globalSearchStaticEntries()];
+  const teams = getScopedTeamList();
+  for(const team of teams){
+    const profile = getTeamProfile(team) || {};
+    out.push({
+      type:'team',title:team,subtitle:[profile.team_name && profile.team_name !== team ? profile.team_name : '',profile.region,profile.group].filter(Boolean).join(' • ') || 'Team profile',
+      keywords:[team,profile.team_name,profile.region,profile.country,profile.group,profile.seed,profile.coach,'team profile roster stats'].filter(Boolean).join(' '),team,icon:team.slice(0,2)
+    });
+  }
+
+  const seenPlayers = new Set();
+  const seenMatches = new Set();
+  for(const row of (FILTERED || [])){
+    const team = norm(getVal(row, KEYS.team)).toUpperCase();
+    const player = norm(getVal(row, KEYS.player)) || norm(getVal(row, KEYS.accountId));
+    if(team && player){
+      const pkey = `${team}::${globalSearchNormalize(player)}`;
+      if(!seenPlayers.has(pkey)){
+        seenPlayers.add(pkey);
+        const ids = (KEYS.playerIds || []).map(k => norm(row?.[k])).filter(Boolean);
+        out.push({type:'player',title:player,subtitle:`Player • ${team}`,keywords:[player,team,...ids,'player roster stats kills damage assists headshots'].join(' '),team,player,icon:globalSearchInitials(player)});
+      }
+    }
+    const day = norm(getVal(row, KEYS.day));
+    const matchNo = norm(getVal(row, KEYS.matchNo));
+    const matchId = norm(getVal(row, KEYS.matchId));
+    if(team && (matchNo || matchId)){
+      const mkey = `${team}::${day}::${matchNo}::${matchId}`;
+      if(!seenMatches.has(mkey)){
+        seenMatches.add(mkey);
+        out.push({type:'match',title:`${team} — ${day ? `Day ${day} ` : ''}${matchNo ? `Match ${matchNo}` : 'Match'}`,subtitle:[norm(getVal(row,KEYS.tournament)),norm(getVal(row,KEYS.stage)),matchId ? `ID ${matchId}` : ''].filter(Boolean).join(' • '),keywords:[team,day,matchNo,matchId,getVal(row,KEYS.tournament),getVal(row,KEYS.stage),'match log history'].filter(Boolean).join(' '),team,day,matchNo,matchId,icon:'MP'});
+      }
+    }
+  }
+
+  for(const kind of RESOURCE_NAV_ORDER){
+    for(const item of (RESOURCE_DATA[kind] || [])){
+      const raw = item?.raw || {};
+      const extra = [item?.search_name,item?.character_name,item?.skill_name,item?.pet_name,item?.pet_skill_name,raw?.aliases,raw?.special_attributes,raw?.role,raw?.category,raw?.type].flat().filter(Boolean).join(' ');
+      out.push({type:'resource',title:item.name || globalSearchResourceLabel(kind),subtitle:[globalSearchResourceLabel(kind),item.sub].filter(Boolean).join(' • '),keywords:[item.name,item.sub,item.desc,extra].filter(Boolean).join(' '),kind,item,icon:globalSearchInitials(item.name)});
+    }
+  }
+  return out;
+}
+function scoreGlobalSearchEntry(entry, query){
+  const q = globalSearchNormalize(query);
+  if(!q) return 0;
+  const title = globalSearchNormalize(entry.title);
+  const subtitle = globalSearchNormalize(entry.subtitle);
+  const hay = globalSearchNormalize(`${entry.title} ${entry.subtitle} ${entry.keywords || ''}`);
+  const terms = q.split(' ').filter(Boolean);
+  if(title === q) return 220;
+  if(title.startsWith(q)) return 185;
+  if(title.includes(q)) return 160;
+  if(subtitle.startsWith(q)) return 135;
+  if(subtitle.includes(q)) return 120;
+  if(terms.every(term => title.includes(term))) return 110;
+  if(terms.every(term => hay.includes(term))) return 85;
+  const prefixMatches = terms.filter(term => hay.split(' ').some(token => token.startsWith(term))).length;
+  if(prefixMatches === terms.length) return 65;
+  return 0;
+}
+function globalSearchIconHtml(entry){
+  if(entry.type === 'team'){
+    const profile = getTeamProfile(entry.team);
+    const local = norm(profile?.team_logo_url || '');
+    if(local) return `<img src="${escHtml(local)}" alt="" onerror="this.remove()">`;
+  }
+  if(entry.type === 'resource' && entry.item){
+    const rawImg = normalizeImageUrl(entry.item.img || '');
+    if(rawImg) return `<img src="${escHtml(rawImg)}" alt="" onerror="this.remove()">`;
+  }
+  return escHtml(entry.icon || globalSearchInitials(entry.title));
+}
+function positionGlobalSearchPanel(){
+  const inputWrap = el('globalSearch');
+  const panel = el('globalSearchPanel');
+  if(!inputWrap || !panel || panel.hidden) return;
+  const rect = inputWrap.getBoundingClientRect();
+  const margin = 10;
+  const mobile = window.innerWidth <= 620;
+  const width = mobile ? Math.max(260, window.innerWidth - margin*2) : Math.min(560, Math.max(360, rect.width));
+  const left = mobile ? margin : Math.min(Math.max(margin, rect.left), window.innerWidth - width - margin);
+  const belowSpace = window.innerHeight - rect.bottom - margin;
+  const aboveSpace = rect.top - margin;
+  panel.style.width = `${width}px`;
+  panel.style.left = `${left}px`;
+  if(belowSpace >= 220 || belowSpace >= aboveSpace){
+    panel.style.top = `${Math.min(window.innerHeight - 80, rect.bottom + 8)}px`;
+    panel.style.bottom = 'auto';
+  }else{
+    panel.style.top = 'auto';
+    panel.style.bottom = `${Math.max(margin, window.innerHeight - rect.top + 8)}px`;
+  }
+}
+function openGlobalSearchPanel(){
+  const panel = el('globalSearchPanel');
+  const input = el('globalSearchInput');
+  if(!panel || !input) return;
+  panel.hidden = false;
+  input.setAttribute('aria-expanded','true');
+  positionGlobalSearchPanel();
+}
+function closeGlobalSearchPanel(options={}){
+  const panel = el('globalSearchPanel');
+  const input = el('globalSearchInput');
+  if(panel) panel.hidden = true;
+  if(input) input.setAttribute('aria-expanded','false');
+  GLOBAL_SEARCH_ACTIVE_INDEX = -1;
+  if(options.clear && input){input.value='';el('globalSearchClear')?.setAttribute('hidden','');}
+}
+function renderGlobalSearchResults(query){
+  const resultsBox = el('globalSearchResults');
+  const summary = el('globalSearchSummary');
+  const clear = el('globalSearchClear');
+  if(!resultsBox) return;
+  const q = norm(query);
+  if(clear) clear.hidden = !q;
+  if(!q){
+    GLOBAL_SEARCH_RESULTS = globalSearchStaticEntries().slice(0,6);
+    GLOBAL_SEARCH_ACTIVE_INDEX = -1;
+    if(summary) summary.textContent = 'Quick destinations';
+  }else{
+    GLOBAL_SEARCH_RESULTS = buildGlobalSearchEntries()
+      .map(entry => ({entry,score:scoreGlobalSearchEntry(entry,q)}))
+      .filter(row => row.score > 0)
+      .sort((a,b)=>b.score-a.score || a.entry.title.localeCompare(b.entry.title))
+      .slice(0,16)
+      .map(row=>row.entry);
+    GLOBAL_SEARCH_ACTIVE_INDEX = GLOBAL_SEARCH_RESULTS.length ? 0 : -1;
+    if(summary) summary.textContent = `${GLOBAL_SEARCH_RESULTS.length} result${GLOBAL_SEARCH_RESULTS.length===1?'':'s'} for “${q}”`;
+  }
+  if(!GLOBAL_SEARCH_RESULTS.length){
+    resultsBox.innerHTML = `<div class="global-search-state"><b>No matching item found</b><small>Try a team tag, player name, skill, pet, weapon, loadout, map, match, or page section.</small></div>`;
+    return;
+  }
+  resultsBox.innerHTML = GLOBAL_SEARCH_RESULTS.map((entry,index)=>`
+    <button class="global-search-result ${index===GLOBAL_SEARCH_ACTIVE_INDEX?'active':''}" type="button" role="option" aria-selected="${index===GLOBAL_SEARCH_ACTIVE_INDEX?'true':'false'}" data-global-result="${index}">
+      <span class="global-search-result-icon">${globalSearchIconHtml(entry)}</span>
+      <span class="global-search-result-copy"><span class="global-search-result-title">${escHtml(entry.title)}</span><span class="global-search-result-sub">${escHtml(entry.subtitle || '')}</span></span>
+      <span class="global-search-result-type">${escHtml(entry.type === 'resource' ? globalSearchResourceLabel(entry.kind) : entry.type.replace('-', ' '))}</span>
+    </button>`).join('');
+  resultsBox.querySelectorAll('[data-global-result]').forEach(btn=>btn.addEventListener('click',()=>activateGlobalSearchResult(Number(btn.dataset.globalResult))));
+  requestAnimationFrame(positionGlobalSearchPanel);
+}
+function updateGlobalSearchActive(next){
+  if(!GLOBAL_SEARCH_RESULTS.length) return;
+  GLOBAL_SEARCH_ACTIVE_INDEX = (next + GLOBAL_SEARCH_RESULTS.length) % GLOBAL_SEARCH_RESULTS.length;
+  el('globalSearchResults')?.querySelectorAll('[data-global-result]').forEach((node,index)=>{
+    const active = index === GLOBAL_SEARCH_ACTIVE_INDEX;
+    node.classList.toggle('active',active);
+    node.setAttribute('aria-selected',active?'true':'false');
+    if(active) node.scrollIntoView({block:'nearest'});
+  });
+}
+function flashGlobalSearchTarget(node){
+  if(!node) return;
+  node.classList.remove('global-search-flash');
+  void node.offsetWidth;
+  node.classList.add('global-search-flash');
+  setTimeout(()=>node.classList.remove('global-search-flash'),1450);
+}
+function revealGlobalSearchSection(sectionId){
+  let node = el(sectionId);
+  if(!node) return;
+  if(node.tagName === 'DETAILS') node.open = true;
+  if(sectionId === 'teamSelectionTitle') node = node.closest('.team-selection-section') || node;
+  node.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  flashGlobalSearchTarget(node);
+}
+function highlightSearchedPlayer(player){
+  const key = globalSearchNormalize(player);
+  const candidates = [...document.querySelectorAll('#rosterCards .roster-card, #tblPlayers tbody tr')];
+  const match = candidates.find(node=>globalSearchNormalize(node.textContent).includes(key));
+  if(match){match.scrollIntoView({block:'center'});flashGlobalSearchTarget(match);}
+  else flashGlobalSearchTarget(el('panel-players'));
+}
+function activateGlobalSearchResult(index){
+  const entry = GLOBAL_SEARCH_RESULTS[index];
+  if(!entry) return;
+  closeGlobalSearchPanel({clear:true});
+  if(entry.type === 'section'){
+    revealGlobalSearchSection(entry.sectionId);
+    return;
+  }
+  if(entry.type === 'team'){
+    selectTeam(entry.team,false);
+    return;
+  }
+  if(entry.type === 'player'){
+    selectTeam(entry.team,false);
+    requestAnimationFrame(()=>{setTeamTab('players');requestAnimationFrame(()=>highlightSearchedPlayer(entry.player));});
+    return;
+  }
+  if(entry.type === 'match'){
+    selectTeam(entry.team,false);
+    requestAnimationFrame(()=>{setTeamTab('matches');requestAnimationFrame(()=>{el('teamMatchLog')?.scrollIntoView({block:'center'});flashGlobalSearchTarget(el('teamMatchLog'));});});
+    return;
+  }
+  if(entry.type === 'resource'){
+    openItemDetailPopup(entry.item,entry.kind,'standalone');
+    return;
+  }
+  if(entry.type === 'team-tab'){
+    if(CURRENT_TEAM){
+      if(!isTeamModalOpen()) selectTeam(CURRENT_TEAM,false);
+      requestAnimationFrame(()=>setTeamTab(entry.tab));
+    }else{
+      revealGlobalSearchSection('teamSelectionTitle');
+    }
+  }
+}
+function wireGlobalSearch(){
+  const input = el('globalSearchInput');
+  const panel = el('globalSearchPanel');
+  const clear = el('globalSearchClear');
+  if(!input || !panel) return;
+  input.addEventListener('focus',()=>{openGlobalSearchPanel();renderGlobalSearchResults(input.value);});
+  input.addEventListener('input',()=>{openGlobalSearchPanel();renderGlobalSearchResults(input.value);});
+  input.addEventListener('keydown',event=>{
+    if(event.key === 'ArrowDown'){event.preventDefault();openGlobalSearchPanel();updateGlobalSearchActive(GLOBAL_SEARCH_ACTIVE_INDEX+1);}
+    else if(event.key === 'ArrowUp'){event.preventDefault();openGlobalSearchPanel();updateGlobalSearchActive(GLOBAL_SEARCH_ACTIVE_INDEX-1);}
+    else if(event.key === 'Enter' && GLOBAL_SEARCH_ACTIVE_INDEX >= 0){event.preventDefault();activateGlobalSearchResult(GLOBAL_SEARCH_ACTIVE_INDEX);}
+    else if(event.key === 'Escape'){event.preventDefault();closeGlobalSearchPanel();input.blur();}
+  });
+  clear?.addEventListener('click',()=>{input.value='';input.focus();renderGlobalSearchResults('');});
+  document.addEventListener('pointerdown',event=>{
+    if(!event.target.closest('#globalSearch') && !event.target.closest('#globalSearchPanel')) closeGlobalSearchPanel();
+  });
+  document.addEventListener('keydown',event=>{
+    const target = event.target;
+    const typing = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+    if((event.ctrlKey || event.metaKey) && event.key.toLowerCase()==='k'){
+      event.preventDefault();input.focus();input.select();openGlobalSearchPanel();renderGlobalSearchResults(input.value);
+    }else if(event.key === '/' && !typing && !event.ctrlKey && !event.metaKey && !event.altKey){
+      event.preventDefault();input.focus();openGlobalSearchPanel();renderGlobalSearchResults(input.value);
+    }
+  });
+  window.addEventListener('resize',positionGlobalSearchPanel,{passive:true});
+  window.addEventListener('scroll',positionGlobalSearchPanel,{passive:true,capture:true});
+}
+
 function updateSkillDiagnostics(){
   try{
     const rows = RAW || [];
@@ -6274,6 +6548,7 @@ function wire(){
   el('teamCompareSelect')?.addEventListener('change', renderTeamHeadToHead);
 
   wireResourceTools();
+  wireGlobalSearch();
 }
 
 
