@@ -2,9 +2,11 @@
 
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
-const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-});
+const client = window.supabase?.createClient
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    })
+  : null;
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -17,7 +19,9 @@ const els = {
   recordId: $('teamRecordId'), logoFile: $('teamLogoFile'), logoPreview: $('teamLogoPreview'), teamCode: $('teamCodeInput'),
   teamName: $('teamNameInput'), shortName: $('teamShortNameInput'), organization: $('teamOrganizationInput'), country: $('teamCountryInput'),
   region: $('teamRegionInput'), externalId: $('teamExternalIdInput'), aliases: $('teamAliasesInput'), notes: $('teamNotesInput'), saveTeam: $('saveTeamBtn'),
-  logoFilename: $('teamLogoFilename'), logoRepoPath: $('teamLogoRepoPath'), downloadRepoLogo: $('downloadRepoLogoBtn')
+  logoFilename: $('teamLogoFilename'), logoRepoPath: $('teamLogoRepoPath'), downloadRepoLogo: $('downloadRepoLogoBtn'),
+  loginModal: $('adminLoginModal'), loginForm: $('adminLoginForm'), loginEmail: $('adminLoginEmail'), loginPassword: $('adminLoginPassword'),
+  loginMessage: $('adminLoginMessage'), loginSubmit: $('adminLoginSubmit'), passwordToggle: $('adminPasswordToggle')
 };
 
 const state = {
@@ -100,17 +104,73 @@ function findDirectoryMatch(teamId, teamName, teamTag = '') {
   return null;
 }
 
+function setLoginMessage(message, type = '') {
+  if (!els.loginMessage) return;
+  els.loginMessage.hidden = !message;
+  els.loginMessage.textContent = message || '';
+  els.loginMessage.className = `auth-message${type ? ` ${type}` : ''}`;
+}
+
+function showAdminLogin(message = '') {
+  els.loading?.classList.add('hide');
+  els.loginModal?.classList.add('show');
+  els.loginModal?.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  setLoginMessage(message);
+  window.setTimeout(() => els.loginEmail?.focus(), 50);
+}
+
+function hideAdminLogin() {
+  els.loginModal?.classList.remove('show');
+  els.loginModal?.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  setLoginMessage('');
+}
+
+async function handleAdminLogin(event) {
+  event.preventDefault();
+  if (!client) {
+    setLoginMessage('Supabase could not load. Check your internet connection or Content Security Policy.', 'error');
+    return;
+  }
+  const email = els.loginEmail?.value.trim();
+  const password = els.loginPassword?.value || '';
+  if (!email || !password) {
+    setLoginMessage('Enter both your email and password.', 'error');
+    return;
+  }
+  setBusy(els.loginSubmit, true, 'Signing in…');
+  setLoginMessage('');
+  try {
+    const { error } = await client.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    hideAdminLogin();
+    els.loading?.classList.remove('hide');
+    await initializeAdminPage();
+  } catch (error) {
+    console.error(error);
+    setLoginMessage(error.message || 'Unable to sign in.', 'error');
+  } finally {
+    setBusy(els.loginSubmit, false);
+  }
+}
+
 async function requireAdmin() {
+  if (!client) {
+    showNotice('Supabase failed to load. Check the CDN, connection, or site Content Security Policy.', 'error');
+    showAdminLogin('Supabase library is unavailable.');
+    return false;
+  }
   const { data: { session }, error } = await client.auth.getSession();
   if (error) throw error;
   if (!session) {
-    location.href = 'index.html';
+    showAdminLogin();
     return false;
   }
   state.session = session;
   els.adminUser.textContent = session.user.email || 'Signed in';
   const { data, error: adminError } = await client.rpc('is_app_admin');
-  if (adminError) throw new Error('Run supabase/03_group_assignment_admin.sql before using this page.');
+  if (adminError) throw new Error(`Admin check failed: ${adminError.message}. Run supabase/03_group_assignment_admin.sql in the same Supabase project used by this page.`);
   if (!data) {
     showNotice('This account is not listed in app_admins. Add it through the Supabase SQL Editor before using this page.', 'error');
     els.loading.classList.add('hide');
@@ -121,13 +181,23 @@ async function requireAdmin() {
 }
 
 async function loadTournamentIndex() {
-  const { data, error } = await client
+  let result = await client
     .from('ff_player_stats_raw')
     .select('Tournament,Stage,pulled_at')
     .not('Tournament', 'is', null)
     .order('pulled_at', { ascending: false })
     .limit(5000);
-  if (error) throw error;
+
+  // Older copies of ff_player_stats_raw may not contain pulled_at.
+  if (result.error) {
+    result = await client
+      .from('ff_player_stats_raw')
+      .select('Tournament,Stage')
+      .not('Tournament', 'is', null)
+      .limit(5000);
+  }
+  const { data, error } = result;
+  if (error) throw new Error(`Unable to load tournaments: ${error.message}`);
 
   state.tournamentIndex.clear();
   for (const row of data || []) {
@@ -659,12 +729,21 @@ async function saveTeam(event) {
 }
 
 function bindEvents() {
+  els.loginForm?.addEventListener('submit', handleAdminLogin);
+  els.passwordToggle?.addEventListener('click', () => {
+    const showing = els.loginPassword.type === 'text';
+    els.loginPassword.type = showing ? 'password' : 'text';
+    els.passwordToggle.textContent = showing ? 'Show' : 'Hide';
+  });
   els.themeToggle.addEventListener('click', () => {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
     localStorage.setItem('ff_theme_v1', next);
   });
-  els.logout.addEventListener('click', async () => { await client.auth.signOut(); location.href = 'index.html'; });
+  els.logout.addEventListener('click', async () => {
+    if (client) await client.auth.signOut();
+    showAdminLogin('You have been signed out.');
+  });
   els.tournament.addEventListener('input', refreshStageList);
   els.load.addEventListener('click', loadSetup);
   els.search.addEventListener('input', renderBoard);
@@ -713,19 +792,30 @@ function bindEvents() {
   window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && els.modal.classList.contains('show')) closeTeamModal(); });
 }
 
-async function init() {
-  bindEvents();
-  updateLogoPathPreview();
+async function initializeAdminPage() {
   try {
     const allowed = await requireAdmin();
     if (!allowed) return;
+    hideAdminLogin();
     await Promise.all([loadTournamentIndex(), loadDirectory()]);
+    showNotice('');
   } catch (error) {
     console.error(error);
     showNotice(error.message || 'Unable to initialize the admin page.', 'error');
   } finally {
-    els.loading.classList.add('hide');
+    els.loading?.classList.add('hide');
   }
+}
+
+async function init() {
+  bindEvents();
+  updateLogoPathPreview();
+  if (!client || window.__ffdcSupabaseFailed) {
+    showNotice('Supabase failed to load. Check that cdn.jsdelivr.net is allowed by your site and browser.', 'error');
+    showAdminLogin('Supabase library is unavailable.');
+    return;
+  }
+  await initializeAdminPage();
 }
 
 init();

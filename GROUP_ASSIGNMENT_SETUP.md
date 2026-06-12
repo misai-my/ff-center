@@ -75,3 +75,16 @@ supabase/04_tournament_progression.sql
 ```
 
 That later step adds advancement rules, provisional/confirmed status, Survival Stage logic, and Champion Rush.
+
+
+## If the admin page does not open
+
+The page now displays its own login form instead of silently returning to `index.html`. Make sure all three files are uploaded together:
+
+```text
+admin-group-assignments.html
+assets/css/admin-group-assignments.css
+assets/js/admin-group-assignments.js
+```
+
+If it displays an admin setup error, run `supabase/03_group_assignment_admin.sql` in the same Supabase project configured in `assets/js/admin-group-assignments.js`, then add your login account to `public.app_admins`.

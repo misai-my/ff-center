@@ -11,11 +11,11 @@
       document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
     })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__ffdcSupabaseFailed=true"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/admin-group-assignments.css" />
+  <link rel="stylesheet" href="assets/css/admin-group-assignments.css?v=20260612-admin-fix" />
 </head>
 <body>
   <div class="admin-shell">
@@ -171,11 +171,44 @@
     </div>
   </div>
 
+
+  <div class="modal auth-modal" id="adminLoginModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Administrator access</span>
+          <h2 id="adminLoginTitle">Sign in to Group Assignments</h2>
+          <p>Use an account listed in <code>public.app_admins</code>.</p>
+        </div>
+        <a class="icon-btn" href="index.html" aria-label="Back to Data Center" title="Back to Data Center">×</a>
+      </div>
+      <form id="adminLoginForm" class="auth-form">
+        <label class="field required">
+          <span>Email</span>
+          <input id="adminLoginEmail" type="email" autocomplete="email" required placeholder="you@example.com" />
+        </label>
+        <label class="field required">
+          <span>Password</span>
+          <div class="password-field">
+            <input id="adminLoginPassword" type="password" autocomplete="current-password" required placeholder="Password" />
+            <button class="btn ghost password-toggle" id="adminPasswordToggle" type="button">Show</button>
+          </div>
+        </label>
+        <div class="auth-message" id="adminLoginMessage" hidden></div>
+        <div class="modal-actions auth-actions">
+          <a class="btn ghost" href="index.html">Back</a>
+          <button class="btn primary" id="adminLoginSubmit" type="submit">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="loading-screen" id="loadingScreen">
     <div class="loader"></div>
     <strong>Loading group assignment tools…</strong>
   </div>
 
-  <script src="assets/js/admin-group-assignments.js"></script>
+  <script src="assets/js/admin-group-assignments.js?v=20260612-admin-fix"></script>
 </body>
 </html>
