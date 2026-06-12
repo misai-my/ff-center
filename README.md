@@ -229,3 +229,8 @@ The homepage cover is rendered from bundled Kelly, Tatsuya, Orion, and Hayato PN
 ## Mobile Team Summary
 
 On screens up to 680px, the standings table becomes touch-friendly team cards. Rank, team, total points, tournament progression, core scoring, 1UP, and qualification points remain visible. Damage and per-match efficiency metrics are available through each card's **More** button. Expanded-card state is retained locally.
+
+
+## iPhone portrait Team Summary
+
+At phone portrait widths (500px and below), Team Summary uses dedicated compact standings cards. Landscape and tablet layouts retain the wider standings presentation. Each portrait card keeps rank, team, score, progression, MP, Booyah, eliminations, placement, 1UP, and Quali Pts visible, with efficiency metrics behind More.

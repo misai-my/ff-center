@@ -3880,6 +3880,142 @@ function enhanceOverallMobileCards(){
   });
 }
 
+
+function renderOverallPortraitCards(rows, qualificationCutoff, progressionState){
+  const tableRoot = el('tblOverall');
+  if(!tableRoot) return;
+
+  let host = el('tblOverallPortrait');
+  if(!host){
+    host = document.createElement('div');
+    host.id = 'tblOverallPortrait';
+    host.className = 'overall-portrait-cards';
+    host.setAttribute('aria-label', 'Team standings for portrait mobile view');
+    tableRoot.insertAdjacentElement('afterend', host);
+  }
+
+  const expandedTeams = getMobileSummaryExpandedTeams();
+  const statusClassFor = row => {
+    const status = progressionStatusClass(row?.advancement_status);
+    if(status === 'finals') return 'progression-finals';
+    if(status === 'survival') return 'progression-survival';
+    if(status === 'eliminated') return 'progression-eliminated';
+    if(status === 'cr-active') return 'progression-cr-active';
+    if(status === 'champion') return 'progression-champion';
+    return '';
+  };
+
+  const cards = rows.map((row, index) => {
+    const team = norm(row.team).toUpperCase();
+    const expanded = expandedTeams.has(team);
+    const rank = Number(row.display_rank || index + 1);
+    const tier = rank === 1 ? 'rank-tier-gold' : rank === 2 ? 'rank-tier-silver' : rank === 3 ? 'rank-tier-bronze' : rank <= 6 ? 'rank-tier-contender' : 'rank-tier-field';
+    const cutoffClass = qualificationCutoff
+      ? (row.at_qualification_cutoff ? 'at-quali-cutoff' : row.below_qualification_cutoff ? 'below-quali-cutoff' : 'inside-quali-cutoff')
+      : '';
+    const progressionClass = statusClassFor(row);
+
+    const context = [];
+    if(row.group_code) context.push(`<span class="portrait-context-chip">Group ${escHtml(row.group_code)}</span>`);
+    if(row.group_rank) context.push(`<span class="portrait-context-chip">G#${fmtNum(row.group_rank)}</span>`);
+    if(row.stage_rank && !row.group_rank) context.push(`<span class="portrait-context-chip">Stage #${fmtNum(row.stage_rank)}</span>`);
+    if(progressionState?.stage_type === 'finals' && progressionState?.config?.champion_rush_enabled){
+      context.push(row.cr_active
+        ? '<span class="portrait-context-chip cr-active">CR ACTIVE</span>'
+        : `<span class="portrait-context-chip">CR +${fmtNum(row.cr_points_needed ?? 0)}</span>`);
+    }
+
+    const qualiText = row.quali_pts == null
+      ? '<span class="portrait-quali-value off">OFF</span>'
+      : Number(row.quali_pts) === 0
+        ? '<span class="portrait-quali-value safe">SAFE</span>'
+        : `<span class="portrait-quali-value needed">+${fmtNum(row.quali_pts)}</span>`;
+    const oneUpText = row.one_up == null ? 'LEAD' : fmtNum(row.one_up);
+    const progression = progressionState ? progressionStatusPill(row) : '';
+
+    return `<article class="overall-portrait-card ${tier} ${cutoffClass} ${progressionClass} ${expanded ? 'portrait-expanded' : ''}" data-team="${escHtml(team)}" tabindex="0" role="button" aria-label="Open ${escHtml(team)} team profile">
+      <div class="portrait-card-accent" aria-hidden="true"></div>
+      <div class="portrait-card-head">
+        <div class="portrait-rank-wrap">
+          <span class="portrait-rank-label">RANK</span>
+          <strong class="portrait-rank-number">${fmtNum(rank)}</strong>
+        </div>
+        <div class="portrait-team-block">
+          ${teamLogoHtml(team, getTeamProfile(team), 'portrait-team-logo')}
+          <div class="portrait-team-copy">
+            <div class="portrait-team-name-line"><strong>${escHtml(team)}</strong>${rankMovementHtml(row)}</div>
+            <div class="portrait-context-row">${context.join('') || '<span class="portrait-context-chip muted-chip">Current standings</span>'}</div>
+          </div>
+        </div>
+        <div class="portrait-total-block">
+          <span>TOTAL</span>
+          <strong>${fmtNum(row.total_score)}</strong>
+          <small>PTS</small>
+        </div>
+      </div>
+      ${progression ? `<div class="portrait-progression-row">${progression}</div>` : ''}
+      <div class="portrait-primary-stats">
+        <div><span>MP</span><strong>${fmtNum(row.matches)}</strong></div>
+        <div><span>BOOYAH</span><strong>${fmtNum(row.booyahs)}</strong></div>
+        <div><span>ELIMS</span><strong>${fmtNum(row.elims)}</strong></div>
+        <div><span>PLACE</span><strong>${fmtNum(row.ranking_score)}</strong></div>
+        <div><span>1UP</span><strong>${escHtml(oneUpText)}</strong></div>
+      </div>
+      <div class="portrait-card-footer">
+        <div class="portrait-quali-block"><span>QUALI PTS</span>${qualiText}</div>
+        <button type="button" class="portrait-more-btn" aria-expanded="${expanded ? 'true' : 'false'}" aria-label="${expanded ? 'Hide' : 'Show'} additional statistics for ${escHtml(team)}">
+          <span>${expanded ? 'Less' : 'More'}</span><i aria-hidden="true">${expanded ? '⌃' : '⌄'}</i>
+        </button>
+      </div>
+      <div class="portrait-detail-grid" aria-hidden="${expanded ? 'false' : 'true'}">
+        <div><span>DAMAGE</span><strong>${fmtNum(row.damage)}</strong></div>
+        <div><span>ELIMS / M</span><strong>${Number(row.elims_pm || 0).toFixed(1)}</strong></div>
+        <div><span>PLACE / M</span><strong>${Number(row.ranking_score_pm || 0).toFixed(1)}</strong></div>
+        <div><span>TOTAL / M</span><strong>${Number(row.total_pm || 0).toFixed(1)}</strong></div>
+        <div><span>DMG / M</span><strong>${Math.round(Number(row.dmg_pm || 0)).toLocaleString()}</strong></div>
+        ${row.cr_activated_match ? `<div><span>CR ACTIVATED</span><strong>M${fmtNum(row.cr_activated_match)}</strong></div>` : ''}
+      </div>
+    </article>`;
+  }).join('');
+
+  const signature = rows.map(r => `${r.team}:${r.display_rank}:${r.total_score}:${r.quali_pts}:${r.advancement_status || ''}:${r.cr_points_needed ?? ''}`).join('|');
+  setStableHTML(host, cards || '<div class="portrait-empty-state">No teams match the current filters.</div>', `portrait-overall::${qualificationCutoff || 'off'}::${signature}`);
+
+  host.querySelectorAll('.overall-portrait-card').forEach(card => {
+    const team = norm(card.dataset.team).toUpperCase();
+    const toggle = card.querySelector('.portrait-more-btn');
+
+    const openProfile = event => {
+      if(event?.target?.closest?.('.portrait-more-btn')) return;
+      selectTeam(team);
+    };
+    card.addEventListener('click', openProfile);
+    card.addEventListener('keydown', event => {
+      if((event.key === 'Enter' || event.key === ' ') && !event.target.closest('.portrait-more-btn')){
+        event.preventDefault();
+        selectTeam(team);
+      }
+    });
+
+    toggle?.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      const next = !card.classList.contains('portrait-expanded');
+      card.classList.toggle('portrait-expanded', next);
+      toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+      toggle.setAttribute('aria-label', `${next ? 'Hide' : 'Show'} additional statistics for ${team}`);
+      const label = toggle.querySelector('span');
+      const icon = toggle.querySelector('i');
+      if(label) label.textContent = next ? 'Less' : 'More';
+      if(icon) icon.textContent = next ? '⌃' : '⌄';
+      const details = card.querySelector('.portrait-detail-grid');
+      details?.setAttribute('aria-hidden', next ? 'false' : 'true');
+      if(next) expandedTeams.add(team); else expandedTeams.delete(team);
+      saveMobileSummaryExpandedTeams(expandedTeams);
+    });
+  });
+}
+
 function renderOverall(options = {}){
   const tm = teamMatchAgg(FILTERED);
   const rows = buildOverallRowsFromTeamMatches(tm);
@@ -3984,6 +4120,7 @@ function renderOverall(options = {}){
   applyColumnHeatmap('tblOverall', ['matches','booyahs','elims','ranking_score','total_score','damage','elims_pm','ranking_score_pm','total_pm','dmg_pm']);
   applyQualificationRowStyles(rows, qualificationCutoff);
   enhanceOverallMobileCards();
+  renderOverallPortraitCards(rows, qualificationCutoff, progressionState);
 
   const currentSortKey = el('overallSortKey').value || 'total_score';
   const currentDir = el('overallSortDir').dataset.dir || 'desc';
