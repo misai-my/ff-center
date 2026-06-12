@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles.css?v=latest-filter-default">
+  <link rel="stylesheet" href="assets/css/styles.css">
 
   <!-- Critical search layout: keeps the global search compact even if a stale stylesheet is cached. -->
   <style id="global-search-critical">
@@ -280,6 +280,7 @@
       <div class="bar">
         <label>Tournament <select id="fTournament" class="input" style="min-width:250px"><option value="__all__">All</option></select></label>
         <label>Stage <select id="fStage" class="input" style="min-width:170px"><option value="__all__">All</option></select></label>
+        <label>Group <select id="fGroup" class="input" style="min-width:120px" title="Group assignments are loaded from Supabase, raw data, or automatically detected from match participation"><option value="__all__">All</option></select></label>
         <label>Mode <select id="fMode" class="input" style="min-width:100px"><option value="__all__">All</option></select></label>
         <label>Source <select id="fSource" class="input" style="min-width:130px"><option value="__all__">All</option></select></label>
         <label>Year <select id="fYear" class="input" style="min-width:110px"><option value="__all__">All</option></select></label>
@@ -294,6 +295,7 @@
   <details class="accordion" id="accOverall">
     <summary><span>Overall — Team Summary</span><span class="muted" id="overallHint"></span></summary>
     <div class="accordion-body">
+      <section id="tournamentProgressionPanel" class="tournament-progression-panel" aria-live="polite" hidden></section>
       <div class="standings-toolbar">
       <div class="bar standings-controls">
         <label><span class="control-label">Sort by</span>
@@ -311,7 +313,7 @@
           </select>
         </label>
         <button class="btn secondary" id="overallSortDir" data-dir="desc">Desc</button>
-        <label>Qualification cutoff
+        <label id="manualQualiControl">Qualification cutoff
           <select id="overallQualiCutoff" class="input" title="Teams below this total-points position will be highlighted in red">
             <option value="">Off</option>
           </select>
@@ -557,6 +559,6 @@
 </div>
 
 <div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<script src="assets/js/app.js?v=latest-filter-default"></script>
+<script src="assets/js/app.js"></script>
 </body>
 </html>

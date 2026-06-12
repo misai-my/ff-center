@@ -30,15 +30,23 @@ const PET_JSON_URL = 'data/pet.json';
 const LOADOUT_JSON_URL = 'data/loadout.json';
 const WEAPON_JSON_URLS = ['data/weapon.json','data/weapons.json','data/free_fire_full_weapon_data_with_armory.json'];
 const TEAM_LOGOS_JSON_URL = 'data/team_logos.json';
+const TOURNAMENT_PROGRESSION_JSON_URL = 'data/tournament_progression.json';
+const TOURNAMENT_STAGE_CONFIG_TABLE = 'tournament_stage_config';
+const TOURNAMENT_TEAM_ASSIGNMENTS_TABLE = 'tournament_team_assignments';
 const MAX_ROWS_TO_LOAD = 5000;
 const CHUNK_SIZE = 1000;
 let EWC_PENDING_QUALIFICATION_CUTOFF = '';
+let TOURNAMENT_STAGE_CONFIGS = [];
+let TOURNAMENT_TEAM_ASSIGNMENTS = [];
+let TOURNAMENT_PROGRESSION_DEFAULTS = {};
+let EWC_CURRENT_PROGRESSION = null;
+let EWC_GROUP_MAP_CACHE = new Map();
 
 // Columns used by this dashboard only. Heavy JSON/text columns such as row_data,
 // player_stats_weapon_usages and knock_down_damage_info are intentionally excluded.
 // player_stats_kill_info is included for the Live Feed team elimination timeline.
 const DASHBOARD_DESIRED_COLS = [
-  'id','match_id','Mode','Tournament','Stage','Year','Week','Day','MatchNumber',
+  'id','match_id','Mode','Tournament','Stage','Group','group','group_code','Year','Week','Day','MatchNumber',
   'booyah','eliminated_team_name','final','is_double_kill_score','is_eliminated','is_focus','kill_count','killing_score','ranking_score','win_rate',
   'team_id','team_name',
   'player_stats_account_id','player_stats_id','player_stats_player_id','player_stats_role_id','player_stats_uid','player_stats_user_id',
@@ -637,7 +645,7 @@ let CURRENT_TEAM = null;
 let USED_CORE_SELECT = true;
 let KEYS = {
   team:null, teamId:null, player:null, accountId:null, playerIds:[],
-  tournament:null, stage:null, year:null, week:null, day:null, matchNo:null, matchId:null, mode:null, dataSource:null, center:null,
+  tournament:null, stage:null, group:null, year:null, week:null, day:null, matchNo:null, matchId:null, mode:null, dataSource:null, center:null,
   kills:null, damage:null, assists:null, headshots:null, shoots:null, hits:null, survivalTime:null,
   booyah:null, killCount:null, killingScore:null, rankingScore:null, winRate:null,
   petName:null, petId:null, loadouts:null,
@@ -678,6 +686,7 @@ function detectSchema(sample){
   if(KEYS.accountId && !KEYS.playerIds.includes(KEYS.accountId)) KEYS.playerIds.unshift(KEYS.accountId);
   KEYS.tournament = pickKey(keys, [/^Tournament$/, /^tournament$/i]);
   KEYS.stage = pickKey(keys, [/^Stage$/, /^stage$/i]);
+  KEYS.group = pickKey(keys, [/^Group$/, /^group$/i, /^group_code$/i, /^team_group$/i]);
   KEYS.year = pickKey(keys, [/^Year$/, /^year$/i]);
   KEYS.week = pickKey(keys, [/^Week$/, /^week$/i]);
   KEYS.day = pickKey(keys, [/^Day$/, /^day$/i]);
@@ -717,6 +726,7 @@ function detectSchema(sample){
     KEYS.accountId ? `account=${KEYS.accountId}` : 'account=—',
     KEYS.tournament ? `tournament=${KEYS.tournament}` : 'tournament=—',
     KEYS.stage ? `stage=${KEYS.stage}` : 'stage=—',
+    KEYS.group ? `group=${KEYS.group}` : 'group=—',
     KEYS.matchNo ? `matchNo=${KEYS.matchNo}` : 'matchNo=—',
     KEYS.kills ? `kills=${KEYS.kills}` : 'kills=—',
     KEYS.damage ? `dmg=${KEYS.damage}` : 'dmg=—',
@@ -1782,7 +1792,7 @@ async function fetchAllRows(){
   DASHBOARD_SELECT_COLS = DASHBOARD_DESIRED_COLS.filter(c => available.has(c) && !HEAVY_COLS.has(c));
 
   // Include any safe server.js metadata aliases if your table has them, without forcing them to exist.
-  for(const optional of ['mode','center','target_id','endpoint','match_number','tournament','stage','year','week','day']){
+  for(const optional of ['mode','center','target_id','endpoint','match_number','tournament','stage','group','group_code','year','week','day']){
     if(available.has(optional) && !DASHBOARD_SELECT_COLS.includes(optional)) DASHBOARD_SELECT_COLS.push(optional);
   }
 
@@ -1809,7 +1819,7 @@ function matchKeyForRow(r){
   const t = norm(getVal(r, KEYS.tournament)); const y = norm(getVal(r, KEYS.year)); const w = norm(getVal(r, KEYS.week)); const d = norm(getVal(r, KEYS.day)); const m = norm(getVal(r, KEYS.matchNo)); const mid = norm(getVal(r, KEYS.matchId));
   return mid ? `${t}|${mid}` : `${t}|Y${y}|W${w}|D${d}|M${m}`;
 }
-function currentFilter(){ return { t:el('fTournament')?.value || '__all__', s:el('fStage')?.value || '__all__', mode:el('fMode')?.value || '__all__', source:el('fSource')?.value || '__all__', y:el('fYear')?.value || '__all__', w:el('fWeek')?.value || '__all__', d:el('fDay')?.value || '__all__', m:el('fMatchNo')?.value || '__all__' }; }
+function currentFilter(){ return { t:el('fTournament')?.value || '__all__', s:el('fStage')?.value || '__all__', g:el('fGroup')?.value || '__all__', mode:el('fMode')?.value || '__all__', source:el('fSource')?.value || '__all__', y:el('fYear')?.value || '__all__', w:el('fWeek')?.value || '__all__', d:el('fDay')?.value || '__all__', m:el('fMatchNo')?.value || '__all__' }; }
 function countMatchesIn(rows){ return new Set(rows.map(matchKeyForRow)).size; }
 function uniqSorted(values, descNumeric=true){
   const arr = [...new Set(values.map(v => norm(v)).filter(Boolean))];
@@ -1953,6 +1963,7 @@ function populateTopDropdowns(){
   if(KEYS.stage) setSelectOptions(el('fStage'), uniqSorted(RAW.map(r=>getVal(r,KEYS.stage))), false);
   if(KEYS.mode) setSelectOptions(el('fMode'), uniqSorted(RAW.map(r=>String(getVal(r,KEYS.mode)).toUpperCase())), false);
   if(KEYS.dataSource) setSelectOptions(el('fSource'), uniqSorted(RAW.map(r=>getVal(r,KEYS.dataSource))), false);
+  syncGroupFilterOptions();
 }
 function resetToLatest(){
   populateTopDropdowns();
@@ -1960,7 +1971,7 @@ function resetToLatest(){
   // Reset non-temporal filters to All so the latest match is not hidden by an
   // older mode/source choice. Then select the newest tournament represented by
   // the database rows and cascade down to its newest stage/week/day/match.
-  for(const id of ['fStage','fMode','fSource','fYear','fWeek','fDay','fMatchNo']){
+  for(const id of ['fStage','fGroup','fMode','fSource','fYear','fWeek','fDay','fMatchNo']){
     if(el(id)) el(id).value = '__all__';
   }
 
@@ -1972,6 +1983,7 @@ function resetToLatest(){
   }
 
   refreshCascadeOptions('tournament');
+  syncGroupFilterOptions();
 
   const tournamentRows = (latestTournament && KEYS.tournament)
     ? RAW.filter(r => norm(getVal(r, KEYS.tournament)) === latestTournament)
@@ -1982,6 +1994,7 @@ function resetToLatest(){
     el('fStage').value = latest.stage;
   }
   refreshCascadeOptions('stage');
+  syncGroupFilterOptions();
 
   // Re-evaluate after selecting the latest stage in case week/day numbering
   // restarts between stages.
@@ -2012,9 +2025,11 @@ function refreshOpenTeamModalFromLiveData(){
   requestAnimationFrame(() => { if(body) body.scrollTop = scrollTop; });
 }
 function applyFilters(options = {}){
+  syncGroupFilterOptions();
   const silentRefresh = !!options.silentRefresh;
   const updateOnlyLiveAndSummary = !!options.updateOnlyLiveAndSummary;
   const f = currentFilter();
+  const groupFilterMap = f.g !== '__all__' ? currentGroupMapForFilter() : null;
   FILTERED = RAW.filter(r => {
     if(f.t !== '__all__' && KEYS.tournament && norm(getVal(r,KEYS.tournament)) !== f.t) return false;
     if(f.s !== '__all__' && KEYS.stage && norm(getVal(r,KEYS.stage)) !== f.s) return false;
@@ -2024,6 +2039,10 @@ function applyFilters(options = {}){
     if(f.w !== '__all__' && KEYS.week && norm(getVal(r,KEYS.week)) !== f.w) return false;
     if(f.d !== '__all__' && KEYS.day && norm(getVal(r,KEYS.day)) !== f.d) return false;
     if(f.m !== '__all__' && KEYS.matchNo && norm(getVal(r,KEYS.matchNo)) !== f.m) return false;
+    if(f.g !== '__all__') {
+      const team=norm(getVal(r,KEYS.team)).toUpperCase();
+      if((groupFilterMap?.get(team)||'') !== f.g) return false;
+    }
     return true;
   });
 
@@ -2044,6 +2063,7 @@ function applyFilters(options = {}){
   const scopeText = [
     f.t !== '__all__' ? f.t : 'All tournaments',
     f.s !== '__all__' ? f.s : 'All stages',
+    f.g !== '__all__' ? `Group ${f.g}` : 'All groups',
     f.mode !== '__all__' ? f.mode : 'All modes',
     f.source !== '__all__' ? f.source : 'All sources',
     f.y !== '__all__' ? `Y${f.y}` : 'All years',
@@ -2057,6 +2077,7 @@ function applyFilters(options = {}){
     const scopeRows = [
       ['Tournament', f.t !== '__all__' ? f.t : 'All'],
       ['Stage', f.s !== '__all__' ? f.s : 'All'],
+      ['Group', f.g !== '__all__' ? f.g : 'All'],
       ['Week', f.w !== '__all__' ? f.w : 'All'],
       ['Day', f.d !== '__all__' ? f.d : 'All'],
       ['Match', f.m !== '__all__' ? f.m : 'All']
@@ -3071,6 +3092,7 @@ function liveFeedCardHtml(t){
       </div>
       <div class="live-feed-status-row">
         ${liveFeedTeamStatusLabel(t)}
+        ${progressionLiveBadge(t.team)}
         <span class="live-feed-status">${fmtNum(t.eliminatedPlayers)} Player Out</span>
       </div>
       <div class="live-feed-players">${liveFeedTeamRowsHtml(t)}</div>
@@ -3200,6 +3222,310 @@ function renderLiveFeed(options = {}){
   updateLiveFeedGlobalModalInPlace();
 }
 
+
+
+/* ============ Tournament progression, groups and Champion Rush ============ */
+function progressionNorm(value){ return norm(value).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+function progressionStageType(stage){
+  const key = progressionNorm(stage);
+  if(/survival|last chance|play[- ]?in/.test(key)) return 'survival';
+  if(/grand final|finals?/.test(key)) return 'finals';
+  if(/group|league/.test(key)) return 'group_stage';
+  return '';
+}
+function progressionSafeArray(value){
+  if(Array.isArray(value)) return value;
+  if(value && typeof value === 'object') return Object.values(value);
+  if(typeof value === 'string'){
+    try{ const parsed=JSON.parse(value); return Array.isArray(parsed) ? parsed : []; }catch(_e){ return []; }
+  }
+  return [];
+}
+function progressionStatusLabel(status){
+  const labels = {
+    qualified_finals_direct:'FINALS', qualified_finals_survival:'FINALS', advanced_survival:'SURVIVAL',
+    eliminated:'ELIMINATED', pending:'PENDING', champion_rush_pending:'CR CHASE',
+    champion_rush_active:'CR ACTIVE', champion_rush_winner:'CHAMPION', champion:'CHAMPION'
+  };
+  return labels[status] || norm(status).replace(/_/g,' ').toUpperCase() || 'PENDING';
+}
+function progressionStatusClass(status){
+  if(['qualified_finals_direct','qualified_finals_survival'].includes(status)) return 'finals';
+  if(status === 'advanced_survival') return 'survival';
+  if(status === 'eliminated') return 'eliminated';
+  if(status === 'champion_rush_active') return 'cr-active';
+  if(['champion_rush_winner','champion'].includes(status)) return 'champion';
+  return 'pending';
+}
+function normalizeProgressionConfig(row, source='database'){
+  if(!row) return null;
+  const config={...row};
+  config.tournament=norm(config.tournament || config.tournament_name);
+  config.stage=norm(config.stage || config.stage_name);
+  config.stage_type=norm(config.stage_type) || progressionStageType(config.stage);
+  config.is_grouped=toBool(config.is_grouped ?? config.grouped ?? (config.stage_type==='group_stage'));
+  config.group_codes=progressionSafeArray(config.group_codes).map(v=>norm(v)).filter(Boolean);
+  if(!config.group_codes.length && config.is_grouped) config.group_codes=['A','B'];
+  config.advancement_rules=progressionSafeArray(config.advancement_rules);
+  config.ranking_tiebreakers=progressionSafeArray(config.ranking_tiebreakers);
+  config.scheduled_matches=Number(config.scheduled_matches || config.matches || 0) || 0;
+  config.scheduled_matches_per_group=Number(config.scheduled_matches_per_group || config.matches_per_group || 0) || 0;
+  config.teams_per_group=Number(config.teams_per_group || 0) || 0;
+  config.champion_rush_enabled=toBool(config.champion_rush_enabled ?? config.champion_rush?.enabled);
+  config.champion_rush_threshold=Number(config.champion_rush_threshold || config.champion_rush?.threshold || 0) || 0;
+  config.champion_rush_activation_rule=norm(config.champion_rush_activation_rule || config.champion_rush?.activation_rule || 'reaches_threshold');
+  config.champion_rush_win_rule=norm(config.champion_rush_win_rule || config.champion_rush?.win_rule || 'next_match_booyah');
+  config.source=source;
+  return config;
+}
+async function loadTournamentProgressionData(){
+  TOURNAMENT_STAGE_CONFIGS=[];
+  TOURNAMENT_TEAM_ASSIGNMENTS=[];
+  TOURNAMENT_PROGRESSION_DEFAULTS={};
+  EWC_GROUP_MAP_CACHE.clear();
+
+  try{
+    const res=await fetch(`${TOURNAMENT_PROGRESSION_JSON_URL}?v=${Date.now()}`,{cache:'no-store'});
+    if(res.ok) TOURNAMENT_PROGRESSION_DEFAULTS=await res.json();
+  }catch(e){ console.warn('Local tournament progression config unavailable:',e?.message||e); }
+
+  try{
+    const {data,error}=await withTimeout(client.from(TOURNAMENT_STAGE_CONFIG_TABLE).select('*'),12000,'Tournament stage config timed out');
+    if(error) throw error;
+    TOURNAMENT_STAGE_CONFIGS=(data||[]).map(row=>normalizeProgressionConfig(row,'database')).filter(Boolean);
+  }catch(e){
+    console.warn(`${TOURNAMENT_STAGE_CONFIG_TABLE} unavailable; using bundled auto-detection rules:`,e?.message||e);
+  }
+
+  try{
+    const {data,error}=await withTimeout(client.from(TOURNAMENT_TEAM_ASSIGNMENTS_TABLE).select('*'),12000,'Tournament team assignments timed out');
+    if(error) throw error;
+    TOURNAMENT_TEAM_ASSIGNMENTS=data||[];
+  }catch(e){
+    console.warn(`${TOURNAMENT_TEAM_ASSIGNMENTS_TABLE} unavailable; groups will be inferred from match participation:`,e?.message||e);
+  }
+}
+function resolveTournamentStageConfig(tournament,stage){
+  const t=progressionNorm(tournament), s=progressionNorm(stage);
+  if(!s) return null;
+  const exact=TOURNAMENT_STAGE_CONFIGS.find(row=>progressionNorm(row.tournament)===t && progressionNorm(row.stage)===s);
+  if(exact) return exact;
+  const wildcard=TOURNAMENT_STAGE_CONFIGS.find(row=>(!row.tournament || row.tournament==='*') && progressionNorm(row.stage)===s);
+  if(wildcard) return wildcard;
+  const type=progressionStageType(stage);
+  const defaults=TOURNAMENT_PROGRESSION_DEFAULTS?.stage_defaults || {};
+  const local=defaults[type];
+  if(!local) return null;
+  return normalizeProgressionConfig({...local,tournament,stage,stage_type:type},'bundled-default');
+}
+function progressionBaseRows(){
+  const f=currentFilter();
+  if(f.t==='__all__' || f.s==='__all__') return [];
+  let rows=RAW.filter(r=>{
+    if(KEYS.tournament && norm(getVal(r,KEYS.tournament))!==f.t) return false;
+    if(KEYS.stage && norm(getVal(r,KEYS.stage))!==f.s) return false;
+    if(f.mode!=='__all__' && KEYS.mode && norm(getVal(r,KEYS.mode)).toUpperCase()!==f.mode.toUpperCase()) return false;
+    if(f.source!=='__all__' && KEYS.dataSource && norm(getVal(r,KEYS.dataSource))!==f.source) return false;
+    if(f.y!=='__all__' && KEYS.year && norm(getVal(r,KEYS.year))!==f.y) return false;
+    if(f.w!=='__all__' && KEYS.week && norm(getVal(r,KEYS.week))!==f.w) return false;
+    return true;
+  });
+  const targetRows=rows.filter(r=>{
+    if(f.d!=='__all__' && KEYS.day && norm(getVal(r,KEYS.day))!==f.d) return false;
+    if(f.m!=='__all__' && KEYS.matchNo && norm(getVal(r,KEYS.matchNo))!==f.m) return false;
+    return true;
+  });
+  const targetOrder=targetRows.length ? Math.max(...targetRows.map(matchOrderValueForRow)) : Infinity;
+  if(Number.isFinite(targetOrder)) rows=rows.filter(r=>matchOrderValueForRow(r)<=targetOrder);
+  return rows;
+}
+function progressionAssignmentMap(tournament,stage){
+  const t=progressionNorm(tournament),s=progressionNorm(stage),map=new Map();
+  for(const row of TOURNAMENT_TEAM_ASSIGNMENTS){
+    if(progressionNorm(row.tournament)!==t) continue;
+    if(row.stage && progressionNorm(row.stage)!==s) continue;
+    const keys=[row.team_tag,row.team_code,row.team_name,row.team_id].map(v=>norm(v).toUpperCase()).filter(Boolean);
+    for(const key of keys) map.set(key,row);
+  }
+  return map;
+}
+function inferTeamGroups(rows,config,tournament,stage){
+  if(!config?.is_grouped) return new Map();
+  const cacheKey=[progressionNorm(tournament),progressionNorm(stage),rows.length,TOURNAMENT_TEAM_ASSIGNMENTS.length].join('|');
+  if(EWC_GROUP_MAP_CACHE.has(cacheKey)) return new Map(EWC_GROUP_MAP_CACHE.get(cacheKey));
+  const teams=[...new Set(rows.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean))];
+  const result=new Map();
+  const assignments=progressionAssignmentMap(tournament,stage);
+  for(const team of teams){
+    const row=assignments.get(team);
+    const group=norm(row?.group_code || row?.group || row?.team_group);
+    if(group) result.set(team,group.replace(/^group\s+/i,''));
+  }
+  if(KEYS.group){
+    for(const row of rows){
+      const team=norm(getVal(row,KEYS.team)).toUpperCase();
+      const group=norm(getVal(row,KEYS.group)).replace(/^group\s+/i,'');
+      if(team && group && !result.has(team)) result.set(team,group);
+    }
+  }
+  const graph=new Map(teams.map(team=>[team,new Set()]));
+  const byMatch=groupBy(rows,r=>matchKeyForRow(r));
+  for(const matchRows of byMatch.values()){
+    const matchTeams=[...new Set(matchRows.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean))];
+    for(const a of matchTeams) for(const b of matchTeams) if(a!==b) graph.get(a)?.add(b);
+  }
+  const visited=new Set(),components=[];
+  for(const team of teams){
+    if(visited.has(team)) continue;
+    const stack=[team],component=[]; visited.add(team);
+    while(stack.length){
+      const current=stack.pop(); component.push(current);
+      for(const next of graph.get(current)||[]) if(!visited.has(next)){visited.add(next);stack.push(next);}
+    }
+    components.push(component.sort());
+  }
+  components.sort((a,b)=>{
+    const ao=Math.min(...rows.filter(r=>a.includes(norm(getVal(r,KEYS.team)).toUpperCase())).map(matchOrderValueForRow));
+    const bo=Math.min(...rows.filter(r=>b.includes(norm(getVal(r,KEYS.team)).toUpperCase())).map(matchOrderValueForRow));
+    return ao-bo || a[0].localeCompare(b[0]);
+  });
+  const codes=config.group_codes?.length ? config.group_codes : ['A','B','C','D'];
+  components.forEach((component,index)=>{
+    const known=component.map(team=>result.get(team)).find(Boolean);
+    const code=known || codes[index] || String(index+1);
+    component.forEach(team=>{ if(!result.has(team)) result.set(team,code); });
+  });
+  EWC_GROUP_MAP_CACHE.set(cacheKey,new Map(result));
+  return result;
+}
+function progressionSortRows(rows){
+  return rows.sort((a,b)=>(b.total_score-a.total_score)||(b.booyahs-a.booyahs)||(b.elims-a.elims)||(b.final_ranking_score-a.final_ranking_score)||a.team.localeCompare(b.team));
+}
+function progressionRuleForRank(config,rank){
+  return (config.advancement_rules||[]).find(rule=>rank>=Number(rule.rank_from||rule.from||1) && rank<=Number(rule.rank_to||rule.to||999)) || null;
+}
+function progressionOverrideForTeam(team,tournament,stage){
+  const row=progressionAssignmentMap(tournament,stage).get(norm(team).toUpperCase());
+  return norm(row?.status_override);
+}
+function championRushForTeam(team,teamMatches,config){
+  const threshold=Number(config.champion_rush_threshold||90);
+  const matches=teamMatches.filter(row=>row.team===team).sort((a,b)=>(a.match_order||0)-(b.match_order||0));
+  let cumulative=0,activated=null,winner=null;
+  for(const match of matches){
+    const before=cumulative;
+    cumulative += Number(match.elims||0)+Number(match.ranking_score||0);
+    if(!activated && before<threshold && cumulative>=threshold) activated=match;
+    const winRule=config.champion_rush_win_rule||'next_match_booyah';
+    const canWin=winRule==='same_match_booyah' ? cumulative>=threshold : before>=threshold;
+    if(!winner && canWin && Number(match.booyah||0)>0) winner=match;
+  }
+  return {
+    threshold,total:cumulative,points_needed:Math.max(0,threshold-cumulative),active:cumulative>=threshold,
+    activated_match:activated?.match_no||activated?.match_id||'',activated_day:activated?.day||'',
+    winner:!!winner,winner_match:winner?.match_no||winner?.match_id||''
+  };
+}
+function buildTournamentProgressionState(){
+  const f=currentFilter();
+  const config=resolveTournamentStageConfig(f.t,f.s);
+  if(!config) return null;
+  const scopeRows=progressionBaseRows();
+  if(!scopeRows.length) return null;
+  const tm=teamMatchAgg(scopeRows);
+  const standings=buildOverallRowsFromTeamMatches(tm);
+  const groupMap=inferTeamGroups(scopeRows,config,f.t,f.s);
+  const byTeam=new Map(),groups=[];
+  const grouped=config.is_grouped;
+  const buckets=grouped ? groupBy(standings,row=>groupMap.get(row.team)||'Unassigned') : new Map([['',standings]]);
+  for(const [groupCode,list] of buckets.entries()){
+    progressionSortRows(list);
+    const groupTeams=new Set(list.map(row=>row.team));
+    const completedMatches=new Set(tm.filter(row=>groupTeams.has(row.team)).map(row=>row.mk)).size;
+    const expected=grouped ? (config.scheduled_matches_per_group||config.scheduled_matches||0) : (config.scheduled_matches||0);
+    const confirmed=toBool(config.is_completed) || (!!expected && completedMatches>=expected);
+    list.forEach((row,index)=>{
+      const rank=index+1;
+      const override=progressionOverrideForTeam(row.team,f.t,f.s);
+      const rule=progressionRuleForRank(config,rank);
+      let status=override || norm(rule?.status) || 'pending';
+      const item={...row,group_code:groupCode,group_rank:grouped?rank:null,stage_rank:rank,advancement_status:status,next_stage:norm(rule?.next_stage),is_provisional:!confirmed,completed_matches:completedMatches,expected_matches:expected,config_source:config.source};
+      if(config.stage_type==='finals' && config.champion_rush_enabled){
+        const cr=championRushForTeam(row.team,tm,config);
+        Object.assign(item,{champion_rush:cr,cr_points_needed:cr.points_needed,cr_active:cr.active,cr_activated_match:cr.activated_match});
+        item.advancement_status=cr.winner?'champion_rush_winner':(cr.active?'champion_rush_active':'champion_rush_pending');
+        item.is_provisional=false;
+      }
+      byTeam.set(row.team,item);
+    });
+    groups.push({code:groupCode,rows:list.map(row=>byTeam.get(row.team)),completed_matches:completedMatches,expected_matches:expected,confirmed});
+  }
+  return {tournament:f.t,stage:f.s,stage_type:config.stage_type,config,scopeRows,teamMatches:tm,standings,byTeam,groups,groupMap,grouped};
+}
+function syncGroupFilterOptions(){
+  const select=el('fGroup'); if(!select) return;
+  const t=el('fTournament')?.value||'__all__',s=el('fStage')?.value||'__all__';
+  const current=select.value||'__all__';
+  if(t==='__all__'||s==='__all__'){
+    select.innerHTML='<option value="__all__">All</option>';select.value='__all__';select.disabled=true;return;
+  }
+  const config=resolveTournamentStageConfig(t,s);
+  if(!config?.is_grouped){select.innerHTML='<option value="__all__">All</option>';select.value='__all__';select.disabled=true;return;}
+  const rows=RAW.filter(r=>(!KEYS.tournament||norm(getVal(r,KEYS.tournament))===t)&&(!KEYS.stage||norm(getVal(r,KEYS.stage))===s));
+  const map=inferTeamGroups(rows,config,t,s);
+  const groups=[...new Set(map.values())].filter(Boolean).sort();
+  select.innerHTML='<option value="__all__">All</option>'+groups.map(group=>`<option value="${escHtml(group)}">Group ${escHtml(group)}</option>`).join('');
+  select.value=[...select.options].some(o=>o.value===current)?current:'__all__';
+  select.disabled=!groups.length;
+}
+function currentGroupMapForFilter(){
+  const t=el('fTournament')?.value||'__all__',s=el('fStage')?.value||'__all__';
+  const config=resolveTournamentStageConfig(t,s);
+  if(!config?.is_grouped) return new Map();
+  const rows=RAW.filter(r=>(!KEYS.tournament||norm(getVal(r,KEYS.tournament))===t)&&(!KEYS.stage||norm(getVal(r,KEYS.stage))===s));
+  return inferTeamGroups(rows,config,t,s);
+}
+function progressionLiveBadge(teamCode){
+  const item=EWC_CURRENT_PROGRESSION?.byTeam?.get?.(norm(teamCode).toUpperCase());
+  if(!item) return '';
+  if(EWC_CURRENT_PROGRESSION?.stage_type==='finals' && EWC_CURRENT_PROGRESSION?.config?.champion_rush_enabled){
+    if(item.champion_rush?.winner) return '<span class="live-progression-badge champion">CHAMPION</span>';
+    if(item.cr_active) return `<span class="live-progression-badge cr-active">CR ACTIVE${item.cr_activated_match?` · M${escHtml(item.cr_activated_match)}`:''}</span>`;
+    return `<span class="live-progression-badge cr-chase">${fmtNum(item.cr_points_needed||0)} TO CR</span>`;
+  }
+  const cls=progressionStatusClass(item.advancement_status);
+  return `<span class="live-progression-badge ${cls}">${escHtml(progressionStatusLabel(item.advancement_status))}${item.is_provisional?' · PROV':''}</span>`;
+}
+
+function progressionStatusPill(item){
+  if(!item) return '<span class="progression-pill pending">—</span>';
+  const label=progressionStatusLabel(item.advancement_status);
+  const provisional=item.is_provisional && !String(item.advancement_status).startsWith('champion_rush');
+  return `<span class="progression-pill ${progressionStatusClass(item.advancement_status)}"><b>${escHtml(label)}</b>${provisional?'<small>PROVISIONAL</small>':''}</span>`;
+}
+function renderTournamentProgressionPanel(state){
+  const panel=el('tournamentProgressionPanel'); if(!panel) return;
+  if(!state){panel.hidden=true;panel.innerHTML='';return;}
+  panel.hidden=false;
+  const sourceLabel=state.config.source==='database'?'Supabase rules':'Auto rules';
+  const stageLabel=state.stage_type==='group_stage'?'Group Stage':state.stage_type==='survival'?'Survival Stage':state.stage_type==='finals'?'Finals':'Stage Progression';
+  let body='';
+  if(state.stage_type==='finals' && state.config.champion_rush_enabled){
+    const all=[...state.byTeam.values()].sort((a,b)=>a.cr_points_needed-b.cr_points_needed||b.total_score-a.total_score);
+    const active=all.filter(row=>row.cr_active).length;
+    body=`<div class="cr-summary"><div class="cr-threshold"><span>Champion Rush</span><strong>${fmtNum(state.config.champion_rush_threshold||90)} PTS</strong><small>${active} active • ${all.length-active} chasing</small></div><div class="cr-team-track">${all.slice(0,12).map(row=>{const pct=Math.min(100,Math.round((row.total_score/Number(state.config.champion_rush_threshold||90))*100));return `<div class="cr-track-row ${row.cr_active?'active':''}"><span>${teamLogoHtml(row.team,getTeamProfile(row.team),'progression-team-logo')}<b>${escHtml(row.team)}</b></span><div><i style="width:${pct}%"></i></div><strong>${row.cr_active?(row.champion_rush?.winner?'CHAMPION':'ACTIVE'):`${fmtNum(row.cr_points_needed)} TO CR`}</strong></div>`;}).join('')}</div></div>`;
+  }else{
+    body=`<div class="progression-group-grid">${state.groups.map(group=>{const counts={finals:0,survival:0,eliminated:0,pending:0};const lists={finals:[],survival:[],eliminated:[],pending:[]};group.rows.forEach(row=>{const cls=progressionStatusClass(row.advancement_status);if(cls==='finals'){counts.finals++;lists.finals.push(row.team);}else if(cls==='survival'){counts.survival++;lists.survival.push(row.team);}else if(cls==='eliminated'){counts.eliminated++;lists.eliminated.push(row.team);}else{counts.pending++;lists.pending.push(row.team);}});const rosterHtml=[['finals','Finals'],['survival','Survival'],['eliminated','Eliminated']].filter(([key])=>lists[key].length).map(([key,label])=>`<div class="progression-team-list ${key}"><b>${label}</b><span>${lists[key].map(team=>`<i>${escHtml(team)}</i>`).join('')}</span></div>`).join('');return `<article class="progression-group-card"><div class="progression-group-head"><div><span>${state.grouped?`Group ${escHtml(group.code)}`:stageLabel}</span><b>${group.rows.length} teams</b></div><em class="${group.confirmed?'confirmed':'provisional'}">${group.confirmed?'CONFIRMED':'PROVISIONAL'}</em></div><div class="progression-match-meter"><span><i style="width:${group.expected_matches?Math.min(100,group.completed_matches/group.expected_matches*100):0}%"></i></span><b>${group.completed_matches}${group.expected_matches?` / ${group.expected_matches}`:''} matches</b></div><div class="progression-counts"><span class="finals">${counts.finals} Finals</span>${counts.survival?`<span class="survival">${counts.survival} Survival</span>`:''}<span class="eliminated">${counts.eliminated} Eliminated</span></div><div class="progression-team-lists">${rosterHtml}</div></article>`;}).join('')}</div>`;
+  }
+  panel.innerHTML=`<header class="progression-panel-head"><div><span class="eyebrow">Tournament Progression</span><h3>${escHtml(stageLabel)}</h3><p>${escHtml(state.tournament)} • automatic group and advancement tracking</p></div><div class="progression-source"><span>${escHtml(sourceLabel)}</span><b>${state.grouped?'Groups detected':'Stage standings'}</b></div></header>${body}`;
+}
+function applyProgressionToRows(rows,state){
+  if(!state) return;
+  for(const row of rows){
+    const item=state.byTeam.get(row.team);
+    if(item) Object.assign(row,{group_code:item.group_code,group_rank:item.group_rank,stage_rank:item.stage_rank,advancement_status:item.advancement_status,next_stage:item.next_stage,is_provisional:item.is_provisional,cr_points_needed:item.cr_points_needed,cr_active:item.cr_active,cr_activated_match:item.cr_activated_match,champion_rush:item.champion_rush});
+  }
+}
 
 function teamMatchAgg(rows){
   const m = new Map();
@@ -3375,6 +3701,14 @@ function applyQualificationRowStyles(rows, cutoff){
     else if(displayRank <= Math.max(6, cutoff || 0)) tr.classList.add('rank-tier-top');
     else tr.classList.add('rank-tier-field');
 
+    tr.classList.remove('progression-finals','progression-survival','progression-eliminated','progression-cr-active','progression-champion');
+    const pClass=progressionStatusClass(row.advancement_status);
+    if(pClass==='finals') tr.classList.add('progression-finals');
+    else if(pClass==='survival') tr.classList.add('progression-survival');
+    else if(pClass==='eliminated') tr.classList.add('progression-eliminated');
+    else if(pClass==='cr-active') tr.classList.add('progression-cr-active');
+    else if(pClass==='champion') tr.classList.add('progression-champion');
+
     if(!cutoff) return;
     if(row.below_qualification_cutoff) tr.classList.add('below-quali-cutoff');
     else tr.classList.add('inside-quali-cutoff');
@@ -3396,6 +3730,10 @@ function rankMovementHtml(row){
 function renderOverall(options = {}){
   const tm = teamMatchAgg(FILTERED);
   const rows = buildOverallRowsFromTeamMatches(tm);
+  const progressionState = buildTournamentProgressionState();
+  EWC_CURRENT_PROGRESSION = progressionState;
+  applyProgressionToRows(rows, progressionState);
+  renderTournamentProgressionPanel(progressionState);
   const qualificationCutoff = syncQualificationCutoffOptions(rows.length);
   const qualificationInfo = applyQualificationMetrics(rows, qualificationCutoff);
 
@@ -3452,28 +3790,43 @@ function renderOverall(options = {}){
     row.rank_move = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
   });
 
-  const overallHtml = renderSimpleTable(rows, [
+  const overallColumns = [
     {label:'Rank', key:'display_rank', right:true, html:(r)=>`<span class="premium-rank-badge" aria-label="Rank ${escHtml(r.display_rank)}"><span>${escHtml(r.display_rank)}</span></span>`},
     {
-      label:'Team',
-      key:'team',
-      escape:false,
+      label:'Team', key:'team', escape:false,
       html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>Team profile</small></span>${rankMovementHtml(r)}</div>`
-    },
+    }
+  ];
+  if(progressionState?.grouped){
+    overallColumns.push({label:'Group',key:'group_code',html:(r)=>`<span class="group-code-pill">${r.group_code?`GROUP ${escHtml(r.group_code)}`:'—'}</span>`});
+    overallColumns.push({label:'G Rank',key:'group_rank',right:true,html:(r)=>r.group_rank?`<strong class="group-rank-value">#${fmtNum(r.group_rank)}</strong>`:'—'});
+  }else if(progressionState){
+    overallColumns.push({label:'Stage Rank',key:'stage_rank',right:true,html:(r)=>r.stage_rank?`<strong class="group-rank-value">#${fmtNum(r.stage_rank)}</strong>`:'—'});
+  }
+  overallColumns.push(
     {label:'MP', key:'matches', right:true},
     {label:'BYH', key:'booyahs', right:true},
     {label:'ELM', key:'elims', right:true},
     {label:'PLC', key:'ranking_score', right:true},
     {label:'TOT', key:'total_score', right:true, html:(r)=>`<strong class="premium-total-score">${fmtNum(r.total_score)}</strong>`},
     {label:'1UP', key:'one_up', right:true, html:(r)=>r.one_up == null ? '<span class="gap-pill leader">LEAD</span>' : `<span class="gap-pill">${fmtNum(r.one_up)}</span>`},
-    {label:'Quali Pts', key:'quali_pts', right:true, html:(r)=>r.quali_pts == null ? '<span class="quali-pill off">—</span>' : (Number(r.quali_pts) === 0 ? '<span class="quali-pill safe"><b>0</b><small>SAFE</small></span>' : `<span class="quali-pill needed"><b>+${fmtNum(r.quali_pts)}</b><small>NEEDED</small></span>`)},
+    {label:'Quali Pts', key:'quali_pts', right:true, html:(r)=>r.quali_pts == null ? '<span class="quali-pill off">—</span>' : (Number(r.quali_pts) === 0 ? '<span class="quali-pill safe"><b>0</b><small>SAFE</small></span>' : `<span class="quali-pill needed"><b>+${fmtNum(r.quali_pts)}</b><small>NEEDED</small></span>`)}
+  );
+  if(progressionState?.stage_type === 'finals' && progressionState?.config?.champion_rush_enabled){
+    overallColumns.push({label:'CR Pts',key:'cr_points_needed',right:true,html:(r)=>r.cr_active?'<span class="cr-points-pill active">ACTIVE</span>':`<span class="cr-points-pill">${fmtNum(r.cr_points_needed??0)}</span>`});
+    overallColumns.push({label:'CR Status',key:'advancement_status',html:(r)=>progressionStatusPill(r)});
+  }else if(progressionState){
+    overallColumns.push({label:'Progression',key:'advancement_status',html:(r)=>progressionStatusPill(r)});
+  }
+  overallColumns.push(
     {label:'DMG', key:'damage', right:true},
     {label:'ELM/M', key:'elims_pm', right:true, format:'1d'},
     {label:'PLC/M', key:'ranking_score_pm', right:true, format:'1d'},
     {label:'TOT/M', key:'total_pm', right:true, format:'1d'},
     {label:'DMG/M', key:'dmg_pm', right:true, format:'0d'}
-  ]);
-  setStableHTML(el('tblOverall'), overallHtml, `overall::${sortKey}::${dir}::cutoff=${qualificationCutoff}::${rows.map(r => `${r.team}:${r.total_score}:${r.one_up}:${r.quali_pts}:${r.elims}:${r.ranking_score}:${r.damage}:${r.rank_move}:${r.rank_delta}`).join('|')}`, !!arguments[0]?.silentRefresh);
+  );
+  const overallHtml = renderSimpleTable(rows, overallColumns);
+  setStableHTML(el('tblOverall'), overallHtml, `overall::${sortKey}::${dir}::cutoff=${qualificationCutoff}::${rows.map(r => `${r.team}:${r.total_score}:${r.one_up}:${r.quali_pts}:${r.group_code||''}:${r.group_rank||''}:${r.advancement_status||''}:${r.cr_points_needed??''}:${r.elims}:${r.ranking_score}:${r.damage}:${r.rank_move}:${r.rank_delta}`).join('|')}`, !!arguments[0]?.silentRefresh);
 
   applyColumnHeatmap('tblOverall', ['matches','booyahs','elims','ranking_score','total_score','damage','elims_pm','ranking_score_pm','total_pm','dmg_pm']);
   applyQualificationRowStyles(rows, qualificationCutoff);
@@ -3932,13 +4285,14 @@ async function loadTeamLogosJson(){
 
 function getTeamProfile(teamCode){
   const direct = SAMPLE_TEAM_PROFILES[teamCode] || SAMPLE_TEAM_PROFILES[teamCode?.toUpperCase?.()] || SAMPLE_TEAM_PROFILES.DEFAULT || {};
+  const progression = EWC_CURRENT_PROGRESSION?.byTeam?.get?.(norm(teamCode).toUpperCase()) || null;
   return {
     team_name: direct.team_name || teamCode,
     region: direct.region || 'TBD Region',
     country: direct.country || 'TBD Country',
-    group: direct.group || 'TBD Group',
+    group: progression?.group_code ? `Group ${progression.group_code}` : (direct.group || 'TBD Group'),
     seed: direct.seed || direct.team_seed || direct.slot || 'TBD Seed',
-    qualification_path: direct.qualification_path || 'Qualification path TBD',
+    qualification_path: progression ? progressionStatusLabel(progression.advancement_status) + (progression.is_provisional ? ' (Provisional)' : '') : (direct.qualification_path || 'Qualification path TBD'),
     coach: direct.coach || 'TBD Coach',
     team_logo_url: direct.team_logo_url || '',
     logo_url: direct.logo_url || '',
@@ -6293,6 +6647,7 @@ function globalSearchResourceLabel(kind){
 function globalSearchStaticEntries(){
   return [
     {type:'section',title:'Filters',subtitle:'Tournament, stage, mode, source, year, week, day and match filters',keywords:'filter scope tournament stage mode source year week day match reset latest',sectionId:'accFilters',icon:'FL'},
+    {type:'section',title:'Tournament Progression',subtitle:'Groups, advancement paths and Champion Rush status',keywords:'group stage survival finals champion rush qualification progression advanced eliminated',sectionId:'accOverall',icon:'PR'},
     {type:'section',title:'Overall Team Summary',subtitle:'Standings, rankings, qualification cutoff, 1UP and Quali Pts',keywords:'overall summary standings leaderboard ranking rank points qualification cutoff 1up quali pts booyah eliminations damage',sectionId:'accOverall',icon:'ST'},
     {type:'section',title:'Quick Popups',subtitle:'Open skill, pet, weapon, loadout and map references',keywords:'quick popup reference library skills pets weapons loadouts maps',sectionId:'quickPopupsSection',icon:'QP'},
     {type:'section',title:'Team Selection',subtitle:'Browse and open team profiles',keywords:'team selection profiles roster choose team',sectionId:'teamSelectionTitle',icon:'TM'},
@@ -6592,6 +6947,7 @@ function wire(){
   for (const [id, changed] of [
     ['fTournament', 'tournament'],
     ['fStage', 'stage'],
+    ['fGroup', 'group'],
     ['fMode', 'mode'],
     ['fSource', 'source'],
     ['fYear', 'year'],
@@ -6600,6 +6956,7 @@ function wire(){
   ]) {
     el(id)?.addEventListener('change', () => {
       refreshCascadeOptions(changed);
+      if(changed==='tournament' || changed==='stage') syncGroupFilterOptions();
       applyFilters();
       saveFilterState();
       syncTeamCardFilterControls();
@@ -6641,7 +6998,7 @@ function readSelectValue(id){ return el(id)?.value || '__all__'; }
 function getFilterState(){
   return {
     t: readSelectValue('fTournament'), s: readSelectValue('fStage'), mode: readSelectValue('fMode'), source: readSelectValue('fSource'),
-    y: readSelectValue('fYear'), w: readSelectValue('fWeek'), d: readSelectValue('fDay'), m: readSelectValue('fMatchNo')
+    g: readSelectValue('fGroup'), y: readSelectValue('fYear'), w: readSelectValue('fWeek'), d: readSelectValue('fDay'), m: readSelectValue('fMatchNo')
   };
 }
 function saveFilterState(){
@@ -6660,6 +7017,8 @@ function applySavedFilterState(state){
   setSelectIfExists('fTournament', state.t || '__all__');
   refreshCascadeOptions('tournament');
   setSelectIfExists('fStage', state.s || '__all__');
+  syncGroupFilterOptions();
+  setSelectIfExists('fGroup', state.g || '__all__');
   setSelectIfExists('fMode', state.mode || '__all__');
   setSelectIfExists('fSource', state.source || '__all__');
   refreshCascadeOptions('tournament');
@@ -7267,7 +7626,7 @@ function restoreDashboardViewState(state, attempt = 0){
 
 function captureFilterControlState(){
   const ids = [
-    'fTournament','fStage','fMode','fSource','fYear','fWeek','fDay','fMatchNo',
+    'fTournament','fStage','fGroup','fMode','fSource','fYear','fWeek','fDay','fMatchNo',
     'teamCardTournament','teamCardStage','teamCardDay','teamCardMatchNo'
   ];
   const controls = {};
@@ -7290,12 +7649,13 @@ function restoreFilterControlState(state){
 }
 function getRefreshLockedFilterSignature(){
   const f = currentFilterSnapshot();
-  return [f.t,f.s,f.mode,f.source,f.y,f.w,f.d,f.m].join('::');
+  return [f.t,f.s,f.g,f.mode,f.source,f.y,f.w,f.d,f.m].join('::');
 }
 function currentFilterSnapshot(){
   return {
     t: el('fTournament')?.value || '__all__',
     s: el('fStage')?.value || '__all__',
+    g: el('fGroup')?.value || '__all__',
     mode: el('fMode')?.value || '__all__',
     source: el('fSource')?.value || '__all__',
     y: el('fYear')?.value || '__all__',
@@ -7315,6 +7675,8 @@ function rebuildFilterOptionsPreservingCurrent(){
   setSelectValueIfAvailable('fTournament', f.t);
   refreshCascadeOptions('tournament');
   setSelectValueIfAvailable('fStage', f.s);
+  syncGroupFilterOptions();
+  setSelectValueIfAvailable('fGroup', f.g);
   setSelectValueIfAvailable('fMode', f.mode);
   setSelectValueIfAvailable('fSource', f.source);
   refreshCascadeOptions('tournament');
@@ -7435,7 +7797,7 @@ async function init(){
     detectSchema(RAW[0]);
     await loadMatchApi();
     await loadCharacterJson();
-    await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson(), loadTeamLogosJson()]);
+    await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson(), loadTeamLogosJson(), loadTournamentProgressionData()]);
     updateSkillDiagnostics();
     updateSkillLookupDiagnostics();
     populateTopDropdowns();

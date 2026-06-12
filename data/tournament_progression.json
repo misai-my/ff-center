@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "description": "Fallback tournament progression rules. Supabase tournament_stage_config rows override these defaults.",
+  "stage_defaults": {
+    "group_stage": {
+      "stage_type": "group_stage",
+      "is_grouped": true,
+      "group_codes": [
+        "A",
+        "B"
+      ],
+      "teams_per_group": 12,
+      "scheduled_matches_per_group": 12,
+      "points_reset": true,
+      "advancement_rules": [
+        {
+          "rank_from": 1,
+          "rank_to": 4,
+          "status": "qualified_finals_direct",
+          "next_stage": "Finals"
+        },
+        {
+          "rank_from": 5,
+          "rank_to": 10,
+          "status": "advanced_survival",
+          "next_stage": "Survival Stage"
+        },
+        {
+          "rank_from": 11,
+          "rank_to": 12,
+          "status": "eliminated",
+          "next_stage": ""
+        }
+      ],
+      "ranking_tiebreakers": [
+        "total_points",
+        "booyah",
+        "eliminations",
+        "final_match_placement"
+      ]
+    },
+    "survival": {
+      "stage_type": "survival",
+      "is_grouped": false,
+      "scheduled_matches": 10,
+      "points_reset": true,
+      "advancement_rules": [
+        {
+          "rank_from": 1,
+          "rank_to": 4,
+          "status": "qualified_finals_survival",
+          "next_stage": "Finals"
+        },
+        {
+          "rank_from": 5,
+          "rank_to": 12,
+          "status": "eliminated",
+          "next_stage": ""
+        }
+      ],
+      "ranking_tiebreakers": [
+        "total_points",
+        "booyah",
+        "eliminations",
+        "final_match_placement"
+      ]
+    },
+    "finals": {
+      "stage_type": "finals",
+      "is_grouped": false,
+      "scheduled_matches": 0,
+      "points_reset": true,
+      "champion_rush_enabled": true,
+      "champion_rush_threshold": 90,
+      "champion_rush_activation_rule": "reaches_threshold",
+      "champion_rush_win_rule": "next_match_booyah",
+      "ranking_tiebreakers": [
+        "total_points",
+        "booyah",
+        "eliminations",
+        "final_match_placement"
+      ]
+    }
+  }
+}

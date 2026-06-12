@@ -194,3 +194,18 @@ The topbar search uses a fixed 42 px field and constrained icon sizing. Critical
 ## Latest-filter behavior
 
 On a fresh load, the dashboard now selects the newest tournament represented in `ff_player_stats_raw`. **Reset to Latest** restores the newest available stage, year, week, day, and match within that tournament. Mode and source return to **All** so they cannot hide the newest match. Filter selections made afterward continue to be saved locally.
+
+
+## Tournament progression and Champion Rush
+
+The dashboard now supports grouped stages, automatic advancement paths, Survival Stage qualification, and Champion Rush.
+
+Run `supabase/03_tournament_progression.sql`, then configure the event using the exact tournament name stored in `ff_player_stats_raw`:
+
+```sql
+select public.configure_two_group_champion_rush_format('YOUR EXACT TOURNAMENT NAME');
+```
+
+Group assignment priority is: official rows in `tournament_team_assignments`, a Group/group_code column in match data, then automatic detection from teams participating together in the same Group Stage matches. The bundled `data/tournament_progression.json` provides the 2x12 Group Stage, 12-team Survival Stage, and 90-point Champion Rush defaults when the Supabase config tables have not yet been created.
+
+Progression remains marked **PROVISIONAL** until the configured match count is reached or `is_completed` is set to true in `tournament_stage_config`.

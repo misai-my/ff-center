@@ -1,0 +1,4 @@
+tournament,stage,team_id,team_tag,team_name,group_code,seed,source_stage,source_group,source_rank,status_override
+YOUR EXACT TOURNAMENT NAME,Group Stage,,TEAM1,Team One,A,1,,,,
+YOUR EXACT TOURNAMENT NAME,Group Stage,,TEAM2,Team Two,A,2,,,,
+YOUR EXACT TOURNAMENT NAME,Group Stage,,TEAM13,Team Thirteen,B,1,,,,
