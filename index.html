@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EWC — Team Command Center</title>
+  <title>Free Fire Data Center</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 
   <!-- Theme pre-load -->
   <script src="assets/js/theme-init.js"></script>
-  <link rel="stylesheet" href="assets/css/styles.css?v=login-fix-1">
+  <link rel="stylesheet" href="assets/css/styles.css?v=free-fire-hero-1">
 
   <!-- Critical search layout: keeps the global search compact even if a stale stylesheet is cached. -->
   <style id="global-search-critical">
@@ -195,8 +195,8 @@
         </a>
         
 
-        <!-- EWC Team Center -->
-        <a class="nav-item" href="ewc-team-overview.html" data-page="ewc-team-overview.html" title="EWC Team Center">
+        <!-- Free Fire Data Center -->
+        <a class="nav-item" href="ewc-team-overview.html" data-page="ewc-team-overview.html" title="Free Fire Data Center">
           <span class="nav-ico">
             <svg viewBox="0 0 24 24" fill="none">
               <path d="M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -205,7 +205,7 @@
               <path d="M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/>
             </svg>
           </span>
-          <span class="nav-label">EWC Team Center</span>
+          <span class="nav-label">Free Fire Data Center</span>
         </a>
 
         <!-- Split View (two panes) -->
@@ -225,7 +225,7 @@
       <button class="icon-btn" id="sbToggle" title="Toggle sidebar" aria-label="Toggle sidebar">
         <svg viewBox="0 0 24 24" fill="none"><path id="sbTogglePath" d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <div class="page-title"><h1>EWC Team Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
+      <div class="page-title"><h1>Free Fire Data Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
       <div class="global-search" id="globalSearch">
         <div class="global-search-field">
           <span class="global-search-icon" aria-hidden="true">
@@ -260,17 +260,28 @@
       <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results"></div>
     </div>
 
-<div id="veil"><div class="box">Loading EWC team data…</div></div>
+<div id="veil"><div class="box">Loading Free Fire team data…</div></div>
 <div class="shell">
   <div id="globalErr" class="gerr"></div>
 
-  <section class="ewc-hero section sportsbook-hero">
+  <section class="ewc-hero section sportsbook-hero free-fire-hero">
     <div class="hero-blue-panel">
-      <div class="hero-kicker">Esports World Cup</div>
-      <h2>EWC TEAM CENTER</h2>
-      <p>Track team pace, player impact, loadout identity, and match form in one broadcast-ready command page.</p>
+      <div class="hero-copy">
+        <div class="hero-kicker">Free Fire Esports Intelligence</div>
+        <h2>FREE FIRE<br>DATA CENTER</h2>
+        <p>Track team pace, player impact, loadout identity, qualification paths, and match form in one broadcast-ready command page.</p>
+      </div>
+
+      <div class="hero-character-stage" aria-hidden="true">
+        <span class="hero-energy-orbit orbit-one"></span>
+        <span class="hero-energy-orbit orbit-two"></span>
+        <span class="hero-character-slot hero-hayato"><img src="assets/img/characters/hayato.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-orion"><img src="assets/img/characters/orion.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-tatsuya"><img src="assets/img/characters/tatsuya.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-kelly"><img src="assets/img/characters/kelly.png" alt="" draggable="false"></span>
+      </div>
     </div>
-    <div class="hero-market-board compact" aria-label="EWC quick status card">
+    <div class="hero-market-board compact" aria-label="Free Fire Data Center quick status card">
       <div class="market-card scope-market-card"><span>Scope</span><b id="heroScopeMirror">Live Filters</b><small id="heroScopeSub">synced from filters</small></div>
     </div>
   </section>
@@ -358,7 +369,7 @@
     </div>
     <div class="team-selection-toolbar">
       <label class="team-selection-search" aria-label="Search teams">
-        <input type="search" id="teamSearch" placeholder="Search EWC team…" class="input" autocomplete="off">
+        <input type="search" id="teamSearch" placeholder="Search Free Fire team…" class="input" autocomplete="off">
       </label>
     </div>
     <div id="teamGrid" class="team-grid" aria-live="polite">Loading teams…</div>
@@ -568,7 +579,7 @@
     </button>
     <div class="auth-modal-copy">
       <span class="auth-eyebrow">Protected dashboard</span>
-      <h2 id="authModalTitle">Sign in to EWC Team Center</h2>
+      <h2 id="authModalTitle">Sign in to Free Fire Data Center</h2>
       <p>Use your Supabase account to load team data, live feeds, profiles, and tournament progression.</p>
     </div>
     <form class="auth-form" id="authLoginForm" novalidate>
@@ -591,6 +602,6 @@
 </div>
 
 <div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
-<script src="assets/js/app.js?v=login-fix-1"></script>
+<script src="assets/js/app.js?v=free-fire-hero-1"></script>
 </body>
 </html>

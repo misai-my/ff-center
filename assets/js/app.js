@@ -357,7 +357,7 @@ function syncAuthAction(session){
   const loggedIn = isSecureSupabaseSession(session);
   button.textContent = loggedIn ? 'Logout' : 'Login';
   button.classList.toggle('login-mode', !loggedIn);
-  button.setAttribute('aria-label', loggedIn ? 'Log out of EWC Team Center' : 'Log in to EWC Team Center');
+  button.setAttribute('aria-label', loggedIn ? 'Log out of Free Fire Data Center' : 'Log in to Free Fire Data Center');
   button.setAttribute('title', loggedIn ? 'Logout' : 'Login');
 }
 function updateConnectionBadge(session){
@@ -727,7 +727,7 @@ function setActiveNavItem(){
   });
 
   // This page is an EWC/team profile dashboard. If the filename does not exist in the sidebar,
-  // keep the EWC Team Center nav item highlighted.
+  // keep the Free Fire Data Center nav item highlighted.
   if(!active){
     active = items.find(item => String(item.dataset.page || '').toLowerCase() === 'ewc-team-overview.html') ||
       items.find(item => String(item.dataset.page || '').toLowerCase() === 'br-team.html');
