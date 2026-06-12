@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0e15" />
+  <title>Gloo Rush: Pixel Brawler</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <h1>GLOO RUSH</h1>
+        <p>Pixel-art arcade brawler prototype</p>
+      </div>
+      <div class="top-actions">
+        <button id="exitDataCenterButton" class="exit-data-center" type="button">EXIT TO DATA CENTER</button>
+        <button id="soundButton" type="button">SOUND: ON</button>
+        <button id="fullscreenButton" type="button">FULLSCREEN</button>
+      </div>
+    </header>
+
+    <section class="game-frame">
+      <canvas id="game" width="1280" height="720" aria-label="Gloo Rush game canvas"></canvas>
+
+      <section id="startScreen" class="overlay visible">
+        <div class="panel wide">
+          <div class="kicker">CHOOSE YOUR SURVIVOR</div>
+          <h2>Select your survivor and battle through 5 iconic maps</h2>
+          <p class="intro">
+            A fan-made browser prototype inspired by classic 1990s side-scrolling
+            arcade brawlers, with five map-themed stages, character skills, and deployable gloo walls.
+          </p>
+
+          <div id="roster" class="roster">
+            <button class="fighter selected" data-character="kelly"><span class="selected-badge">SELECTED</span>
+              <canvas width="120" height="120" data-portrait="kelly"></canvas>
+              <strong>KELLY</strong>
+              <span>Speed / Burst Damage</span>
+              <small>Deadly Velocity</small>
+            </button>
+            <button class="fighter" data-character="tatsuya"><span class="selected-badge">SELECTED</span>
+              <canvas width="120" height="120" data-portrait="tatsuya"></canvas>
+              <strong>TATSUYA</strong>
+              <span>Rush / Combo</span>
+              <small>Rebel Rush</small>
+            </button>
+            <button class="fighter" data-character="orion"><span class="selected-badge">SELECTED</span>
+              <canvas width="120" height="120" data-portrait="orion"></canvas>
+              <strong>ORION</strong>
+              <span>Drain / Area Control</span>
+              <small>Crimson Crush</small>
+            </button>
+            <button class="fighter" data-character="hayato"><span class="selected-badge">SELECTED</span>
+              <canvas width="120" height="120" data-portrait="hayato"></canvas>
+              <strong>HAYATO</strong>
+              <span>Defense / Blade</span>
+              <small>Art of Blades</small>
+            </button>
+          </div>
+
+          <div id="selectedDescription" class="selected-description"></div>
+
+          <div class="controls-grid">
+            <span><b>MOVE</b> WASD / Arrows</span>
+            <span><b>GUN</b> J</span>
+            <span><b>ACTIVE SKILL</b> K</span>
+            <span><b>GLOO WALL</b> L</span>
+            <span><b>HEAL</b> I · 3 Med Kits</span>
+            <span><b>PAUSE</b> P / Esc</span>
+          </div>
+
+          <button id="startButton" class="primary" type="button">DROP IN</button>
+        </div>
+      </section>
+
+      <section id="pauseScreen" class="overlay">
+        <div class="panel compact">
+          <div class="kicker">PAUSED</div>
+          <h2>Hold the line</h2>
+          <div class="menu-actions">
+            <button id="resumeButton" class="primary" type="button">RESUME</button>
+            <button id="pauseRestartButton" class="menu-button" type="button">RESTART RUN</button>
+            <button id="pauseChangeButton" class="menu-button character-button" type="button">CHANGE SURVIVOR</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="gameOverScreen" class="overlay">
+        <div class="panel compact">
+          <div class="kicker danger">MISSION FAILED</div>
+          <h2>Survivor eliminated</h2>
+          <p id="gameOverStats"></p>
+          <div class="menu-actions">
+            <button id="restartButton" class="primary" type="button">RETRY SAME SURVIVOR</button>
+            <button id="gameOverChangeButton" class="menu-button character-button" type="button">CHANGE SURVIVOR</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="victoryScreen" class="overlay">
+        <div class="panel compact">
+          <div class="kicker success">BOOYAH!</div>
+          <h2>District secured</h2>
+          <p id="victoryStats"></p>
+          <div class="menu-actions">
+            <button id="replayButton" class="primary" type="button">REPLAY SAME SURVIVOR</button>
+            <button id="victoryChangeButton" class="menu-button character-button" type="button">CHANGE SURVIVOR</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="orientationHint" class="orientation-hint" aria-live="polite">
+        <div class="phone-icon">↻</div>
+        <strong>ROTATE TO LANDSCAPE</strong>
+        <span>Landscape mode gives you the full game view and controls.</span>
+      </section>
+
+      <section class="touch-controls" aria-label="Mobile game controls">
+        <div class="dpad" aria-label="Movement pad">
+          <button data-touch="up" aria-label="Move up">▲</button>
+          <div>
+            <button data-touch="left" aria-label="Move left">◀</button>
+            <button data-touch="down" aria-label="Move down">▼</button>
+            <button data-touch="right" aria-label="Move right">▶</button>
+          </div>
+        </div>
+        <div class="action-pad" aria-label="Action buttons">
+          <button class="gloo" data-touch="gloo"><b>L</b><span>GLOO</span></button>
+          <button class="signature" data-touch="signature"><b>K</b><span>SKILL</span></button>
+          <button class="heal" data-touch="heal"><b>I</b><span>HEAL</span></button>
+          <button class="attack" data-touch="attack"><b>J</b><span>GUN</span></button>
+        </div>
+      </section>
+
+      <section id="toast" class="toast"></section>
+    </section>
+
+
+
+    <footer>
+      Fan-made prototype with original procedural pixel art. Free Fire character names and concepts belong to Garena.
+      No official game assets are included.
+    </footer>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
