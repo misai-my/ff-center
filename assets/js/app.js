@@ -335,6 +335,7 @@ function applyColumnHeatmap(containerId, keys, options = {}){
 }
 
 let EWC_MANUAL_LOGOUT = false;
+let EWC_AUTH_MODAL_OPENER = null;
 
 function isSecureSupabaseSession(session){
   if(!session || !session.user || !session.access_token) return false;
@@ -342,15 +343,52 @@ function isSecureSupabaseSession(session){
   if(expiresAtMs && expiresAtMs <= Date.now()) return false;
   return true;
 }
-function redirectToLogin(){
-  const current = (location.pathname.split('/').pop() || '').toLowerCase();
-  if(current !== 'index.html') location.replace('index.html');
+function authNode(id){ return document.getElementById(id); }
+function setAuthMessage(message = '', state = ''){
+  const box = authNode('authMessage');
+  if(!box) return;
+  box.textContent = message;
+  box.dataset.state = state;
+  box.hidden = !message;
+}
+function syncAuthAction(session){
+  const button = authNode('logoutBtn');
+  if(!button) return;
+  const loggedIn = isSecureSupabaseSession(session);
+  button.textContent = loggedIn ? 'Logout' : 'Login';
+  button.classList.toggle('login-mode', !loggedIn);
+  button.setAttribute('aria-label', loggedIn ? 'Log out of EWC Team Center' : 'Log in to EWC Team Center');
+  button.setAttribute('title', loggedIn ? 'Logout' : 'Login');
 }
 function updateConnectionBadge(session){
   const loggedIn = isSecureSupabaseSession(session);
   setText('user-info', loggedIn ? session.user.email : 'Not logged in');
-  setText('connection-status', loggedIn ? 'Connection active' : 'Connection inactive');
+  setText('connection-status', loggedIn ? 'Connection active' : 'Sign in required');
   document.body.classList.toggle('is-logged-in', loggedIn);
+  syncAuthAction(session);
+}
+function openLoginModal(message = ''){
+  const modal = authNode('authModal');
+  if(!modal) return;
+  EWC_AUTH_MODAL_OPENER = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('auth-modal-open');
+  if(message) setAuthMessage(message, 'info');
+  requestAnimationFrame(() => {
+    const email = authNode('authEmail');
+    const card = authNode('authModalCard');
+    (email || card)?.focus?.();
+  });
+}
+function closeLoginModal({ restoreFocus = true } = {}){
+  const modal = authNode('authModal');
+  if(!modal) return;
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('auth-modal-open');
+  setAuthMessage('');
+  if(restoreFocus && EWC_AUTH_MODAL_OPENER?.isConnected) EWC_AUTH_MODAL_OPENER.focus();
 }
 async function requireSecureSession(){
   try{
@@ -359,46 +397,106 @@ async function requireSecureSession(){
 
     if(isSecureSupabaseSession(session)){
       updateConnectionBadge(session);
+      closeLoginModal({ restoreFocus:false });
       return session;
     }
 
-    // Do not sign out or redirect automatically. First try to refresh the stored Supabase session.
     try{
       const { data: { session: refreshedSession }, error: refreshError } = await withTimeout(client.auth.refreshSession(), 10000, 'Token refresh timed out');
       if(refreshError) throw refreshError;
       if(isSecureSupabaseSession(refreshedSession)){
         updateConnectionBadge(refreshedSession);
+        closeLoginModal({ restoreFocus:false });
         return refreshedSession;
       }
     }catch(refreshErr){
       console.warn('Session refresh failed or unavailable:', refreshErr?.message || refreshErr);
     }
 
-    updateConnectionBadge(session);
+    updateConnectionBadge(null);
+    openLoginModal('Sign in to load the protected dashboard data.');
     return null;
   }catch(err){
     console.warn('Login check failed:', err?.message || err);
     setText('user-info', 'Login check failed');
-    setText('connection-status', 'Connection inactive');
+    setText('connection-status', 'Sign in required');
     document.body.classList.remove('is-logged-in');
+    syncAuthAction(null);
+    openLoginModal('The session could not be verified. Sign in again to continue.');
     return null;
   }
 }
 
+function wireAuthControls(){
+  const form = authNode('authLoginForm');
+  const closeBtn = authNode('authModalClose');
+  const backdrop = authNode('authModalBackdrop');
+  const passwordToggle = authNode('authPasswordToggle');
+  const password = authNode('authPassword');
+  const submit = authNode('authSubmitBtn');
+
+  closeBtn?.addEventListener('click', () => closeLoginModal());
+  backdrop?.addEventListener('click', () => closeLoginModal());
+  passwordToggle?.addEventListener('click', () => {
+    if(!password) return;
+    const show = password.type === 'password';
+    password.type = show ? 'text' : 'password';
+    passwordToggle.textContent = show ? 'Hide' : 'Show';
+    passwordToggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+  });
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const email = String(authNode('authEmail')?.value || '').trim();
+    const passwordValue = String(password?.value || '');
+    if(!email || !passwordValue){
+      setAuthMessage('Enter both your email and password.', 'error');
+      return;
+    }
+    submit?.setAttribute('disabled', '');
+    if(submit) submit.textContent = 'Signing In…';
+    setAuthMessage('Checking your account…', 'info');
+    try{
+      const { data, error } = await client.auth.signInWithPassword({ email, password: passwordValue });
+      if(error) throw error;
+      if(!isSecureSupabaseSession(data?.session)) throw new Error('No active session was returned.');
+      updateConnectionBadge(data.session);
+      setAuthMessage('Signed in. Loading the dashboard…', 'success');
+      closeLoginModal({ restoreFocus:false });
+      location.reload();
+    }catch(error){
+      setAuthMessage(error?.message || 'Unable to sign in. Check your credentials.', 'error');
+      password?.focus();
+      password?.select?.();
+    }finally{
+      submit?.removeAttribute('disabled');
+      if(submit) submit.textContent = 'Sign In';
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if(event.key === 'Escape' && authNode('authModal')?.classList.contains('show')) closeLoginModal();
+  });
+}
+
+wireAuthControls();
 requireSecureSession();
 
 client.auth.onAuthStateChange((event, session) => {
   updateConnectionBadge(session);
-  // No automatic page kick-out. Only the Logout button redirects to index.html.
-  if(event === 'SIGNED_OUT' && EWC_MANUAL_LOGOUT){
-    redirectToLogin();
-  }
+  if(event === 'SIGNED_IN') closeLoginModal({ restoreFocus:false });
+  if(event === 'SIGNED_OUT') openLoginModal('You have been logged out. Sign in to continue.');
 });
-el('logoutBtn').onclick = async () => {
+
+authNode('logoutBtn')?.addEventListener('click', async () => {
+  const { data: { session } } = await client.auth.getSession();
+  if(!isSecureSupabaseSession(session)){
+    openLoginModal();
+    return;
+  }
   EWC_MANUAL_LOGOUT = true;
   await client.auth.signOut();
-  redirectToLogin();
-};
+  updateConnectionBadge(null);
+  openLoginModal('You have been logged out. Sign in to continue.');
+});
 
 
 /* ============ Sidebar + Theme controls ============ */
@@ -7781,7 +7879,8 @@ async function init(){
     if(!activeSession){
       if(loadWatchdog) clearTimeout(loadWatchdog);
       el('veil').classList.add('hide');
-      gerr('Login/session is inactive, so the dashboard cannot load protected Supabase data. The page will not auto-logout anymore; use index.html only if you need to sign in again.');
+      clearErr();
+      openLoginModal('Sign in to load the protected dashboard data.');
       return;
     }
     await withTimeout(headCount(), 15000, 'Row count timed out').catch(e => console.warn(e?.message || e));

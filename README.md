@@ -209,3 +209,8 @@ select public.configure_two_group_champion_rush_format('YOUR EXACT TOURNAMENT NA
 Group assignment priority is: official rows in `tournament_team_assignments`, a Group/group_code column in match data, then automatic detection from teams participating together in the same Group Stage matches. The bundled `data/tournament_progression.json` provides the 2x12 Group Stage, 12-team Survival Stage, and 90-point Champion Rush defaults when the Supabase config tables have not yet been created.
 
 Progression remains marked **PROVISIONAL** until the configured match count is reached or `is_completed` is set to true in `tournament_stage_config`.
+
+
+## Login and logout
+
+The dashboard now includes an in-page Supabase email/password sign-in dialog. When a session is missing or the user logs out, the dialog opens automatically and the topbar action changes from **Logout** to **Login**.
