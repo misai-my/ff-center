@@ -215,3 +215,19 @@ body.card-arena-open { overflow: hidden !important; }
     right: max(8px, env(safe-area-inset-right)) !important;
   }
 }
+
+
+/* iPhone landscape: place close button away from Card Arena top controls */
+@media (max-width: 932px) and (orientation: landscape) {
+  .card-arena-close {
+    top: auto !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    border-radius: 50% !important;
+    background: rgba(5,10,18,.72) !important;
+    backdrop-filter: blur(8px);
+  }
+}
