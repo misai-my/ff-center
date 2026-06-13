@@ -3800,3 +3800,503 @@ body.is-battle-mode .avatar-pane img { max-height: 240px; }
     max-height: 22px !important;
   }
 }
+
+
+/* ===== iPhone layout V3: readable cards + battle page adjustment ===== */
+@media (max-width: 932px) and (orientation: landscape) {
+  /* Bring Random back on the top bar without crowding everything else */
+  .topbar-controls {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
+  .top-actions {
+    display: flex !important;
+    flex: 0 0 auto !important;
+    gap: 0 !important;
+  }
+
+  .top-actions button {
+    display: none !important;
+  }
+
+  .top-actions #randomizeBtn {
+    display: inline-grid !important;
+    place-items: center !important;
+    min-width: 46px !important;
+    width: 46px !important;
+    height: 25px !important;
+    min-height: 25px !important;
+    padding: 0 4px !important;
+    border-radius: 7px !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+  }
+
+  .topbar-controls .builder-command-top {
+    grid-template-columns: 66px minmax(78px, 1fr) 62px 42px !important;
+    min-width: 0 !important;
+  }
+
+  .topbar-controls #startBattleBtn {
+    max-width: none !important;
+    width: 62px !important;
+    font-size: 7px !important;
+    letter-spacing: .02em !important;
+  }
+
+  .topbar-controls #clearLoadoutBtn {
+    width: 42px !important;
+    font-size: 7px !important;
+  }
+
+  /* Readability: mobile card tiles get more usable stat area */
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  .card.template-card {
+    height: 128px !important;
+    min-height: 128px !important;
+    max-height: 128px !important;
+    grid-template-columns: 50px minmax(0, 1fr) 24px !important;
+    grid-template-rows: 18px 1fr !important;
+  }
+
+  .card.template-card .card-image-wrap {
+    height: 82px !important;
+    min-height: 82px !important;
+  }
+
+  .card.template-card .card-body {
+    min-height: 82px !important;
+    height: 82px !important;
+    max-height: 82px !important;
+    gap: 4px !important;
+  }
+
+  .card.template-card .card-skill {
+    font-size: 8px !important;
+    line-height: 1.12 !important;
+    min-height: 9px !important;
+  }
+
+  .card-stat-row {
+    font-size: 6.8px !important;
+    line-height: 1.05 !important;
+    gap: 3px !important;
+  }
+
+  .card-stat-row span {
+    padding: 2px 3px !important;
+  }
+
+  .card.template-card .card-power {
+    max-height: 34px !important;
+    min-height: 30px !important;
+    font-size: 6.8px !important;
+    line-height: 1.18 !important;
+    padding: 3px 4px !important;
+    overflow: auto !important;
+  }
+
+  .card.template-card .card-actions button,
+  .card-add-toggle {
+    width: 23px !important;
+    min-width: 23px !important;
+    height: 23px !important;
+    min-height: 23px !important;
+  }
+
+  /* Battle page: give arena more height and make sides/buttons/deck usable */
+  body.is-battle-mode .topbar {
+    min-height: 24px !important;
+    max-height: 26px !important;
+    padding: 2px 5px !important;
+  }
+
+  body.is-battle-mode .brand-block {
+    gap: 4px !important;
+  }
+
+  body.is-battle-mode .game-mark {
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
+    font-size: 7px !important;
+  }
+
+  body.is-battle-mode .topbar h1 {
+    font-size: 12px !important;
+    max-width: 22vw !important;
+  }
+
+  body.is-battle-mode .topbar-controls .builder-command-top,
+  body.is-battle-mode .top-actions {
+    display: none !important;
+  }
+
+  #battleScreen.active {
+    height: 100% !important;
+    min-height: 0 !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+  }
+
+  .battle-topline {
+    min-height: 24px !important;
+    max-height: 26px !important;
+    padding: 2px 6px !important;
+    border-radius: 9px !important;
+  }
+
+  .battle-topline .section-kicker,
+  .battle-map-info {
+    display: none !important;
+  }
+
+  .battle-topline h2 {
+    font-size: 12px !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+  }
+
+  .battle-actions-row {
+    gap: 4px !important;
+  }
+
+  .battle-actions-row button {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 2px 6px !important;
+    border-radius: 7px !important;
+    font-size: 8px !important;
+  }
+
+  .battle-layout {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-areas:
+      "player center enemy"
+      "hand hand hand" !important;
+    grid-template-columns: 104px minmax(0, 1fr) 104px !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+  }
+
+  .player-box,
+  .enemy-box {
+    grid-area: player;
+    min-height: 0 !important;
+    height: 100% !important;
+    padding: 4px !important;
+    border-radius: 9px !important;
+    overflow: auto !important;
+  }
+
+  .enemy-box { grid-area: enemy; }
+
+  .combatant .section-kicker {
+    font-size: 6px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .hero-summary {
+    gap: 4px !important;
+    margin-top: 4px !important;
+  }
+
+  .hero-card {
+    padding: 4px !important;
+    gap: 4px !important;
+    border-radius: 8px !important;
+  }
+
+  .hero-card img {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .hero-card h4 {
+    font-size: 8px !important;
+  }
+
+  .hero-card p,
+  .mini-card .meta,
+  .stat-line .label-row {
+    font-size: 6.2px !important;
+  }
+
+  .status-bars {
+    gap: 3px !important;
+    margin: 4px 0 !important;
+  }
+
+  .bar {
+    height: 5px !important;
+  }
+
+  .mini-cards {
+    gap: 3px !important;
+  }
+
+  .mini-card {
+    padding: 3px !important;
+    gap: 3px !important;
+    border-radius: 7px !important;
+  }
+
+  .mini-card img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .battle-center {
+    grid-area: center;
+    min-height: 0 !important;
+    height: 100% !important;
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 54px !important;
+    gap: 3px !important;
+    padding: 4px !important;
+    border-radius: 9px !important;
+  }
+
+  .battle-board {
+    min-height: 0 !important;
+    height: 100% !important;
+    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr) !important;
+    gap: 4px !important;
+    border-radius: 8px !important;
+  }
+
+  .avatar-pane {
+    padding: 4px !important;
+  }
+
+  .avatar-pane img {
+    width: min(96px, 82%) !important;
+    max-height: 108px !important;
+  }
+
+  .nameplate {
+    max-width: 94px !important;
+    bottom: 2px !important;
+    padding: 3px 5px !important;
+    border-radius: 7px !important;
+  }
+
+  .nameplate strong {
+    font-size: 7px !important;
+  }
+
+  .nameplate span {
+    font-size: 6px !important;
+  }
+
+  .vs-core {
+    font-size: 15px !important;
+  }
+
+  .turn-counter {
+    font-size: 6px !important;
+  }
+
+  .battle-log {
+    min-height: 0 !important;
+    height: 54px !important;
+    padding: 3px !important;
+    border-radius: 7px !important;
+  }
+
+  .log-item {
+    padding: 3px 5px !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+  }
+
+  .player-hand {
+    grid-area: hand !important;
+    width: min(620px, 100%) !important;
+    max-width: 620px !important;
+    justify-self: center !important;
+    padding: 4px !important;
+    border-radius: 9px !important;
+  }
+
+  .player-hand .section-head {
+    display: none !important;
+  }
+
+  .battle-control-panel {
+    gap: 4px !important;
+  }
+
+  .battle-action-header {
+    grid-template-columns: minmax(0, 1fr) 86px !important;
+    gap: 4px !important;
+  }
+
+  .battle-action-buttons {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .battle-side-toggles {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 3px !important;
+  }
+
+  .battle-action-button,
+  .auto-battle-toggle,
+  .mobile-deck-toggle {
+    min-height: 26px !important;
+    height: 26px !important;
+    padding: 3px 4px !important;
+    border-radius: 8px !important;
+  }
+
+  .battle-action-button b {
+    font-size: 8px !important;
+  }
+
+  .battle-action-button span {
+    display: none !important;
+  }
+
+  .auto-battle-toggle,
+  .mobile-deck-toggle {
+    font-size: 6px !important;
+  }
+
+  .battle-deck-row {
+    width: min(540px, 100%) !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 96px)) !important;
+    gap: 4px !important;
+    justify-content: center !important;
+  }
+
+  .deck-card {
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
+    padding: 3px !important;
+    gap: 2px !important;
+    border-radius: 8px !important;
+  }
+
+  .deck-card .battle-card-top {
+    min-height: 12px !important;
+    height: 12px !important;
+    padding: 1px 3px !important;
+    font-size: 5.5px !important;
+  }
+
+  .deck-card .battle-card-top span {
+    display: none !important;
+  }
+
+  .deck-card .battle-card-art {
+    min-height: 34px !important;
+    height: 34px !important;
+  }
+
+  .deck-card .battle-card-art img {
+    height: 32px !important;
+    padding: 1px !important;
+  }
+
+  .deck-card .battle-card-text {
+    min-height: 20px !important;
+    height: 20px !important;
+    max-height: 20px !important;
+    padding: 2px !important;
+    font-size: 5.5px !important;
+    line-height: 1.05 !important;
+  }
+
+  .deck-card .battle-card-text small {
+    display: none !important;
+  }
+
+  body.deck-collapsed .battle-deck-row {
+    display: none !important;
+  }
+
+  body.deck-collapsed .player-hand {
+    width: min(430px, 100%) !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .topbar h1 { max-width: 20vw !important; }
+  .topbar-controls .builder-command-top {
+    grid-template-columns: 56px minmax(70px, 1fr) 54px 34px !important;
+  }
+  .top-actions #randomizeBtn {
+    width: 38px !important;
+    min-width: 38px !important;
+    font-size: 6px !important;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) !important;
+  }
+
+  .card.template-card {
+    height: 116px !important;
+    min-height: 116px !important;
+  }
+
+  .card.template-card .card-image-wrap {
+    height: 72px !important;
+    min-height: 72px !important;
+  }
+
+  .card.template-card .card-body {
+    min-height: 72px !important;
+    height: 72px !important;
+  }
+
+  .battle-layout {
+    grid-template-columns: 94px minmax(0, 1fr) 94px !important;
+  }
+
+  .player-hand {
+    width: min(560px, 100%) !important;
+  }
+
+  .battle-deck-row {
+    grid-template-columns: repeat(5, minmax(0, 84px)) !important;
+  }
+
+  .deck-card {
+    height: 68px !important;
+    min-height: 68px !important;
+  }
+
+  .deck-card .battle-card-art {
+    min-height: 28px !important;
+    height: 28px !important;
+  }
+
+  .deck-card .battle-card-art img {
+    height: 27px !important;
+  }
+
+  .deck-card .battle-card-text {
+    min-height: 18px !important;
+    height: 18px !important;
+    max-height: 18px !important;
+  }
+}
