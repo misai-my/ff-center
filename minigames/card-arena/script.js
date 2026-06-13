@@ -76,6 +76,8 @@ let audioCtx = null;
 let combat = null;
 let actionBusy = false;
 let deckCollapsed = false;
+let playerAutoEnabled = localStorage.getItem('ffcaPlayerAutoEnabled') === '1';
+let autoTurnTimer = null;
 let campaignIndex = Number(localStorage.getItem('ffcaCampaignIndexV2') || 0);
 
 function rand(n) { return Math.floor(Math.random() * n); }
@@ -453,7 +455,7 @@ function startBattle() {
   startTurn(combat.player, combat.enemy);
 }
 function showBattleScreen() { document.body.classList.add('is-battle-mode'); ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
-function showBuilderScreen() { actionBusy = false; document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
+function showBuilderScreen() { clearTimeout(autoTurnTimer); actionBusy = false; document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
   actionBusy = actor !== combat.player;
@@ -470,7 +472,16 @@ function startTurn(actor, target) {
   if (actor.regen > 0) restoreHp(actor, actor.regen, logMessage, `${actor.name} regenerates`);
   if (actor.burnTurns > 0) { actor.burnTurns -= 1; dealDamage(null, actor, actor.burnDamage, `${actor.name} suffers burn damage`, logMessage, { skipDodge: true }); if (actor.hp <= 0) return finishBattle(target === combat.player ? 'player' : 'enemy'); }
   combat.turn = actor === combat.player ? 'player' : 'enemy';
-  if (actor === combat.player) { actionBusy = false; ui.turnBanner.textContent = 'Your Turn'; ui.handHint.textContent = 'Use Basic, Active, or Pet once per turn'; renderBattle(); }
+  if (actor === combat.player) {
+    actionBusy = false;
+    ui.turnBanner.textContent = playerAutoEnabled ? 'Auto Battle' : 'Your Turn';
+    ui.handHint.textContent = playerAutoEnabled ? 'Auto is choosing the best action' : 'Use Basic, Active, or Pet once per turn';
+    renderBattle();
+    if (playerAutoEnabled && !combat.over) {
+      clearTimeout(autoTurnTimer);
+      autoTurnTimer = setTimeout(takeAutoPlayerTurn, 620);
+    }
+  }
   else { actionBusy = true; ui.turnBanner.textContent = 'Opponent Turn'; ui.handHint.textContent = 'Opponent is thinking...'; renderBattle(); setTimeout(() => takeAiTurn(), 800); }
 }
 async function performPlayerAction(kind) {
@@ -500,6 +511,75 @@ async function performPlayerAction(kind) {
     console.error(err);
     actionBusy = false;
     renderBattle();
+  }
+}
+
+
+function canUseActive(unit) {
+  return unit.activeCooldown === 0 && unit.energy >= unit.activeAction.cost && unit.silenceTurns <= 0;
+}
+function canUsePet(unit) {
+  return unit.petCooldown === 0 && unit.energy >= unit.petAction.cost;
+}
+function isDefensiveAction(kind) {
+  return ['heal', 'shield', 'support', 'utility'].includes(kind);
+}
+function isTempoAction(kind) {
+  return ['info', 'speed'].includes(kind);
+}
+function isDamageAction(kind) {
+  return ['damage', 'explosive'].includes(kind);
+}
+function chooseAutoPlayerAction() {
+  if (!combat || combat.over) return 'basic';
+  const p = combat.player;
+  const e = combat.enemy;
+  const lowHp = p.hp <= p.maxHp * .42;
+  const dangerHp = p.hp <= p.maxHp * .28;
+  const enemyLow = e.hp <= Math.max(28, e.maxHp * .32);
+  const shieldLow = p.shield <= 6;
+  const canActive = canUseActive(p);
+  const canPet = canUsePet(p);
+  const activeKind = p.activeAction.kind;
+  const petKind = p.petAction.kind;
+
+  if (dangerHp && canActive && isDefensiveAction(activeKind)) return 'active';
+  if (dangerHp && canPet && isDefensiveAction(petKind)) return 'pet';
+  if (lowHp && canActive && ['heal', 'shield'].includes(activeKind)) return 'active';
+  if (lowHp && canPet && ['heal', 'shield'].includes(petKind)) return 'pet';
+
+  if (enemyLow && canActive && isDamageAction(activeKind)) return 'active';
+  if (enemyLow && canPet && isDamageAction(petKind)) return 'pet';
+
+  if (canActive && activeKind === 'info' && p.focus < 8 && combat.turnNumber <= 4) return 'active';
+  if (canActive && activeKind === 'speed' && (p.tempDodgeTurns <= 0 || p.tempAttackTurns <= 0)) return 'active';
+  if (canPet && petKind === 'info' && p.focus < 6 && combat.turnNumber <= 5) return 'pet';
+  if (canPet && petKind === 'speed' && p.tempDodgeTurns <= 0) return 'pet';
+
+  if (canActive && isDamageAction(activeKind) && (p.energy >= p.activeAction.cost + 1 || Math.random() < .78)) return 'active';
+  if (canPet && isDamageAction(petKind) && Math.random() < .55) return 'pet';
+  if (shieldLow && canActive && activeKind === 'shield') return 'active';
+  if (shieldLow && canPet && petKind === 'shield') return 'pet';
+  if (canActive && isTempoAction(activeKind) && Math.random() < .35) return 'active';
+  if (canPet && isTempoAction(petKind) && Math.random() < .28) return 'pet';
+  return 'basic';
+}
+async function takeAutoPlayerTurn() {
+  if (!playerAutoEnabled || !combat || combat.over || combat.turn !== 'player' || actionBusy) return;
+  const action = chooseAutoPlayerAction();
+  logMessage(`Auto Battle selected ${action.toUpperCase()}.`);
+  await performPlayerAction(action);
+}
+function togglePlayerAuto() {
+  playerAutoEnabled = !playerAutoEnabled;
+  localStorage.setItem('ffcaPlayerAutoEnabled', playerAutoEnabled ? '1' : '0');
+  if (combat && !combat.over) {
+    logMessage(`Auto Battle ${playerAutoEnabled ? 'ON' : 'OFF'}.`);
+    renderBattle();
+    if (playerAutoEnabled && combat.turn === 'player' && !actionBusy) {
+      clearTimeout(autoTurnTimer);
+      autoTurnTimer = setTimeout(takeAutoPlayerTurn, 420);
+    }
   }
 }
 
@@ -550,6 +630,7 @@ function afterAction(actor, target) { renderBattle(); if (combat.over) return; i
 function finishBattle(winner) {
   if (combat.over) return;
   combat.over = true;
+  clearTimeout(autoTurnTimer);
   renderBattle();
   const resultCard = ui.resultModal.querySelector('.result-card');
   resultCard.classList.toggle('win', winner === 'player');
@@ -608,12 +689,17 @@ function renderHand() {
             <b>${action.label}</b><span>${escapeHtml(action.detail)}</span>
           </button>`).join('')}
         </div>
-        <button id="toggleDeckBtn" class="mobile-deck-toggle" type="button">${deckCollapsed ? 'SHOW DECK' : 'HIDE DECK'}</button>
+        <div class="battle-side-toggles">
+          <button id="autoBattleBtn" class="auto-battle-toggle ${playerAutoEnabled ? 'is-on' : ''}" type="button">${playerAutoEnabled ? 'AUTO ON' : 'AUTO OFF'}</button>
+          <button id="toggleDeckBtn" class="mobile-deck-toggle" type="button">${deckCollapsed ? 'SHOW DECK' : 'HIDE DECK'}</button>
+        </div>
       </div>
       <div class="battle-deck-row">${deckCards}</div>
     </div>`;
 
   ui.playerHand.querySelectorAll('[data-play]').forEach(btn => btn.addEventListener('click', () => performPlayerAction(btn.dataset.play)));
+  const autoToggle = ui.playerHand.querySelector('#autoBattleBtn');
+  if (autoToggle) autoToggle.addEventListener('click', togglePlayerAuto);
   const toggle = ui.playerHand.querySelector('#toggleDeckBtn');
   if (toggle) toggle.addEventListener('click', () => { deckCollapsed = !deckCollapsed; renderHand(); });
 }

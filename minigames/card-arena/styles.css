@@ -2783,3 +2783,56 @@ body.is-battle-mode .avatar-pane img { max-height: 240px; }
   .deck-card .battle-card-art img { height: 36px; }
   .deck-card .battle-card-text { min-height: 20px; max-height: 20px; font-size: 6px; padding: 2px; }
 }
+
+
+/* ===== Player Auto Battle controls ===== */
+.battle-side-toggles {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+.auto-battle-toggle {
+  min-width: 92px;
+  border-color: rgba(100,232,255,.34);
+  color: #dffaff;
+  background: rgba(8,12,22,.72);
+}
+.auto-battle-toggle.is-on {
+  color: #201407;
+  border-color: rgba(255,216,90,.72);
+  background: linear-gradient(135deg, #ffd85a, #ff8b55 55%, #ff5da8);
+  box-shadow: 0 0 18px rgba(255,216,90,.18);
+}
+@media (max-width: 1366px) and (orientation: landscape) {
+  .battle-action-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .battle-side-toggles {
+    gap: 6px;
+  }
+  .auto-battle-toggle {
+    min-width: 78px;
+    font-size: 9px;
+    padding: 5px 6px;
+  }
+}
+@media (max-width: 932px) and (orientation: landscape) {
+  .battle-action-header {
+    grid-template-columns: minmax(0, 1fr) 116px;
+    gap: 5px;
+  }
+  .battle-side-toggles {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .auto-battle-toggle,
+  .mobile-deck-toggle {
+    min-width: 0;
+    width: 100%;
+    font-size: 7px;
+    padding: 3px 4px;
+    border-radius: 8px;
+  }
+}

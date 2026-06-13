@@ -287,3 +287,8 @@ This package includes `minigames/card-arena/` as a standalone Free Fire Card Are
 - Mobile landscape has a battle-deck collapse toggle to show only Basic/Active/Pet buttons.
 - Floating Data Center mini-game order changed: Card Arena is the lower icon, Gloo Rush is stacked above it.
 - Gloo Rush launcher icon is now a landscape phone/game-screen icon.
+
+## Card Arena auto battle update
+- Added player-side Auto Battle toggle in the battle controls.
+- Auto logic chooses between Basic, Active, and Pet based on HP, shield, energy, cooldowns, enemy HP, and skill type.
+- Auto Battle persists locally and can be toggled on/off mid-battle.
