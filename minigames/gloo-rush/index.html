@@ -34,8 +34,6 @@
             arcade brawlers, with five map-themed stages, character skills, and deployable gloo walls.
           </p>
 
-          <div id="attractBanner" class="attract-banner"></div>
-
           <div id="roster" class="roster">
             <button class="fighter selected" data-character="kelly"><span class="selected-badge">SELECTED</span>
               <canvas width="120" height="120" data-portrait="kelly"></canvas>
@@ -64,7 +62,6 @@
           </div>
 
           <div id="selectedDescription" class="selected-description"></div>
-          <div id="characterBestLine" class="character-best-line"></div>
 
           <div class="controls-grid">
             <span><b>MOVE</b> WASD / Arrows</span>
@@ -81,7 +78,7 @@
 <div class="leaderboard-panel">
   <div class="leaderboard-head">
     <strong>ARCADE LEADERBOARD</strong>
-    <span id="leaderboardStatus">GLOBAL TOP 10 · CONNECTING</span>
+    <span>TOP 10</span>
   </div>
   <ol id="leaderboardList" class="leaderboard-list"></ol>
 </div>
@@ -178,7 +175,6 @@
     </footer>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__glooRushSupabaseFailed=true"></script>
   <script src="game.js"></script>
 </body>
 </html>

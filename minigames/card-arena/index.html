@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#070b14" />
+  <title>Free Fire Card Arena</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="game-mark">FFCA</div>
+        <div>
+          <h1>FREE FIRE CARD ARENA</h1>
+          <p>V2 Tactical Skill Card Battle · 1 Active · 3 Passives · 1 Pet · Map Advantage</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="campaignBtn" type="button">CAMPAIGN</button>
+        <button id="deckBtn" type="button">DECK MODE</button>
+        <button id="randomizeBtn" type="button">RANDOM LOADOUT</button>
+        <button id="soundBtn" type="button">SOUND: ON</button>
+      </div>
+    </header>
+
+    <section id="builderScreen" class="screen active">
+      <aside class="builder-sidebar panel deck-sidebar">
+        <div class="section-kicker">PLAYER DECK</div>
+        <h2>Drop Cards Here</h2>
+        <p class="muted deck-hint">Click or drag cards into the outlined deck slots.</p>
+        <div id="topSelectedSummary" class="deck-drop-grid"></div>
+      </aside>
+
+      <section class="builder-main panel">
+        <div class="builder-command-top">
+          <div class="mode-box compact"><label>Mode</label><select id="modeSelect"><option value="campaign">Campaign</option><option value="duel">Deck Duel</option></select></div>
+          <div class="mode-box compact"><label>Map Advantage</label><select id="mapSelect"><option value="bermuda">Bermuda · Balanced</option><option value="purgatory">Purgatory · Sustain</option><option value="kalahari">Kalahari · Long Range</option><option value="nexterra">NexTerra · Mobility/Info</option><option value="solara">Solara · Gloo/Explosive</option></select></div>
+          <button id="startBattleBtn" class="primary" type="button" disabled>START BATTLE</button>
+          <button id="clearLoadoutBtn" type="button">CLEAR</button>
+        </div>
+        <div id="mapInfo" class="map-info top-map-info"></div>
+        <div class="filters-row">
+          <input id="searchInput" type="text" placeholder="Search by character, pet, skill, role, or description" />
+          <select id="roleFilter">
+            <option value="">All roles</option>
+            <option value="ATTACK">Attack</option>
+            <option value="SURVIVAL">Survival</option>
+            <option value="TEAM WORK">Team Work</option>
+            <option value="INFO">Info</option>
+            <option value="MOVEMENT">Movement</option>
+            <option value="INVENTORY">Inventory</option>
+          </select>
+          <select id="rarityFilter">
+            <option value="">All rarities</option>
+            <option value="Common">Common</option>
+            <option value="Rare">Rare</option>
+            <option value="Epic">Epic</option>
+            <option value="Legendary">Legendary</option>
+          </select>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="active">Active Skills</button>
+          <button class="tab" data-tab="passive">Passive Skills</button>
+          <button class="tab" data-tab="pet">Pet Skills</button>
+        </div>
+
+        <div id="activePanel" class="builder-section tab-panel active">
+          <div class="section-head"><h3>Active Skill Cards</h3><span>Select 1</span></div>
+          <div id="activeGrid" class="card-grid"></div>
+        </div>
+
+        <div id="passivePanel" class="builder-section tab-panel">
+          <div class="section-head"><h3>Passive Skill Cards</h3><span>Select 3</span></div>
+          <div id="passiveGrid" class="card-grid"></div>
+        </div>
+
+        <div id="petPanel" class="builder-section tab-panel">
+          <div class="section-head"><h3>Pet Skill Cards</h3><span>Select 1</span></div>
+          <div id="petGrid" class="card-grid"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="battleScreen" class="screen">
+      <div class="battle-topline panel">
+        <div>
+          <div class="section-kicker">ARENA</div>
+          <h2 id="turnBanner">Your Turn</h2>
+        </div>
+        <div id="battleMapInfo" class="battle-map-info"></div>
+        <div class="battle-actions-row">
+          <button id="basicAttackBtn" class="primary small" type="button">BASIC ATTACK</button>
+          <button id="backToBuilderBtn" type="button">BUILDER</button>
+        </div>
+      </div>
+
+      <div class="battle-layout">
+        <aside class="combatant panel player-box">
+          <div class="section-kicker">PLAYER</div>
+          <div id="playerHero" class="hero-summary"></div>
+          <div id="playerStatus" class="status-bars"></div>
+          <div id="playerPassivePanel" class="mini-cards"></div>
+        </aside>
+
+        <section class="battle-center panel">
+          <div id="battleBoard" class="battle-board">
+            <div id="playerAvatar" class="avatar-pane"></div>
+            <div class="versus">
+              <div class="vs-core">VS</div>
+              <div id="turnCounter" class="turn-counter">TURN 1</div>
+            </div>
+            <div id="enemyAvatar" class="avatar-pane enemy"></div>
+          </div>
+          <div id="battleLog" class="battle-log"></div>
+        </section>
+
+        <aside class="combatant panel enemy-box">
+          <div class="section-kicker">OPPONENT</div>
+          <div id="enemyHero" class="hero-summary"></div>
+          <div id="enemyStatus" class="status-bars"></div>
+          <div id="enemyPassivePanel" class="mini-cards"></div>
+        </aside>
+
+        <section class="player-hand panel">
+          <div class="section-head"><h3>Battle Deck</h3><span id="handHint">Actions above · 5 card deck below</span></div>
+          <div id="playerHand" class="hand-grid"></div>
+        </section>
+      </div>
+    </section>
+
+    <section id="resultModal" class="overlay">
+      <div class="result-card panel">
+        <div id="booyahBanner" class="booyah-banner">BOOYAH!</div>
+        <div id="resultKicker" class="section-kicker">BATTLE OVER</div>
+        <h2 id="resultTitle">Winner</h2>
+        <p id="resultText"></p>
+        <div id="rewardText" class="reward-text"></div>
+        <div class="builder-actions">
+          <button id="rematchBtn" class="primary" type="button">REMATCH</button>
+          <button id="nextCampaignBtn" type="button">NEXT CAMPAIGN</button>
+          <button id="resultBuilderBtn" type="button">CHANGE LOADOUT</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
