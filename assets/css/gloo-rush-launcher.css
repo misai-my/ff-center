@@ -2,12 +2,12 @@
 .gloo-rush-launcher {
   position: fixed;
   right: max(14px, env(safe-area-inset-right));
-  bottom: max(14px, env(safe-area-inset-bottom));
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 74px);
   z-index: 1180;
-  width: 44px;
-  height: 58px;
+  width: 58px;
+  height: 44px;
   border: 1px solid rgba(117, 232, 255, .34);
-  border-radius: 13px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   padding: 0;
@@ -29,7 +29,7 @@
   box-shadow: 0 14px 34px rgba(0, 0, 0, .38), 0 0 22px rgba(72, 215, 255, .16);
   outline: none;
 }
-.gloo-rush-launcher svg { width: 28px; height: 38px; display: block; }
+.gloo-rush-launcher svg { width: 38px; height: 28px; display: block; }
 .gloo-rush-launcher .gloo-rush-launcher-dot {
   position: absolute;
   right: -3px;
@@ -119,7 +119,7 @@ body.gloo-rush-open { overflow: hidden !important; }
   50% { translate: 0 -4px; }
 }
 @media (max-width: 720px) {
-  .gloo-rush-launcher { width: 40px; height: 52px; right: max(9px, env(safe-area-inset-right)); bottom: max(9px, env(safe-area-inset-bottom)); opacity: .76; }
+  .gloo-rush-launcher { width: 40px; height: 52px; right: max(9px, env(safe-area-inset-right)); bottom: calc(max(9px, env(safe-area-inset-bottom)) + 62px); opacity: .76; }
   .gloo-rush-launcher svg { width: 25px; height: 34px; }
   .gloo-rush-overlay { padding: 0; }
   .gloo-rush-shell { width: 100%; height: 100dvh; border: 0; border-radius: 0; }
@@ -127,4 +127,18 @@ body.gloo-rush-open { overflow: hidden !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gloo-rush-launcher { animation: none; }
+}
+
+/* Final: landscape phone icon + stacked above Card Arena */
+@media (max-width: 720px) {
+  .gloo-rush-launcher {
+    width: 52px;
+    height: 40px;
+    bottom: calc(max(9px, env(safe-area-inset-bottom)) + 62px);
+    border-radius: 14px;
+  }
+  .gloo-rush-launcher svg {
+    width: 34px;
+    height: 25px;
+  }
 }

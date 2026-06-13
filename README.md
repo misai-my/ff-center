@@ -278,3 +278,12 @@ This package includes `minigames/card-arena/` as a standalone Free Fire Card Are
 - Uses the Data Center's existing `assets/img/characters/` and `assets/img/pets/` images.
 - Keeps its own generated comic arena background under `minigames/card-arena/assets/bg/`.
 - Supports direct access at `minigames/card-arena/index.html`.
+
+
+## Card Arena responsive integration update
+- Card Arena header/options are merged into a compact top bar.
+- Battle mode minimizes the top UI so the arena animation has more space.
+- Mobile/tablet portrait orientation now shows a landscape prompt.
+- Mobile landscape has a battle-deck collapse toggle to show only Basic/Active/Pet buttons.
+- Floating Data Center mini-game order changed: Card Arena is the lower icon, Gloo Rush is stacked above it.
+- Gloo Rush launcher icon is now a landscape phone/game-screen icon.

@@ -75,6 +75,7 @@ let soundOn = true;
 let audioCtx = null;
 let combat = null;
 let actionBusy = false;
+let deckCollapsed = false;
 let campaignIndex = Number(localStorage.getItem('ffcaCampaignIndexV2') || 0);
 
 function rand(n) { return Math.floor(Math.random() * n); }
@@ -451,8 +452,8 @@ function startBattle() {
   renderBattle();
   startTurn(combat.player, combat.enemy);
 }
-function showBattleScreen() { ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
-function showBuilderScreen() { actionBusy = false; ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
+function showBattleScreen() { document.body.classList.add('is-battle-mode'); ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
+function showBuilderScreen() { actionBusy = false; document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
   actionBusy = actor !== combat.player;
@@ -600,16 +601,21 @@ function renderHand() {
   ].join('');
 
   ui.playerHand.innerHTML = `
-    <div class="battle-control-panel">
-      <div class="battle-action-buttons">
-        ${actions.map(action => `<button type="button" data-play="${action.type}" class="battle-action-button ${action.type} ${action.disabled ? '' : 'primary'}" ${action.disabled ? 'disabled' : ''}>
-          <b>${action.label}</b><span>${escapeHtml(action.detail)}</span>
-        </button>`).join('')}
+    <div class="battle-control-panel ${deckCollapsed ? 'deck-collapsed' : ''}">
+      <div class="battle-action-header">
+        <div class="battle-action-buttons">
+          ${actions.map(action => `<button type="button" data-play="${action.type}" class="battle-action-button ${action.type} ${action.disabled ? '' : 'primary'}" ${action.disabled ? 'disabled' : ''}>
+            <b>${action.label}</b><span>${escapeHtml(action.detail)}</span>
+          </button>`).join('')}
+        </div>
+        <button id="toggleDeckBtn" class="mobile-deck-toggle" type="button">${deckCollapsed ? 'SHOW DECK' : 'HIDE DECK'}</button>
       </div>
       <div class="battle-deck-row">${deckCards}</div>
     </div>`;
 
   ui.playerHand.querySelectorAll('[data-play]').forEach(btn => btn.addEventListener('click', () => performPlayerAction(btn.dataset.play)));
+  const toggle = ui.playerHand.querySelector('#toggleDeckBtn');
+  if (toggle) toggle.addEventListener('click', () => { deckCollapsed = !deckCollapsed; renderHand(); });
 }
 
 function battleDeckCard(card, slot, icon) {
@@ -668,7 +674,7 @@ ui.modeSelect.addEventListener('change', renderBuilder);
 ui.mapSelect.addEventListener('change', renderBuilder);
 if (ui.campaignBtn) ui.campaignBtn.addEventListener('click', () => { ui.modeSelect.value = 'campaign'; ui.mapSelect.value = CAMPAIGN[Math.min(campaignIndex, CAMPAIGN.length-1)].map; renderBuilder(); });
 if (ui.deckBtn) ui.deckBtn.addEventListener('click', () => { ui.modeSelect.value = 'duel'; renderBuilder(); });
-ui.soundBtn.addEventListener('click', () => { soundOn = !soundOn; ui.soundBtn.textContent = `SOUND: ${soundOn ? 'ON' : 'OFF'}`; if (soundOn) playTone(260, .06, 'square', .03, 60); });
+ui.soundBtn.addEventListener('click', () => { soundOn = !soundOn; ui.soundBtn.textContent = soundOn ? 'SOUND' : 'MUTED'; if (soundOn) playTone(260, .06, 'square', .03, 60); });
 document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
 

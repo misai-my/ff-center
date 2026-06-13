@@ -14,12 +14,12 @@
     launcher.setAttribute("title", "Open Gloo Rush");
     launcher.innerHTML = `
       <span class="gloo-rush-launcher-dot" aria-hidden="true"></span>
-      <svg viewBox="0 0 32 44" fill="none" aria-hidden="true">
-        <rect x="4" y="1.5" width="24" height="41" rx="6" stroke="currentColor" stroke-width="2.2"/>
-        <path d="M12 5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
-        <rect x="8" y="9" width="16" height="23" rx="3" fill="rgba(91,223,255,.12)" stroke="currentColor" stroke-width="1.5"/>
-        <path d="M11 22h4m-2-2v4M19.5 20.5h.01M22 23h.01" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-        <path d="M14 36h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/>
+      <svg viewBox="0 0 44 32" fill="none" aria-hidden="true">
+        <rect x="1.5" y="4" width="41" height="24" rx="6" stroke="currentColor" stroke-width="2.2"/>
+        <path d="M6 12v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+        <rect x="9" y="8" width="26" height="16" rx="3" fill="rgba(91,223,255,.12)" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M14 16h5m-2.5-2.5v5M27.5 14.5h.01M31 17.5h.01" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+        <path d="M38 14v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".75"/>
       </svg>`;
 
     const overlay = document.createElement("div");

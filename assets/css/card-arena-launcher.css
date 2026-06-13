@@ -2,7 +2,7 @@
 .card-arena-launcher {
   position: fixed;
   right: max(14px, env(safe-area-inset-right));
-  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 74px);
+  bottom: max(14px, env(safe-area-inset-bottom));
   z-index: 1180;
   width: 54px;
   height: 54px;
@@ -156,7 +156,7 @@ body.card-arena-open { overflow: hidden !important; }
     width: 46px;
     height: 46px;
     right: max(9px, env(safe-area-inset-right));
-    bottom: calc(max(9px, env(safe-area-inset-bottom)) + 62px);
+    bottom: max(9px, env(safe-area-inset-bottom));
     border-radius: 15px;
   }
   .card-arena-launcher-icon { width: 25px; height: 32px; }

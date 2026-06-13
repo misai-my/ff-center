@@ -2588,3 +2588,198 @@ body {
     padding: 3px;
   }
 }
+
+
+/* ===== Integrated Data Center compact header + mobile controls ===== */
+.app-shell {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 8px;
+  gap: 6px;
+}
+.topbar {
+  min-height: 52px;
+  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: minmax(300px, auto) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+.brand-block { gap: 8px; }
+.game-mark { width: 42px; height: 42px; border-radius: 13px; font-size: 12px; }
+.topbar h1 { font-size: clamp(22px, 3.2vw, 42px); letter-spacing: .08em; white-space: nowrap; }
+.topbar p { display: none; }
+.topbar-controls {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.topbar-controls .builder-command-top {
+  display: grid;
+  grid-template-columns: minmax(108px, .7fr) minmax(210px, 1.4fr) auto auto;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.topbar-controls .mode-box { margin: 0; }
+.topbar-controls .mode-box label { font-size: 8px; opacity: .78; }
+.topbar-controls select,
+.topbar-controls button,
+.top-actions button {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 11px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.top-actions { display: flex; flex-wrap: nowrap; gap: 6px; justify-content: flex-end; }
+.top-map-info { margin: 0; max-height: 34px; padding: 6px 9px; font-size: 10px; }
+.builder-main { grid-template-rows: auto auto auto minmax(0,1fr); }
+
+/* battle mode: shrink top/header to give arena more space */
+body.is-battle-mode .topbar {
+  min-height: 34px;
+  padding: 4px 8px;
+  grid-template-columns: auto 1fr;
+}
+body.is-battle-mode .game-mark { width: 30px; height: 30px; border-radius: 10px; font-size: 10px; }
+body.is-battle-mode .topbar h1 { font-size: clamp(16px, 2.4vw, 26px); letter-spacing: .06em; }
+body.is-battle-mode .topbar-controls { display: none; }
+body.is-battle-mode .battle-topline {
+  min-height: 38px;
+  padding: 5px 8px;
+  border-radius: 13px;
+}
+body.is-battle-mode .battle-topline .section-kicker { display: none; }
+body.is-battle-mode .battle-topline h2 { font-size: 18px; margin: 0; }
+body.is-battle-mode .battle-map-info { font-size: 9px; line-height: 1.05; }
+body.is-battle-mode .battle-actions-row button { min-height: 30px; padding: 5px 8px; font-size: 10px; }
+body.is-battle-mode #battleScreen.active { gap: 5px; }
+body.is-battle-mode .battle-center { grid-template-rows: minmax(0, 1fr) 96px; }
+body.is-battle-mode .avatar-pane img { max-height: 240px; }
+
+/* mobile deck collapse */
+.battle-action-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+}
+.mobile-deck-toggle {
+  display: none;
+  min-width: 92px;
+  border-color: rgba(255,216,90,.36);
+  color: #fff3b6;
+  background: rgba(8,12,22,.72);
+}
+.battle-control-panel.deck-collapsed .battle-deck-row { display: none; }
+.battle-control-panel.deck-collapsed { gap: 0; }
+
+/* Orientation lock for smaller portrait screens */
+.orientation-lock { display: none; }
+@media (orientation: portrait) and (max-width: 900px) {
+  .orientation-lock {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,216,90,.18), transparent 28%),
+      rgba(3,7,15,.96);
+    color: #fff;
+    text-align: center;
+  }
+  .orientation-card {
+    width: min(360px, 92vw);
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 22px;
+    background: rgba(13,19,34,.9);
+    box-shadow: 0 24px 70px rgba(0,0,0,.45);
+  }
+  .orientation-card h2 { margin: 14px 0 8px; color: #ffd85a; }
+  .orientation-card p { margin: 0; color: #c8d6ea; }
+  .orientation-phone {
+    width: 92px;
+    height: 54px;
+    margin: 0 auto;
+    border: 4px solid #7de8ff;
+    border-radius: 14px;
+    position: relative;
+    box-shadow: 0 0 24px rgba(125,232,255,.24);
+  }
+  .orientation-phone::after {
+    content: "";
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    width: 6px;
+    height: 18px;
+    border-radius: 99px;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,.35);
+  }
+}
+
+/* Tablet landscape */
+@media (max-width: 1366px) and (orientation: landscape) {
+  .topbar { grid-template-columns: minmax(220px, auto) minmax(0, 1fr); }
+  .topbar-controls .builder-command-top { grid-template-columns: 105px minmax(180px, 1fr) auto auto; }
+  .top-actions button:nth-child(1),
+  .top-actions button:nth-child(2) { display: none; }
+  .topbar-controls select,
+  .topbar-controls button,
+  .top-actions button { min-height: 32px; padding: 6px 8px; font-size: 10px; }
+  body.is-battle-mode .battle-topline { min-height: 34px; }
+  body.is-battle-mode .battle-center { grid-template-rows: minmax(0, 1fr) 82px; }
+  .mobile-deck-toggle { display: block; }
+  .battle-action-buttons { width: min(520px, 100%); }
+  .battle-action-button { min-height: 36px; padding: 5px 6px; }
+  .battle-action-button b { font-size: 10px; }
+  .battle-action-button span { font-size: 8px; }
+}
+
+/* Phone landscape */
+@media (max-width: 932px) and (orientation: landscape) {
+  .app-shell { padding: 5px; gap: 4px; }
+  .topbar { min-height: 38px; padding: 4px 6px; grid-template-columns: auto minmax(0,1fr); border-radius: 12px; }
+  .game-mark { width: 32px; height: 32px; border-radius: 10px; font-size: 10px; }
+  .topbar h1 { font-size: clamp(15px, 3vw, 22px); letter-spacing: .04em; }
+  .topbar-controls { gap: 5px; }
+  .topbar-controls .builder-command-top { grid-template-columns: 80px minmax(110px,1fr) auto auto; gap: 4px; }
+  .topbar-controls .mode-box label { display: none; }
+  .topbar-controls select,
+  .topbar-controls button,
+  .top-actions button { min-height: 28px; padding: 4px 6px; font-size: 8px; border-radius: 8px; }
+  .top-actions button:nth-child(3) { display: none; }
+  .top-map-info { display: none; }
+  body.is-battle-mode .topbar { min-height: 28px; padding: 3px 5px; }
+  body.is-battle-mode .game-mark { width: 24px; height: 24px; font-size: 8px; }
+  body.is-battle-mode .topbar h1 { font-size: 15px; }
+  body.is-battle-mode .battle-topline { min-height: 28px; padding: 4px 6px; }
+  body.is-battle-mode .battle-topline h2 { font-size: 14px; }
+  body.is-battle-mode .battle-map-info { display: none; }
+  body.is-battle-mode .battle-center { grid-template-rows: minmax(0, 1fr) 58px; }
+  body.is-battle-mode .avatar-pane img { max-height: 128px; }
+  .player-hand { padding: 5px; width: min(520px, 100%); }
+  .player-hand .section-head { display: none; }
+  .battle-control-panel { gap: 4px; }
+  .battle-action-header { grid-template-columns: minmax(0, 1fr) 72px; gap: 5px; }
+  .battle-action-buttons { gap: 4px; width: 100%; }
+  .battle-action-button { min-height: 30px; padding: 4px; border-radius: 9px; }
+  .battle-action-button b { font-size: 8px; }
+  .battle-action-button span { display: none; }
+  .mobile-deck-toggle { display: block; min-width: 72px; font-size: 8px; padding: 4px; border-radius: 9px; }
+  .battle-deck-row { gap: 4px; grid-template-columns: repeat(5, minmax(0, 86px)); width: min(460px, 100%); }
+  .deck-card { min-height: 92px; height: 92px; padding: 3px; gap: 3px; }
+  .deck-card .battle-card-top { min-height: 14px; font-size: 6px; padding: 1px 3px; }
+  .deck-card .battle-card-top span { width: 10px; height: 10px; font-size: 5px; }
+  .deck-card .battle-card-art { min-height: 36px; }
+  .deck-card .battle-card-art img { height: 36px; }
+  .deck-card .battle-card-text { min-height: 20px; max-height: 20px; font-size: 6px; padding: 2px; }
+}

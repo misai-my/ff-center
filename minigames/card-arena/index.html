@@ -14,14 +14,22 @@
         <div class="game-mark">FFCA</div>
         <div>
           <h1>FREE FIRE CARD ARENA</h1>
-          <p>V2 Tactical Skill Card Battle · 1 Active · 3 Passives · 1 Pet · Map Advantage</p>
+          <p>1 Active · 3 Passives · 1 Pet</p>
         </div>
       </div>
-      <div class="top-actions">
-        <button id="campaignBtn" type="button">CAMPAIGN</button>
-        <button id="deckBtn" type="button">DECK MODE</button>
-        <button id="randomizeBtn" type="button">RANDOM LOADOUT</button>
-        <button id="soundBtn" type="button">SOUND: ON</button>
+      <div class="topbar-controls">
+        <div class="builder-command-top">
+          <div class="mode-box compact"><label>Mode</label><select id="modeSelect"><option value="campaign">Campaign</option><option value="duel">Deck Duel</option></select></div>
+          <div class="mode-box compact"><label>Map Advantage</label><select id="mapSelect"><option value="bermuda">Bermuda · Balanced</option><option value="purgatory">Purgatory · Sustain</option><option value="kalahari">Kalahari · Long Range</option><option value="nexterra">NexTerra · Mobility/Info</option><option value="solara">Solara · Gloo/Explosive</option></select></div>
+          <button id="startBattleBtn" class="primary" type="button" disabled>START BATTLE</button>
+          <button id="clearLoadoutBtn" type="button">CLEAR</button>
+        </div>
+        <div class="top-actions">
+          <button id="campaignBtn" type="button">CAMPAIGN</button>
+          <button id="deckBtn" type="button">DECK</button>
+          <button id="randomizeBtn" type="button">RANDOM</button>
+          <button id="soundBtn" type="button">SOUND</button>
+        </div>
       </div>
     </header>
 
@@ -34,12 +42,6 @@
       </aside>
 
       <section class="builder-main panel">
-        <div class="builder-command-top">
-          <div class="mode-box compact"><label>Mode</label><select id="modeSelect"><option value="campaign">Campaign</option><option value="duel">Deck Duel</option></select></div>
-          <div class="mode-box compact"><label>Map Advantage</label><select id="mapSelect"><option value="bermuda">Bermuda · Balanced</option><option value="purgatory">Purgatory · Sustain</option><option value="kalahari">Kalahari · Long Range</option><option value="nexterra">NexTerra · Mobility/Info</option><option value="solara">Solara · Gloo/Explosive</option></select></div>
-          <button id="startBattleBtn" class="primary" type="button" disabled>START BATTLE</button>
-          <button id="clearLoadoutBtn" type="button">CLEAR</button>
-        </div>
         <div id="mapInfo" class="map-info top-map-info"></div>
         <div class="filters-row">
           <input id="searchInput" type="text" placeholder="Search by character, pet, skill, role, or description" />
@@ -146,6 +148,14 @@
       </div>
     </section>
   </main>
+
+  <div id="orientationLock" class="orientation-lock" aria-hidden="true">
+    <div class="orientation-card">
+      <div class="orientation-phone" aria-hidden="true"></div>
+      <h2>Rotate to Landscape</h2>
+      <p>Card Arena is designed for mobile/tablet landscape play.</p>
+    </div>
+  </div>
 
   <script src="assets/data.js"></script>
   <script src="script.js"></script>
