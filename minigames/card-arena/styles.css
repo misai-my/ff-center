@@ -2836,3 +2836,128 @@ body.is-battle-mode .avatar-pane img { max-height: 240px; }
     border-radius: 8px;
   }
 }
+
+
+/* ===== Card Arena combat polish patch ===== */
+.battle-log {
+  flex-direction: column !important;
+  scroll-behavior: smooth;
+}
+.avatar-pane.critical-attack img {
+  animation: criticalAttackLunge 980ms cubic-bezier(.12,.9,.22,1.15) both !important;
+  filter: drop-shadow(0 0 32px rgba(255,216,90,.75)) drop-shadow(0 20px 24px rgba(0,0,0,.52));
+}
+.avatar-pane.enemy.critical-attack img {
+  animation: enemyCriticalAttackLunge 980ms cubic-bezier(.12,.9,.22,1.15) both !important;
+}
+.avatar-pane.critical-hit img {
+  animation: criticalHitShake 820ms ease both !important;
+  filter: drop-shadow(0 0 28px rgba(255,74,111,.9));
+}
+.pet-attack-overlay {
+  position: absolute;
+  z-index: 8;
+  left: 20%;
+  top: 38%;
+  width: 115px;
+  height: 115px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: petOverlayAttack 720ms cubic-bezier(.17,.84,.26,1.08) forwards;
+}
+.pet-attack-overlay.enemy {
+  left: 80%;
+  animation-name: petOverlayAttackEnemy;
+}
+.pet-attack-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(255,216,90,.55)) drop-shadow(0 18px 20px rgba(0,0,0,.45));
+}
+.projectile.pet-projectile {
+  width: 26px;
+  height: 26px;
+  background: #ff7fc2;
+  box-shadow: 0 0 20px rgba(255,127,194,.75);
+}
+.blast.pet-blast {
+  width: 58px;
+  height: 58px;
+  background: radial-gradient(circle, #fff 0, #ff7fc2 28%, #7de8ff 58%, transparent 74%);
+}
+.crit-burst {
+  position: absolute;
+  left: 78%;
+  top: 30%;
+  transform: translate(-50%, -50%) rotate(-10deg);
+  padding: 8px 12px;
+  border-radius: 12px;
+  color: #180a02;
+  background: linear-gradient(135deg, #fff26b, #ff7d4d);
+  border: 3px solid rgba(255,255,255,.76);
+  font: 1000 22px/1 Inter, system-ui, sans-serif;
+  letter-spacing: .06em;
+  text-shadow: 0 1px 0 rgba(255,255,255,.34);
+  box-shadow: 0 10px 28px rgba(0,0,0,.35), 0 0 26px rgba(255,216,90,.4);
+  animation: critPop 900ms ease forwards;
+}
+.crit-burst.enemy { left: 22%; }
+@keyframes criticalAttackLunge {
+  0% { transform: translateX(0) scale(1); }
+  26% { transform: translateX(18px) scale(1.06); }
+  56% { transform: translateX(78px) scale(1.13); }
+  72% { transform: translateX(54px) scale(1.08); }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes enemyCriticalAttackLunge {
+  0% { transform: scaleX(-1) translateX(0) scale(1); }
+  26% { transform: scaleX(-1) translateX(18px) scale(1.06); }
+  56% { transform: scaleX(-1) translateX(78px) scale(1.13); }
+  72% { transform: scaleX(-1) translateX(54px) scale(1.08); }
+  100% { transform: scaleX(-1) translateX(0) scale(1); }
+}
+@keyframes criticalHitShake {
+  0%, 100% { transform: translateX(0) scale(1); }
+  12% { transform: translateX(-18px) scale(1.03); }
+  28% { transform: translateX(16px) scale(1.01); }
+  45% { transform: translateX(-12px); }
+  62% { transform: translateX(8px); }
+  78% { transform: translateX(-4px); }
+}
+@keyframes petOverlayAttack {
+  0% { opacity: 0; left: 24%; top: 54%; transform: translate(-50%, -50%) scale(.55) rotate(-8deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.05) rotate(2deg); }
+  64% { left: 72%; top: 38%; transform: translate(-50%, -50%) scale(1.2) rotate(8deg); }
+  100% { opacity: 0; left: 82%; top: 46%; transform: translate(-50%, -50%) scale(.7) rotate(16deg); }
+}
+@keyframes petOverlayAttackEnemy {
+  0% { opacity: 0; left: 76%; top: 54%; transform: translate(-50%, -50%) scale(.55) rotate(8deg); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.05) rotate(-2deg); }
+  64% { left: 28%; top: 38%; transform: translate(-50%, -50%) scale(1.2) rotate(-8deg); }
+  100% { opacity: 0; left: 18%; top: 46%; transform: translate(-50%, -50%) scale(.7) rotate(-16deg); }
+}
+@keyframes critPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) rotate(-16deg) scale(.4); }
+  35% { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1.18); }
+  70% { opacity: 1; transform: translate(-50%, -58%) rotate(-5deg) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -72%) rotate(2deg) scale(.78); }
+}
+@supports (-webkit-touch-callout: none) {
+  .app-shell { height: 100svh; }
+  #battleScreen.active { min-height: 0; }
+}
+@media (max-width: 932px) and (orientation: landscape) {
+  .app-shell { height: 100svh; padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); }
+  .topbar { padding-right: 46px; }
+  body.is-battle-mode .topbar { min-height: 36px; }
+  body.is-battle-mode .topbar h1 { font-size: clamp(15px, 3.4vw, 22px); }
+  body.is-battle-mode .game-mark { width: 32px; height: 32px; }
+  .battle-layout { grid-template-columns: 140px minmax(0,1fr) 140px; }
+  .battle-center { grid-template-rows: minmax(0,1fr) 72px; }
+  .avatar-pane img { max-height: 118px; }
+  .battle-deck-row { grid-template-columns: repeat(5, minmax(0, 86px)); }
+  .deck-card { min-height: 102px; height: 102px; }
+  .pet-attack-overlay { width: 82px; height: 82px; }
+  .crit-burst { font-size: 15px; padding: 6px 9px; }
+}

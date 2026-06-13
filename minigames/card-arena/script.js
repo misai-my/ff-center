@@ -446,7 +446,8 @@ function startBattle() {
   else enemyBoost = { maxHp: 110, attack: 9, ...MAPS[selectedMap].enemyBoost };
   const map = MAPS[selectedMap], enemyLoadout = makeEnemyLoadout(stage || { map: selectedMap });
   actionBusy = false;
-  combat = { mode, mapKey: selectedMap, map, stage, player: buildCombatant('You', { active: builderState.active, passives: builderState.passives, pet: builderState.pet }, false), enemy: buildCombatant(mode === 'campaign' ? stage.title : 'Rival Deck', enemyLoadout, true, enemyBoost), turn: 'player', turnNumber: 1, over: false, log: [] };
+  const enemyDisplayName = `${enemyLoadout.active.name} - ${map.name}`;
+  combat = { mode, mapKey: selectedMap, map, stage, player: buildCombatant('You', { active: builderState.active, passives: builderState.passives, pet: builderState.pet }, false), enemy: buildCombatant(enemyDisplayName, enemyLoadout, true, enemyBoost), turn: 'player', turnNumber: 1, over: false, log: [] };
   map.apply(combat.player); map.apply(combat.enemy);
   showBattleScreen();
   logMessage(`${map.name} advantage active: ${map.description}`);
@@ -597,6 +598,7 @@ async function useSkill(user, target, card, action, slot, log) {
   user.energy -= action.cost;
   if (slot === 'active') user.activeCooldown = action.cooldown; else user.petCooldown = action.cooldown;
   if (!user.usedFirstSkill && user.firstSkillFocus) { user.focus += user.firstSkillFocus; user.usedFirstSkill = true; log(`${user.name} gained +${user.firstSkillFocus} focus from passive synergy.`); }
+  if (slot === 'pet') await animatePetOverlay(user, target);
   await action.effect(user, target, log);
   playTone(slot === 'active' ? 340 : 270, .08, 'square', .035, 40);
 }
@@ -618,7 +620,8 @@ function dealDamage(attacker, defender, amount, intro, log, opts = {}) {
   const original = dmg;
   if (defender.shield > 0) { const absorbed = Math.min(defender.shield, dmg); defender.shield -= absorbed; dmg -= absorbed; }
   defender.hp = Math.max(0, defender.hp - dmg);
-  animateHit(defender);
+  if (isCrit && attacker) animateCriticalAttack(attacker, defender);
+  animateHit(defender, isCrit);
   log(`${intro}${isCrit ? ' · CRITICAL HIT!' : ''}. ${defender.name} took ${original} damage${original !== dmg ? ` (${original - dmg} shielded)` : ''}.`);
   renderBattle();
   if (defender.hp <= 0) finishBattle(defender === combat.enemy ? 'player' : 'enemy');
@@ -655,7 +658,11 @@ function finishBattle(winner) {
   renderCampaignProgress();
 }
 function logMessage(text) { if (!combat) return; combat.log.push(text); combat.log = combat.log.slice(-16); renderBattleLog(); }
-function renderBattleLog() { if (!combat) return; ui.battleLog.innerHTML = combat.log.map(line => `<div class="log-item">${escapeHtml(line)}</div>`).join(''); }
+function renderBattleLog() {
+  if (!combat) return;
+  ui.battleLog.innerHTML = combat.log.slice().reverse().map(line => `<div class="log-item">${escapeHtml(line)}</div>`).join('');
+  if (ui.battleLog) ui.battleLog.scrollTop = 0;
+}
 function renderHeroSummary(unit) { return `<div class="hero-card"><img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div><h4>${escapeHtml(unit.active.name)}</h4><p>${escapeHtml(unit.active.skill)} · ${inferRarity(unit.active)}</p></div></div><div class="hero-card"><img src="${unit.pet.local_image_path}" alt="${escapeHtml(unit.pet.name)}" /><div><h4>${escapeHtml(unit.pet.name)}</h4><p>${escapeHtml(unit.pet.skill)} · ${inferRarity(unit.pet)}</p></div></div>`; }
 function statusBar(label, value, max, cls, rightText='') { return `<div class="stat-line"><div class="label-row"><span>${label}</span><span>${rightText || `${Math.round(value)}/${Math.round(max)}`}</span></div><div class="bar ${cls}"><div style="width:${max ? clamp((value/max)*100,0,100) : 0}%"></div></div></div>`; }
 function renderStatus(unit) { return [ statusBar('HP', unit.hp, unit.maxHp, 'hp'), statusBar('Shield', unit.shield, Math.max(25, unit.maxHp * .5), 'shield', `${unit.shield}`), statusBar('Energy', unit.energy, unit.maxEnergy, 'energy', `${unit.energy}/${unit.maxEnergy}`), `<div class="muted">ATK ${unit.attack + unit.tempAttack} · DEF ${unit.defense} · CRIT ${unit.crit}% · DODGE ${unit.dodge + unit.tempDodge}%${unit.focus ? ` · FOCUS +${unit.focus}` : ''}${unit.silenceTurns ? ' · SILENCED' : ''}${unit.burnTurns ? ' · BURN' : ''}</div>` ].join(''); }
@@ -730,19 +737,55 @@ function renderBattle() {
 }
 async function animateAction(user, target, kind) {
   const userPane = user === combat.player ? ui.playerAvatar : ui.enemyAvatar;
-  userPane.classList.remove('attack','skill'); void userPane.offsetWidth;
+  userPane.classList.remove('attack','skill','critical-attack'); void userPane.offsetWidth;
   userPane.classList.add(kind === 'attack' ? 'attack' : 'skill');
   createProjectile(user === combat.enemy, kind);
-  await sleep(560);
+  await sleep(kind === 'pet' ? 700 : 560);
   userPane.classList.remove('attack','skill');
 }
-function animateHit(unit) { const pane = unit === combat.player ? ui.playerAvatar : ui.enemyAvatar; pane.classList.remove('hit'); void pane.offsetWidth; pane.classList.add('hit'); setTimeout(() => pane.classList.remove('hit'), 450); }
+function animateHit(unit, isCrit = false) {
+  const pane = unit === combat.player ? ui.playerAvatar : ui.enemyAvatar;
+  pane.classList.remove('hit', 'critical-hit'); void pane.offsetWidth;
+  pane.classList.add(isCrit ? 'critical-hit' : 'hit');
+  setTimeout(() => pane.classList.remove('hit', 'critical-hit'), isCrit ? 850 : 450);
+}
+function animateCriticalAttack(attacker, defender) {
+  const attackerPane = attacker === combat.player ? ui.playerAvatar : ui.enemyAvatar;
+  attackerPane.classList.remove('critical-attack'); void attackerPane.offsetWidth;
+  attackerPane.classList.add('critical-attack');
+  createCritBurst(attacker === combat.enemy);
+  setTimeout(() => attackerPane.classList.remove('critical-attack'), 980);
+}
 function createProjectile(enemy, kind) {
   const layer = document.createElement('div'); layer.className = 'effect-layer';
-  const projectile = document.createElement('div'); projectile.className = `projectile ${enemy ? 'enemy' : ''}`;
+  const projectile = document.createElement('div'); projectile.className = `projectile ${enemy ? 'enemy' : ''} ${kind === 'pet' ? 'pet-projectile' : ''}`;
   layer.appendChild(projectile); ui.battleBoard.appendChild(layer);
-  setTimeout(() => { const blast = document.createElement('div'); blast.className = 'blast'; blast.style.left = enemy ? '20%' : '80%'; blast.style.top = '46%'; layer.appendChild(blast); }, 430);
-  setTimeout(() => layer.remove(), 980);
+  setTimeout(() => { const blast = document.createElement('div'); blast.className = `blast ${kind === 'pet' ? 'pet-blast' : ''}`; blast.style.left = enemy ? '20%' : '80%'; blast.style.top = '46%'; layer.appendChild(blast); }, 430);
+  setTimeout(() => layer.remove(), kind === 'pet' ? 1200 : 980);
+}
+async function animatePetOverlay(user, target) {
+  if (!combat || !user.pet || !ui.battleBoard) return;
+  const enemy = user === combat.enemy;
+  const layer = document.createElement('div');
+  layer.className = `pet-attack-overlay ${enemy ? 'enemy' : ''}`;
+  const img = document.createElement('img');
+  img.src = user.pet.local_image_path;
+  img.alt = `${user.pet.name} attack`;
+  layer.appendChild(img);
+  ui.battleBoard.appendChild(layer);
+  playTone(300, .1, 'square', .035, 80);
+  await sleep(720);
+  layer.remove();
+}
+function createCritBurst(enemy) {
+  const layer = document.createElement('div');
+  layer.className = 'effect-layer crit-layer';
+  const burst = document.createElement('div');
+  burst.className = `crit-burst ${enemy ? 'enemy' : ''}`;
+  burst.textContent = 'CRIT!';
+  layer.appendChild(burst);
+  ui.battleBoard.appendChild(layer);
+  setTimeout(() => layer.remove(), 1000);
 }
 
 ui.searchInput.addEventListener('input', renderBuilder);

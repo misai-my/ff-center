@@ -172,3 +172,46 @@ body.card-arena-open { overflow: hidden !important; }
     right: max(8px, env(safe-area-inset-right));
   }
 }
+
+
+/* Keep the Card Arena close button from covering game buttons */
+.card-arena-shell {
+  overflow: visible !important;
+}
+.card-arena-frame {
+  border-radius: inherit;
+  overflow: hidden;
+}
+.card-arena-close {
+  top: -12px !important;
+  right: -12px !important;
+  min-width: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  z-index: 20 !important;
+}
+@media (max-width: 932px) and (orientation: landscape) {
+  .card-arena-overlay { padding: 0 !important; }
+  .card-arena-shell {
+    width: 100vw !important;
+    height: 100svh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+  .card-arena-close {
+    top: max(6px, env(safe-area-inset-top)) !important;
+    right: max(6px, env(safe-area-inset-right)) !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    background: rgba(5,10,18,.52) !important;
+    backdrop-filter: blur(6px);
+  }
+}
+@media (orientation: portrait) and (max-width: 900px) {
+  .card-arena-close {
+    top: max(8px, env(safe-area-inset-top)) !important;
+    right: max(8px, env(safe-area-inset-right)) !important;
+  }
+}

@@ -292,3 +292,11 @@ This package includes `minigames/card-arena/` as a standalone Free Fire Card Are
 - Added player-side Auto Battle toggle in the battle controls.
 - Auto logic chooses between Basic, Active, and Pet based on HP, shield, energy, cooldowns, enemy HP, and skill type.
 - Auto Battle persists locally and can be toggled on/off mid-battle.
+
+## Card Arena update: combat polish
+- Battle log now shows the latest move at the top.
+- iPhone/mobile landscape view has additional spacing and safe-area fixes.
+- Card Arena close button is offset so it does not cover in-game buttons.
+- AI opponent name now uses the active character and map, e.g. `Dimitri - NexTerra`.
+- Pet skills now trigger a pet overlay attack animation.
+- Critical hits now trigger a longer attacking animation and CRIT popup.
