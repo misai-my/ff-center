@@ -231,3 +231,22 @@ body.card-arena-open { overflow: hidden !important; }
     backdrop-filter: blur(8px);
   }
 }
+
+
+/* iPhone landscape V2: close control stays outside the card browser */
+@media (max-width: 932px) and (orientation: landscape) {
+  .card-arena-close {
+    top: auto !important;
+    right: auto !important;
+    left: max(7px, env(safe-area-inset-left)) !important;
+    bottom: max(7px, env(safe-area-inset-bottom)) !important;
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 18px !important;
+    border-radius: 999px !important;
+    opacity: .72 !important;
+    background: rgba(5,10,18,.62) !important;
+    backdrop-filter: blur(8px);
+  }
+}

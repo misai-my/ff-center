@@ -3389,3 +3389,414 @@ body.is-battle-mode .avatar-pane img { max-height: 240px; }
     filter: blur(2px) brightness(.65);
   }
 }
+
+
+/* ===== iPhone landscape V2: practical card browser layout ===== */
+@media (max-width: 932px) and (orientation: landscape) {
+  html, body {
+    width: 100vw !important;
+    height: 100svh !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell {
+    height: 100svh !important;
+    min-height: 100svh !important;
+    width: 100vw !important;
+    padding: max(3px, env(safe-area-inset-top)) max(5px, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(5px, env(safe-area-inset-left)) !important;
+    gap: 3px !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+  }
+
+  .topbar {
+    min-height: 30px !important;
+    max-height: 32px !important;
+    padding: 2px 5px !important;
+    gap: 5px !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+  }
+
+  .brand-block { gap: 5px !important; min-width: 0 !important; }
+  .game-mark {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    border-radius: 8px !important;
+    font-size: 8px !important;
+  }
+
+  .topbar h1 {
+    font-size: clamp(12px, 2.7vw, 18px) !important;
+    line-height: 1 !important;
+    letter-spacing: .035em !important;
+    max-width: 26vw !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .topbar p, .top-actions, .top-map-info {
+    display: none !important;
+  }
+
+  .topbar-controls { min-width: 0 !important; flex: 1 1 auto !important; }
+  .topbar-controls .builder-command-top {
+    display: grid !important;
+    grid-template-columns: 72px minmax(92px, 1fr) auto auto !important;
+    gap: 3px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+  }
+
+  .topbar-controls .mode-box label { display: none !important; }
+  .topbar-controls select,
+  .topbar-controls button {
+    height: 25px !important;
+    min-height: 25px !important;
+    padding: 3px 5px !important;
+    border-radius: 7px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  .topbar-controls #startBattleBtn {
+    max-width: 78px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #builderScreen.active {
+    height: 100% !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+  }
+
+  .builder-sidebar.deck-sidebar {
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    padding: 3px !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+  }
+
+  .deck-sidebar .section-kicker,
+  .deck-sidebar h2,
+  .deck-hint {
+    display: none !important;
+  }
+
+  .deck-drop-grid {
+    height: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    align-items: stretch !important;
+  }
+
+  .deck-left-column,
+  .deck-right-column {
+    display: contents !important;
+  }
+
+  .deck-slot {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 2px !important;
+    gap: 2px !important;
+    border-width: 1px !important;
+    border-radius: 7px !important;
+    grid-template-rows: 12px 1fr !important;
+  }
+
+  .deck-slot.empty {
+    display: grid !important;
+    grid-template-rows: 1fr !important;
+    place-items: center !important;
+  }
+
+  .deck-slot.empty span { font-size: 5px !important; letter-spacing: .04em !important; }
+  .deck-slot.empty b { font-size: 6px !important; }
+  .deck-slot .mini-card-top {
+    min-height: 12px !important;
+    height: 12px !important;
+    padding: 1px 3px !important;
+    font-size: 5px !important;
+    border-radius: 5px !important;
+  }
+  .deck-slot .mini-card-top span { display: none !important; }
+  .deck-slot .mini-card-art { display: none !important; }
+  .deck-slot .mini-card-stat {
+    min-height: 22px !important;
+    height: 22px !important;
+    max-height: 22px !important;
+    padding: 1px 3px !important;
+    font-size: 6px !important;
+  }
+  .deck-slot .mini-card-stat b { font-size: 6px !important; }
+  .deck-slot .mini-card-stat small { display: none !important; }
+
+  .builder-main {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 4px !important;
+    border-radius: 10px !important;
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
+  .filters-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 70px 64px !important;
+    gap: 3px !important;
+    min-height: 25px !important;
+    height: 25px !important;
+  }
+
+  .filters-row input,
+  .filters-row select {
+    height: 25px !important;
+    min-height: 25px !important;
+    padding: 3px 5px !important;
+    border-radius: 7px !important;
+    font-size: 8px !important;
+  }
+
+  .tabs {
+    height: 25px !important;
+    min-height: 25px !important;
+    gap: 3px !important;
+    overflow: visible !important;
+  }
+
+  .tab {
+    flex: 1 1 0 !important;
+    height: 25px !important;
+    min-height: 25px !important;
+    padding: 3px 5px !important;
+    border-radius: 7px !important;
+    font-size: 8px !important;
+  }
+
+  .tab-panel.active {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+
+  .section-head {
+    min-height: 16px !important;
+    height: 16px !important;
+    margin: 0 0 2px !important;
+  }
+
+  .section-head h3 { font-size: 10px !important; }
+  .section-head span { font-size: 7px !important; }
+
+  .card-grid {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)) !important;
+    gap: 5px !important;
+    padding: 2px 2px 28px !important;
+    align-content: start !important;
+  }
+
+  .card.template-card {
+    height: 116px !important;
+    min-height: 116px !important;
+    max-height: 116px !important;
+    padding: 4px !important;
+    border-radius: 10px !important;
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) 24px !important;
+    grid-template-rows: 18px 1fr !important;
+    column-gap: 5px !important;
+    row-gap: 3px !important;
+  }
+
+  .card.template-card .card-topline {
+    grid-column: 1 / 4 !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    padding: 2px 4px !important;
+    font-size: 7px !important;
+    border-radius: 6px !important;
+  }
+
+  .topline-icon {
+    width: 11px !important;
+    height: 11px !important;
+    font-size: 6px !important;
+  }
+
+  .card.template-card .card-image-wrap {
+    grid-column: 1 / 2 !important;
+    grid-row: 2 !important;
+    height: 70px !important;
+    min-height: 70px !important;
+    margin: 0 !important;
+    border-radius: 6px !important;
+  }
+
+  .card.template-card .card-image-wrap img { padding: 2px !important; }
+
+  .badge, .role-tag, .cost-badge, .rarity-badge {
+    display: none !important;
+  }
+
+  .card.template-card .card-body {
+    grid-column: 2 / 3 !important;
+    grid-row: 2 !important;
+    min-height: 70px !important;
+    max-height: 70px !important;
+    height: 70px !important;
+    margin: 0 !important;
+    padding: 4px !important;
+    gap: 3px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+  }
+
+  .card.template-card .card-skill {
+    font-size: 7px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .card-stat-row {
+    font-size: 6px !important;
+    gap: 3px !important;
+  }
+
+  .card-stat-row span { padding: 2px 3px !important; }
+
+  .card.template-card .card-power {
+    max-height: 28px !important;
+    font-size: 6px !important;
+    line-height: 1.15 !important;
+    padding: 3px !important;
+  }
+
+  .card.template-card .card-actions {
+    grid-column: 3 / 4 !important;
+    grid-row: 2 !important;
+    align-self: stretch !important;
+    display: grid !important;
+    place-items: center !important;
+    margin: 0 !important;
+  }
+
+  .card.template-card .card-actions button,
+  .card-add-toggle {
+    width: 22px !important;
+    min-width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    font-size: 0 !important;
+  }
+
+  .card.template-card .card-actions button::before,
+  .card-add-toggle::before {
+    content: "+" !important;
+    font-size: 15px !important;
+    line-height: 1 !important;
+    font-weight: 1000 !important;
+  }
+
+  .card.template-card.selected .card-actions button::before,
+  .card.template-card.selected .card-add-toggle::before {
+    content: "−" !important;
+  }
+
+  #exitDataCenterBtn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .topbar h1 { max-width: 22vw !important; }
+  .topbar-controls .builder-command-top {
+    grid-template-columns: 62px minmax(76px, 1fr) auto auto !important;
+  }
+  .topbar-controls #startBattleBtn { max-width: 62px !important; }
+
+  .builder-sidebar.deck-sidebar {
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+  }
+
+  .deck-slot {
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    grid-template-rows: 10px 1fr !important;
+  }
+
+  .deck-slot .mini-card-top {
+    height: 10px !important;
+    min-height: 10px !important;
+    font-size: 4.5px !important;
+  }
+
+  .deck-slot .mini-card-stat {
+    min-height: 17px !important;
+    height: 17px !important;
+    font-size: 5px !important;
+  }
+
+  .filters-row {
+    grid-template-columns: minmax(0, 1fr) 58px 54px !important;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .card.template-card {
+    height: 104px !important;
+    min-height: 104px !important;
+    max-height: 104px !important;
+    grid-template-columns: 42px minmax(0, 1fr) 22px !important;
+  }
+
+  .card.template-card .card-image-wrap {
+    height: 62px !important;
+    min-height: 62px !important;
+  }
+
+  .card.template-card .card-body {
+    min-height: 62px !important;
+    max-height: 62px !important;
+    height: 62px !important;
+  }
+
+  .card.template-card .card-power {
+    max-height: 22px !important;
+  }
+}
