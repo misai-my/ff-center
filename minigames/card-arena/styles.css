@@ -4300,3 +4300,180 @@ body.is-battle-mode .avatar-pane img { max-height: 240px; }
     max-height: 18px !important;
   }
 }
+
+
+/* ===== Side panel + hide-deck + selection text final fixes ===== */
+
+/* More readable selected/deck-card stats on desktop/tablet */
+.mini-card-stat {
+  line-height: 1.08 !important;
+}
+.mini-card-stat b {
+  font-size: 10px !important;
+  line-height: 1.05 !important;
+  letter-spacing: .01em !important;
+}
+.mini-card-stat small {
+  font-size: 7.5px !important;
+  line-height: 1.05 !important;
+  opacity: .9 !important;
+}
+
+/* Hide deck must work regardless of where the collapsed class lands. */
+.battle-control-panel.deck-collapsed .battle-deck-row,
+body.deck-collapsed .battle-control-panel .battle-deck-row,
+body.deck-collapsed .battle-deck-row {
+  display: none !important;
+}
+body.deck-collapsed .player-hand {
+  width: min(520px, 100%) !important;
+}
+
+/* Battle side panels should span the full battle area height, not only the arena row. */
+body.is-battle-mode .battle-layout {
+  grid-template-areas:
+    "player center enemy"
+    "player hand enemy" !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  align-items: stretch !important;
+  min-height: 0 !important;
+}
+body.is-battle-mode .player-box,
+body.is-battle-mode .enemy-box {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  align-self: stretch !important;
+  overflow: hidden !important;
+}
+body.is-battle-mode .player-box .mini-cards,
+body.is-battle-mode .enemy-box .mini-cards {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* iPhone landscape final tuning */
+@media (max-width: 932px) and (orientation: landscape) {
+  body.is-battle-mode .battle-layout {
+    grid-template-areas:
+      "player center enemy"
+      "player hand enemy" !important;
+    grid-template-columns: 108px minmax(0, 1fr) 108px !important;
+    grid-template-rows: minmax(0, 1fr) auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  body.is-battle-mode .player-box,
+  body.is-battle-mode .enemy-box {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+  }
+
+  body.is-battle-mode .combatant .hero-summary,
+  body.is-battle-mode .combatant .status-bars {
+    flex: 0 0 auto !important;
+  }
+
+  body.is-battle-mode .playerPassivePanel,
+  body.is-battle-mode .enemyPassivePanel,
+  body.is-battle-mode .mini-cards {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  .battle-control-panel.deck-collapsed .battle-deck-row,
+  body.deck-collapsed .battle-deck-row {
+    display: none !important;
+  }
+
+  body.deck-collapsed .player-hand {
+    width: min(430px, 100%) !important;
+  }
+
+  body.deck-collapsed .battle-control-panel {
+    grid-template-rows: auto !important;
+  }
+
+  body.deck-collapsed .battle-action-header {
+    margin-bottom: 0 !important;
+  }
+
+  /* Selection deck stats: bigger name, less squished. */
+  .deck-slot .mini-card-stat {
+    min-height: 22px !important;
+    height: 22px !important;
+    max-height: 22px !important;
+    padding: 2px 4px !important;
+    line-height: 1.05 !important;
+  }
+
+  .deck-slot .mini-card-stat b {
+    font-size: 7px !important;
+    line-height: 1 !important;
+  }
+
+  .deck-slot .mini-card-stat small {
+    display: none !important;
+  }
+
+  .deck-slot .mini-card-top {
+    font-size: 5.8px !important;
+  }
+
+  /* Card-browser stats: slightly less cramped. */
+  .card-stat-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    font-size: 6.5px !important;
+    line-height: 1 !important;
+  }
+
+  .card.template-card .card-power {
+    font-size: 6.5px !important;
+    line-height: 1.12 !important;
+    max-height: 30px !important;
+  }
+
+  .battle-side-toggles {
+    min-width: 86px !important;
+  }
+
+  .mobile-deck-toggle {
+    display: block !important;
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  body.is-battle-mode .battle-layout {
+    grid-template-columns: 98px minmax(0, 1fr) 98px !important;
+  }
+
+  .deck-slot .mini-card-stat {
+    min-height: 17px !important;
+    height: 17px !important;
+    max-height: 17px !important;
+    padding: 1px 3px !important;
+  }
+
+  .deck-slot .mini-card-stat b {
+    font-size: 5.8px !important;
+  }
+
+  .card-stat-row {
+    font-size: 5.8px !important;
+  }
+
+  .card.template-card .card-power {
+    font-size: 5.8px !important;
+    max-height: 23px !important;
+  }
+
+  body.deck-collapsed .player-hand {
+    width: min(390px, 100%) !important;
+  }
+}

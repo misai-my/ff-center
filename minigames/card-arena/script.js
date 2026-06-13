@@ -456,7 +456,7 @@ function startBattle() {
   startTurn(combat.player, combat.enemy);
 }
 function showBattleScreen() { document.body.classList.add('is-battle-mode'); ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
-function showBuilderScreen() { clearTimeout(autoTurnTimer); actionBusy = false; document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
+function showBuilderScreen() { clearTimeout(autoTurnTimer); actionBusy = false; deckCollapsed = false; document.body.classList.remove('deck-collapsed'); document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
   actionBusy = actor !== combat.player;
@@ -670,6 +670,7 @@ function renderPassives(unit) { return unit.passives.map(card => `<div class="mi
 function renderAvatar(unit) { return `<img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div class="name">${escapeHtml(unit.active.name)}</div><div class="sub">${escapeHtml(unit.pet.name)} · ${unit.name}</div>`; }
 function renderHand() {
   if (!combat) return;
+  document.body.classList.toggle('deck-collapsed', deckCollapsed);
   const player = combat.player, isTurn = combat.turn === 'player' && !combat.over;
   const busy = actionBusy || !isTurn;
   const basicDisabled = busy;
@@ -708,7 +709,7 @@ function renderHand() {
   const autoToggle = ui.playerHand.querySelector('#autoBattleBtn');
   if (autoToggle) autoToggle.addEventListener('click', togglePlayerAuto);
   const toggle = ui.playerHand.querySelector('#toggleDeckBtn');
-  if (toggle) toggle.addEventListener('click', () => { deckCollapsed = !deckCollapsed; renderHand(); });
+  if (toggle) toggle.addEventListener('click', () => { deckCollapsed = !deckCollapsed; document.body.classList.toggle('deck-collapsed', deckCollapsed); renderHand(); });
 }
 
 function battleDeckCard(card, slot, icon) {
