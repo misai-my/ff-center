@@ -4477,3 +4477,232 @@ body.is-battle-mode .enemy-box .mini-cards {
     width: min(390px, 100%) !important;
   }
 }
+
+
+/* ===== Mobile side panel + opponent placement + no-flicker image pass ===== */
+
+/* Prevent selection flicker: keep image boxes stable and cached-looking while toggling deck selections. */
+.card img,
+.deck-slot img,
+.hero-card img,
+.mini-card img,
+.avatar-pane img,
+.battle-card-art img,
+.card-image-wrap img {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  image-rendering: auto;
+}
+.card-image-wrap,
+.mini-card-art,
+.battle-card-art,
+.hero-card,
+.mini-card {
+  contain: paint;
+}
+
+/* Side-panel content needs room for active, pet and passives. */
+body.is-battle-mode .combatant {
+  display: grid !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
+  gap: 6px !important;
+}
+body.is-battle-mode .hero-summary {
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+  gap: 6px !important;
+}
+body.is-battle-mode .status-bars {
+  min-height: 0 !important;
+}
+body.is-battle-mode .mini-cards {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Opponent image placement: pull it toward center on small landscape screens. */
+@media (max-width: 932px) and (orientation: landscape) {
+  body.is-battle-mode .battle-layout {
+    grid-template-columns: 122px minmax(0, 1fr) 122px !important;
+  }
+
+  body.is-battle-mode .combatant {
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    gap: 4px !important;
+    overflow: hidden !important;
+  }
+
+  body.is-battle-mode .hero-summary {
+    gap: 3px !important;
+    margin-top: 2px !important;
+  }
+
+  body.is-battle-mode .hero-card {
+    min-height: 34px !important;
+    padding: 3px !important;
+    gap: 3px !important;
+    display: grid !important;
+    grid-template-columns: 22px minmax(0, 1fr) !important;
+    align-items: center !important;
+  }
+
+  body.is-battle-mode .hero-card img {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 6px !important;
+  }
+
+  body.is-battle-mode .hero-card h4 {
+    font-size: 7.5px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body.is-battle-mode .hero-card p {
+    font-size: 5.8px !important;
+    line-height: 1.05 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    margin-top: 1px !important;
+  }
+
+  body.is-battle-mode .status-bars {
+    gap: 2px !important;
+    margin: 2px 0 !important;
+  }
+
+  /* Hide only the long stat sentence on phones; keep HP/shield/energy bars. */
+  body.is-battle-mode .status-bars > .muted {
+    display: none !important;
+  }
+
+  body.is-battle-mode .stat-line {
+    gap: 1px !important;
+  }
+
+  body.is-battle-mode .stat-line .label-row {
+    font-size: 5.6px !important;
+    line-height: 1 !important;
+  }
+
+  body.is-battle-mode .bar {
+    height: 4px !important;
+  }
+
+  body.is-battle-mode .mini-cards {
+    display: grid !important;
+    gap: 3px !important;
+    overflow-y: auto !important;
+    padding-right: 1px !important;
+  }
+
+  body.is-battle-mode .mini-card {
+    min-height: 38px !important;
+    padding: 3px !important;
+    gap: 3px !important;
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: start !important;
+  }
+
+  body.is-battle-mode .mini-card img {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 5px !important;
+  }
+
+  body.is-battle-mode .mini-card b {
+    display: block !important;
+    font-size: 6.4px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  body.is-battle-mode .mini-card .meta {
+    display: block !important;
+    font-size: 5.5px !important;
+    line-height: 1.08 !important;
+    max-height: 18px !important;
+    overflow: hidden !important;
+  }
+
+  .avatar-pane.enemy {
+    justify-items: center !important;
+    align-content: center !important;
+    padding-left: 0 !important;
+    padding-right: 8px !important;
+  }
+
+  .avatar-pane.enemy img {
+    object-position: center bottom !important;
+    transform: translateX(-8px) scaleX(-1) !important;
+  }
+
+  .avatar-pane.enemy.attack img {
+    animation: enemyLungeMobile .72s ease !important;
+  }
+
+  .avatar-pane.enemy.hit img {
+    transform: translateX(-8px) scaleX(-1) !important;
+  }
+
+  @keyframes enemyLungeMobile {
+    0% { transform: translateX(-8px) scaleX(-1); }
+    45% { transform: translateX(18px) scaleX(-1) scale(1.04); }
+    100% { transform: translateX(-8px) scaleX(-1); }
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  body.is-battle-mode .battle-layout {
+    grid-template-columns: 112px minmax(0, 1fr) 112px !important;
+  }
+
+  body.is-battle-mode .hero-card {
+    min-height: 31px !important;
+    grid-template-columns: 20px minmax(0, 1fr) !important;
+  }
+
+  body.is-battle-mode .hero-card img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  body.is-battle-mode .hero-card h4 {
+    font-size: 6.8px !important;
+  }
+
+  body.is-battle-mode .hero-card p,
+  body.is-battle-mode .stat-line .label-row {
+    font-size: 5.2px !important;
+  }
+
+  body.is-battle-mode .mini-card {
+    min-height: 34px !important;
+    grid-template-columns: 16px minmax(0, 1fr) !important;
+  }
+
+  body.is-battle-mode .mini-card img {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  body.is-battle-mode .mini-card b {
+    font-size: 5.8px !important;
+  }
+
+  body.is-battle-mode .mini-card .meta {
+    font-size: 4.9px !important;
+    max-height: 15px !important;
+  }
+
+  .avatar-pane.enemy img {
+    transform: translateX(-6px) scaleX(-1) !important;
+  }
+}

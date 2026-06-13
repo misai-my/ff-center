@@ -271,7 +271,7 @@ function selectCardForSlot(item, slot, forceAdd = false) {
     if (idx >= 0 && !forceAdd) builderState.passives.splice(idx, 1);
     else if (idx < 0 && builderState.passives.length < 3) builderState.passives.push(item);
   }
-  renderBuilder();
+  refreshBuilderSelectionUI();
 }
 
 function removeCardFromDeck(slot, name = '') {
@@ -281,7 +281,40 @@ function removeCardFromDeck(slot, name = '') {
     if (name) builderState.passives = builderState.passives.filter(p => p.name !== name);
     else builderState.passives.pop();
   }
-  renderBuilder();
+  refreshBuilderSelectionUI();
+}
+
+
+function refreshBuilderSelectionUI() {
+  renderSelectedSummary();
+  updateCardSelectionStates();
+}
+
+function isCardSelectedForSlot(slot, name) {
+  if (slot === 'active') return builderState.active?.name === name;
+  if (slot === 'pet') return builderState.pet?.name === name;
+  return builderState.passives.some(p => p.name === name);
+}
+
+function updateCardSelectionStates() {
+  document.querySelectorAll('.card[data-slot]').forEach(cardEl => {
+    const slot = cardEl.dataset.slot;
+    const name = cardEl.dataset.name;
+    const selected = isCardSelectedForSlot(slot, name);
+    const locked = slot === 'passive' && !selected && builderState.passives.length >= 3;
+    cardEl.classList.toggle('selected', selected);
+    cardEl.classList.toggle('disabled', locked);
+    cardEl.setAttribute('aria-selected', selected ? 'true' : 'false');
+    const toggle = cardEl.querySelector('.deck-toggle');
+    if (toggle) {
+      toggle.textContent = selected ? '−' : '+';
+      toggle.classList.toggle('remove', selected);
+      toggle.classList.toggle('add', !selected);
+      toggle.disabled = locked;
+      toggle.setAttribute('aria-label', selected ? 'Remove from deck' : 'Add to deck');
+    }
+    cardEl.draggable = !locked;
+  });
 }
 
 function findCardBySlotAndName(slot, name) {
@@ -313,6 +346,19 @@ function attachLoadoutDropEvents() {
   });
 }
 
+
+
+function preloadCardImages() {
+  const urls = [...activeSkills, ...passiveSkills, ...petSkills]
+    .map(card => card.local_image_path)
+    .filter(Boolean);
+  urls.forEach(src => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = 'eager';
+    img.src = src;
+  });
+}
 
 function renderBuilder() {
   ui.activeGrid.innerHTML = filterCards(activeSkills).map(item => renderCard(item, 'active')).join('');
@@ -663,10 +709,10 @@ function renderBattleLog() {
   ui.battleLog.innerHTML = combat.log.slice().reverse().map(line => `<div class="log-item">${escapeHtml(line)}</div>`).join('');
   if (ui.battleLog) ui.battleLog.scrollTop = 0;
 }
-function renderHeroSummary(unit) { return `<div class="hero-card"><img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div><h4>${escapeHtml(unit.active.name)}</h4><p>${escapeHtml(unit.active.skill)} · ${inferRarity(unit.active)}</p></div></div><div class="hero-card"><img src="${unit.pet.local_image_path}" alt="${escapeHtml(unit.pet.name)}" /><div><h4>${escapeHtml(unit.pet.name)}</h4><p>${escapeHtml(unit.pet.skill)} · ${inferRarity(unit.pet)}</p></div></div>`; }
+function renderHeroSummary(unit) { return `<div class="hero-card active-hero"><img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div><h4>${escapeHtml(unit.active.name)}</h4><p>${escapeHtml(unit.active.skill)} · ${inferRarity(unit.active)}</p></div></div><div class="hero-card pet-hero"><img src="${unit.pet.local_image_path}" alt="${escapeHtml(unit.pet.name)}" /><div><h4>${escapeHtml(unit.pet.name)}</h4><p>${escapeHtml(unit.pet.skill)} · ${inferRarity(unit.pet)}</p></div></div>`; }
 function statusBar(label, value, max, cls, rightText='') { return `<div class="stat-line"><div class="label-row"><span>${label}</span><span>${rightText || `${Math.round(value)}/${Math.round(max)}`}</span></div><div class="bar ${cls}"><div style="width:${max ? clamp((value/max)*100,0,100) : 0}%"></div></div></div>`; }
 function renderStatus(unit) { return [ statusBar('HP', unit.hp, unit.maxHp, 'hp'), statusBar('Shield', unit.shield, Math.max(25, unit.maxHp * .5), 'shield', `${unit.shield}`), statusBar('Energy', unit.energy, unit.maxEnergy, 'energy', `${unit.energy}/${unit.maxEnergy}`), `<div class="muted">ATK ${unit.attack + unit.tempAttack} · DEF ${unit.defense} · CRIT ${unit.crit}% · DODGE ${unit.dodge + unit.tempDodge}%${unit.focus ? ` · FOCUS +${unit.focus}` : ''}${unit.silenceTurns ? ' · SILENCED' : ''}${unit.burnTurns ? ' · BURN' : ''}</div>` ].join(''); }
-function renderPassives(unit) { return unit.passives.map(card => `<div class="mini-card"><img src="${card.local_image_path}" alt="${escapeHtml(card.name)}" /><div><b>${escapeHtml(card.name)}</b><div class="meta">${escapeHtml(card.skill)} · ${inferRarity(card)}</div><div class="meta">${escapeHtml(createPassivePower(card).summary)}</div></div></div>`).join(''); }
+function renderPassives(unit) { return unit.passives.map(card => `<div class="mini-card passive-mini"><img src="${card.local_image_path}" alt="${escapeHtml(card.name)}" /><div><b>${escapeHtml(card.name)}</b><div class="meta">${escapeHtml(card.skill)} · ${inferRarity(card)}</div><div class="meta">${escapeHtml(createPassivePower(card).summary)}</div></div></div>`).join(''); }
 function renderAvatar(unit) { return `<img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div class="name">${escapeHtml(unit.active.name)}</div><div class="sub">${escapeHtml(unit.pet.name)} · ${unit.name}</div>`; }
 function renderHand() {
   if (!combat) return;
@@ -842,4 +888,5 @@ function addDataCenterExitButton() {
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addDataCenterExitButton, { once: true });
 else addDataCenterExitButton();
 
+preloadCardImages();
 renderBuilder();
