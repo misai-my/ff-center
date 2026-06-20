@@ -1,21 +1,652 @@
 <!DOCTYPE html>
+<!-- Packaged from the original single-file dashboard. Runtime behavior is unchanged. -->
 <html lang="en">
 <head>
-  
-  <!-- Browser tab / app icons -->
-  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
-  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
-  <link rel="manifest" href="site.webmanifest?v=20260620" />
-  <meta name="theme-color" content="#ffbd59" />
-<meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EWC Team Overview Redirect</title>
-  <meta http-equiv="refresh" content="0; url=ewc-center.html" />
-  <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07090f;color:#fff;font-family:Arial,sans-serif}a{color:#ffbd59}</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Free Fire Data Center</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <!-- Theme pre-load -->
+  <script src="assets/js/theme-init.js"></script>
+  <link rel="stylesheet" href="assets/css/styles.css?v=iphone-portrait-summary">
+
+  <!-- Critical search layout: keeps the global search compact even if a stale stylesheet is cached. -->
+  <style id="global-search-critical">
+    .topbar > .global-search{position:relative!important;flex:0 1 440px!important;width:clamp(250px,34vw,440px)!important;min-width:220px!important;max-width:440px!important;height:42px!important;align-self:center!important;z-index:45!important}
+    .topbar .global-search-field{box-sizing:border-box!important;width:100%!important;height:42px!important;min-height:42px!important;max-height:42px!important;display:grid!important;grid-template-columns:20px minmax(0,1fr) auto auto!important;align-items:center!important;gap:8px!important;padding:0 9px 0 11px!important;margin:0!important;overflow:hidden!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:14px!important;background:rgba(0,0,0,.23)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)!important}
+    .topbar .global-search-field:focus-within{border-color:rgba(77,211,255,.42)!important;box-shadow:0 0 0 4px rgba(77,211,255,.10),inset 0 1px 0 rgba(255,255,255,.04)!important}
+    .topbar .global-search-icon{box-sizing:border-box!important;width:20px!important;height:20px!important;min-width:20px!important;max-width:20px!important;display:grid!important;place-items:center!important;overflow:hidden!important;color:var(--accent)!important;line-height:0!important}
+    .topbar .global-search-icon svg{box-sizing:border-box!important;display:block!important;width:18px!important;height:18px!important;min-width:18px!important;max-width:18px!important;max-height:18px!important;margin:0!important;padding:0!important;overflow:visible!important}
+    .topbar #globalSearchInput{box-sizing:border-box!important;position:static!important;display:block!important;width:100%!important;min-width:0!important;height:38px!important;min-height:0!important;max-height:38px!important;margin:0!important;padding:0!important;border:0!important;outline:0!important;background:transparent!important;color:var(--ink)!important;box-shadow:none!important;font:750 .84rem/1.2 Roboto,system-ui,sans-serif!important}
+    .topbar #globalSearchInput::placeholder{color:rgba(170,177,197,.72)!important;font-weight:650!important}
+    .topbar .global-search-shortcut{box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;height:24px!important;margin:0!important;padding:0 7px!important;border:1px solid rgba(255,255,255,.11)!important;border-radius:8px!important;background:rgba(255,255,255,.055)!important;color:var(--muted)!important;font:700 .62rem/1 Roboto,system-ui,sans-serif!important;white-space:nowrap!important}
+    .topbar .global-search-clear{box-sizing:border-box!important;width:27px!important;height:27px!important;min-width:27px!important;max-width:27px!important;margin:0!important;padding:0!important;border:0!important;border-radius:9px!important;display:grid!important;place-items:center!important;background:rgba(255,255,255,.07)!important;color:var(--muted)!important;font:700 1rem/1 Arial,sans-serif!important;cursor:pointer!important}
+    .topbar .global-search-clear[hidden]{display:none!important}
+    html[data-theme="light"] .topbar .global-search-field{background:rgba(255,255,255,.76)!important;border-color:rgba(10,20,40,.13)!important}
+    @media(max-width:1120px){.topbar > .global-search{flex:1 1 280px!important;width:auto!important;min-width:200px!important;max-width:380px!important}.topbar .global-search-shortcut{display:none!important}}
+    @media(max-width:760px){.topbar > .global-search{flex:1 1 auto!important;width:auto!important;min-width:160px!important;max-width:none!important}.topbar .global-search-field{grid-template-columns:20px minmax(0,1fr) auto!important}.topbar #globalSearchInput{font-size:.78rem!important}}
+    @media(max-width:480px){.topbar > .global-search{min-width:132px!important}.topbar .global-search-icon{width:18px!important;min-width:18px!important}.topbar .global-search-icon svg{width:16px!important;height:16px!important;min-width:16px!important;max-width:16px!important}.topbar .global-search-field{padding-left:9px!important;gap:6px!important}}
+  </style>
+
+  <!-- Critical hero layout: keeps the Free Fire cover visible even if an older stylesheet is cached. -->
+  <style id="free-fire-hero-critical">
+    .sportsbook-hero.free-fire-hero{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(230px,270px)!important;gap:12px!important;align-items:stretch!important;min-height:260px!important}
+    .free-fire-hero .hero-blue-panel{position:relative!important;isolation:isolate!important;min-height:260px!important;overflow:hidden!important;padding:28px 30px!important;border-radius:28px!important;background:linear-gradient(90deg,rgba(4,8,25,.98) 0%,rgba(13,24,62,.92) 44%,rgba(23,43,104,.58) 72%,rgba(7,11,30,.72) 100%),radial-gradient(620px 290px at 80% 45%,rgba(134,86,255,.30),transparent 68%),linear-gradient(135deg,#121b3a,#080d21)!important;border:1px solid rgba(164,114,255,.38)!important;box-shadow:0 28px 82px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.14)!important}
+    .free-fire-hero .hero-copy{position:relative!important;z-index:20!important;width:min(52%,640px)!important;min-height:100%!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+    .free-fire-hero .hero-kicker{display:inline-flex!important;width:max-content!important;max-width:100%!important;padding:6px 10px!important;border-radius:999px!important;background:rgba(4,10,32,.52)!important;border:1px solid rgba(255,255,255,.16)!important;color:#cfeaff!important;font-size:.68rem!important;font-weight:1000!important;letter-spacing:.14em!important;text-transform:uppercase!important}
+    .free-fire-hero .hero-blue-panel h2{position:relative!important;z-index:21!important;margin:12px 0 10px!important;color:#fff!important;font-family:Orbitron,sans-serif!important;font-size:clamp(2.35rem,4.45vw,4.25rem)!important;line-height:.88!important;letter-spacing:.01em!important;text-shadow:0 9px 30px rgba(0,0,0,.55),0 0 30px rgba(94,190,255,.20)!important}
+    .free-fire-hero .hero-blue-panel h2 .hero-title-accent{color:#ffbd59!important;text-shadow:0 8px 28px rgba(0,0,0,.45),0 0 30px rgba(255,189,89,.20)!important}
+    .free-fire-hero .hero-blue-panel p{position:relative!important;z-index:21!important;max-width:600px!important;margin:0!important;color:rgba(234,244,255,.84)!important;font-size:.9rem!important;font-weight:800!important;line-height:1.42!important;text-shadow:0 2px 12px rgba(0,0,0,.42)!important}
+    .free-fire-hero .hero-character-stage{position:absolute!important;z-index:8!important;top:0!important;right:0!important;bottom:0!important;width:60%!important;overflow:hidden!important;pointer-events:none!important;user-select:none!important;-webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.62) 10%,#000 26%,#000 100%)!important;mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.62) 10%,#000 26%,#000 100%)!important}
+    .free-fire-hero .hero-character-stage:before{content:""!important;position:absolute!important;inset:10% 0 0 12%!important;border-radius:50%!important;background:radial-gradient(circle at 56% 48%,rgba(255,255,255,.17),transparent 14%),radial-gradient(circle at 58% 50%,rgba(108,88,255,.34),transparent 52%)!important;filter:blur(4px)!important;animation:heroCriticalPulse 4.8s ease-in-out infinite!important}
+    .free-fire-hero .hero-character-slot{position:absolute!important;display:block!important;bottom:-42px!important;opacity:1!important;transform-origin:50% 100%!important;filter:drop-shadow(0 22px 22px rgba(0,0,0,.68))!important;will-change:transform,opacity!important}
+    .free-fire-hero .hero-character-slot img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center bottom!important;animation:heroCriticalFloat 5s ease-in-out infinite!important}
+    .free-fire-hero .hero-hayato{height:106%!important;right:50%!important;z-index:2!important;animation:heroCriticalFlyLeft .9s cubic-bezier(.16,.85,.22,1.08) both!important}
+    .free-fire-hero .hero-orion{height:119%!important;right:31%!important;z-index:3!important;animation:heroCriticalFlyTop 1s cubic-bezier(.16,.85,.22,1.08) both!important}
+    .free-fire-hero .hero-tatsuya{height:111%!important;right:15%!important;z-index:4!important;animation:heroCriticalFlyRight 1.05s cubic-bezier(.16,.85,.22,1.08) both!important}
+    .free-fire-hero .hero-kelly{height:122%!important;right:-2%!important;z-index:5!important;animation:heroCriticalFlyBottom 1.1s cubic-bezier(.16,.85,.22,1.08) both!important}
+    @keyframes heroCriticalFlyLeft{0%{opacity:0;transform:translate3d(-180px,70px,0) scale(.72) rotate(-14deg);filter:blur(6px) drop-shadow(0 22px 22px rgba(0,0,0,.4))}100%{opacity:1;transform:none;filter:blur(0) drop-shadow(0 22px 22px rgba(0,0,0,.68))}}
+    @keyframes heroCriticalFlyTop{0%{opacity:0;transform:translate3d(70px,-170px,0) scale(.72) rotate(12deg);filter:blur(6px)}100%{opacity:1;transform:none;filter:blur(0) drop-shadow(0 22px 22px rgba(0,0,0,.68))}}
+    @keyframes heroCriticalFlyRight{0%{opacity:0;transform:translate3d(190px,30px,0) scale(.72) rotate(12deg);filter:blur(6px)}100%{opacity:1;transform:none;filter:blur(0) drop-shadow(0 22px 22px rgba(0,0,0,.68))}}
+    @keyframes heroCriticalFlyBottom{0%{opacity:0;transform:translate3d(190px,150px,0) scale(.72) rotate(17deg);filter:blur(6px)}100%{opacity:1;transform:none;filter:blur(0) drop-shadow(0 22px 22px rgba(0,0,0,.68))}}
+    @keyframes heroCriticalFloat{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-8px,0)}}
+    @keyframes heroCriticalPulse{0%,100%{opacity:.64;transform:scale(.96)}50%{opacity:1;transform:scale(1.05)}}
+    @media(max-width:980px){.sportsbook-hero.free-fire-hero{grid-template-columns:1fr!important;min-height:230px!important}.free-fire-hero .hero-market-board{display:none!important}.free-fire-hero .hero-blue-panel{min-height:230px!important;padding:23px 24px!important}.free-fire-hero .hero-copy{width:58%!important}.free-fire-hero .hero-character-stage{width:64%!important;right:-2%!important}}
+    @media(max-width:680px){.sportsbook-hero.free-fire-hero{min-height:255px!important}.free-fire-hero .hero-blue-panel{min-height:255px!important;padding:18px!important;border-radius:22px!important}.free-fire-hero .hero-copy{width:69%!important;justify-content:flex-start!important;padding-top:5px!important}.free-fire-hero .hero-blue-panel h2{font-size:clamp(1.7rem,9vw,2.35rem)!important;max-width:285px!important;margin:10px 0 8px!important}.free-fire-hero .hero-blue-panel p{font-size:.72rem!important;line-height:1.32!important;max-width:260px!important;display:-webkit-box!important;-webkit-line-clamp:3!important;-webkit-box-orient:vertical!important;overflow:hidden!important}.free-fire-hero .hero-character-stage{width:72%!important;right:-18%!important}.free-fire-hero .hero-hayato{right:55%!important;height:91%!important}.free-fire-hero .hero-orion{right:36%!important;height:101%!important}.free-fire-hero .hero-tatsuya{right:16%!important;height:101%!important}.free-fire-hero .hero-kelly{right:-7%!important;height:108%!important}}
+    @media(max-width:430px){.free-fire-hero .hero-copy{width:73%!important}.free-fire-hero .hero-character-stage{right:-25%!important;width:70%!important}.free-fire-hero .hero-hayato{display:none!important}.free-fire-hero .hero-orion{right:42%!important;height:95%!important}.free-fire-hero .hero-tatsuya{right:17%!important;height:99%!important}.free-fire-hero .hero-kelly{right:-10%!important;height:107%!important}}
+    @media(prefers-reduced-motion:reduce){.free-fire-hero .hero-character-slot,.free-fire-hero .hero-character-slot img,.free-fire-hero .hero-character-stage:before{animation:none!important}.free-fire-hero .hero-character-slot{opacity:1!important;transform:none!important}}
+  </style>
+
+  <link rel="stylesheet" href="assets/css/gloo-rush-launcher.css?v=1">
+  <link rel="stylesheet" href="assets/css/card-arena-launcher.css?v=1">
 </head>
-<body>
-  <p>Opening EWC Team Center… <a href="ewc-center.html">Click here if it does not open.</a></p>
-  <script>location.replace('ewc-center.html' + location.search + location.hash);</script>
+<body class="betting-experiment">
+
+<div class="sb-overlay" id="sbOverlay" aria-hidden="true"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar navigation">
+    <div class="brand">
+      <div class="brand-left">
+        <div class="logo">FF</div>
+        <div class="brand-text">
+          <h1>Free Fire</h1>
+          <small class="muted">Caster Dashboard</small>
+        </div>
+      </div>
+      <button class="icon-btn sb-close" id="sbClose" aria-label="Close sidebar" title="Close">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <nav class="nav" id="nav">
+        <a class="nav-item" href="home.html" data-page="home.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M7 14c-1.7 0-3-1.3-3-3S5.3 8 7 8s3 1.3 3 3-1.3 3-3 3Zm10 0c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3ZM7 20c-2.8 0-5-1.8-5-4v-1h6v1c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-1h6v1c0 2.2-2.2 4-5 4H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21l6-6m0 0 2 2 8-8-2-2-8 8Zm0 0-2-2 4-4 2 2-4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="loadout.html" data-page="loadout.html" title="Loadout">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 7V6a3 3 0 0 1 6 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 20V11a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 12h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 20v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            </span>
+          <span class="nav-label">Loadout</span>
+        </a>
+
+        <a class="nav-item" href="preset.html" data-page="preset.html" title="Preset Builder">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14.5 4.5a5 5 0 0 0-6.7 6.7l-4.3 4.3a2 2 0 0 0 2.8 2.8l4.3-4.3A5 5 0 0 0 19.5 9.5l-3 3-2-2 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 4l1-1M20 6h1M18 5V4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Preset Builder</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M10 6 4 8v14l6-2 4 2 6-2V6l-6 2-4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <!-- BR Data (analytics / chart) -->
+        <a class="nav-item" href="br-team.html" data-page="br-team.html" title="BR Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 19H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 17V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M16 17V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 11l4-3 4 5 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">BR Data</span>
+        </a>
+        
+        <!-- CS Draft (document + pencil) -->
+        <a class="nav-item" href="clash-draft-team.html" data-page="clash-draft-team.html" title="CS Draft">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 3h7l3 3v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 3v4a2 2 0 0 0 2 2h4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 16l1-3 6-6 2 2-6 6-3 1Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Draft</span>
+        </a>
+
+        <!-- CS Data (crossed swords) -->
+        <a class="nav-item" href="clash-data.html" data-page="clash-data.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Data</span>
+        </a>
+
+         <!-- CS COMPARE (crossed swords) -->
+        <a class="nav-item" href="clash-compare.html" data-page="clash-compare.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Compare</span>
+        </a>
+
+        <a class="nav-item" href="store.html" data-page="store.html" title="Stores">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 7h16M6 7l1 12h10l1-12M9 11h6M10 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Stores</span>
+        </a>
+        
+
+        <!-- Free Fire Data Center -->
+        <a class="nav-item" href="ewc-team-overview.html" data-page="ewc-team-overview.html" title="Free Fire Data Center">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 20V9l5-5 5 5v11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 13h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 4v16" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+            </svg>
+          </span>
+          <span class="nav-label">Free Fire Data Center</span>
+        </a>
+
+        <!-- Group Assignment Admin -->
+        <a class="nav-item" href="admin-group-assignments.html" data-page="admin-group-assignments.html" title="Group Assignment Admin">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm10 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20v-2c0-2.2 1.8-4 4-4s4 1.8 4 4v2M13 20v-2c0-2.2 1.8-4 4-4s4 1.8 4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M10 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Group Assignments</span>
+        </a>
+
+        <!-- Split View (two panes) -->
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Split View</span>
+        </a>
+      </nav>
+  </aside>
+  <main class="main">
+    <div class="topbar">
+      <button class="icon-btn" id="sbToggle" title="Toggle sidebar" aria-label="Toggle sidebar">
+        <svg viewBox="0 0 24 24" fill="none"><path id="sbTogglePath" d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <div class="page-title"><h1>Free Fire Data Center</h1><span>Team Summary + Interactive Team Profiles</span></div>
+      <div class="global-search" id="globalSearch">
+        <div class="global-search-field">
+          <span class="global-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="m21 21-4.35-4.35m1.35-5.15a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <input id="globalSearchInput" type="search" placeholder="Search teams, players, skills, weapons, maps…" aria-label="Search this dashboard" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="globalSearchResults" aria-expanded="false">
+          <kbd class="global-search-shortcut" aria-hidden="true">Ctrl K</kbd>
+          <button class="global-search-clear" id="globalSearchClear" type="button" aria-label="Clear search" title="Clear search" hidden>×</button>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="theme-palette" id="colorThemePalette" aria-label="Color theme selector">
+          <div class="theme-palette-swatches" id="colorThemeOptions" role="radiogroup" aria-label="Color theme">
+            <button class="theme-swatch" type="button" data-accent="red" title="Red theme" aria-label="Red theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="blue" title="Blue theme" aria-label="Blue theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="purple" title="Purple theme" aria-label="Purple theme" aria-pressed="false"></button>
+            <button class="theme-swatch" type="button" data-accent="gray" title="Black/gray theme" aria-label="Black/gray theme" aria-pressed="false"></button>
+          </div>
+          <button class="theme-palette-toggle" id="colorThemeToggle" type="button" aria-expanded="false" aria-controls="colorThemeOptions" title="Choose color theme" aria-label="Choose color theme">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m8 10 4 4 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="userchip"><div class="avatar"></div><div class="usertext"><b id="user-info">Checking login…</b><span id="connection-status">Connection checking…</span></div></div>
+        <button class="logout" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+    <div class="global-search-panel" id="globalSearchPanel" hidden>
+      <div class="global-search-panel-head">
+        <span id="globalSearchSummary">Search this dashboard</span>
+        <small>↑↓ navigate · Enter open · Esc close</small>
+      </div>
+      <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results"></div>
+    </div>
+
+<div id="veil"><div class="box">Loading Free Fire team data…</div></div>
+<div class="shell">
+  <div id="globalErr" class="gerr"></div>
+
+  <section class="ewc-hero section sportsbook-hero free-fire-hero">
+    <div class="hero-blue-panel">
+      <div class="hero-copy">
+        <div class="hero-kicker">Free Fire Esports Intelligence</div>
+        <h2>FREE FIRE<br>DATA CENTER</h2>
+        <p>Track team pace, player impact, loadout identity, qualification paths, and match form in one broadcast-ready command page.</p>
+      </div>
+
+      <div class="hero-character-stage" aria-hidden="true">
+        <span class="hero-energy-orbit orbit-one"></span>
+        <span class="hero-energy-orbit orbit-two"></span>
+        <span class="hero-character-slot hero-hayato"><img src="assets/img/characters/hayato.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-orion"><img src="assets/img/characters/orion.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-tatsuya"><img src="assets/img/characters/tatsuya.png" alt="" draggable="false"></span>
+        <span class="hero-character-slot hero-kelly"><img src="assets/img/characters/kelly.png" alt="" draggable="false"></span>
+      </div>
+    </div>
+    <div class="hero-market-board compact" aria-label="Free Fire Data Center quick status card">
+      <div class="market-card scope-market-card"><span>Scope</span><b id="heroScopeMirror">Live Filters</b><small id="heroScopeSub">synced from filters</small></div>
+    </div>
+  </section>
+  <details class="accordion" id="accFilters">
+    <summary><span>Filters</span></summary>
+    <div class="accordion-body">
+      <div class="bar">
+        <label>Tournament <select id="fTournament" class="input" style="min-width:250px"><option value="__all__">All</option></select></label>
+        <label>Stage <select id="fStage" class="input" style="min-width:170px"><option value="__all__">All</option></select></label>
+        <label>Group <select id="fGroup" class="input" style="min-width:120px" title="Group assignments are loaded from Supabase, raw data, or automatically detected from match participation"><option value="__all__">All</option></select></label>
+        <label>Mode <select id="fMode" class="input" style="min-width:100px"><option value="__all__">All</option></select></label>
+        <label>Source <select id="fSource" class="input" style="min-width:130px"><option value="__all__">All</option></select></label>
+        <label>Year <select id="fYear" class="input" style="min-width:110px"><option value="__all__">All</option></select></label>
+        <label>Week <select id="fWeek" class="input" style="min-width:110px"><option value="__all__">All</option></select></label>
+        <label>Day <select id="fDay" class="input" style="min-width:110px"><option value="__all__">All</option></select></label>
+        <label>Match # <select id="fMatchNo" class="input" style="min-width:120px"><option value="__all__">All</option></select></label>
+        <button class="btn secondary" id="resetFilters">Reset to Latest</button>
+      </div>
+      <div class="muted" id="filterHint">—</div>
+    </div>
+  </details>
+  <details class="accordion" id="accOverall">
+    <summary><span>Overall — Team Summary</span><span class="muted" id="overallHint"></span></summary>
+    <div class="accordion-body">
+      <section id="tournamentProgressionPanel" class="tournament-progression-panel" aria-live="polite" hidden></section>
+      <div class="standings-toolbar">
+      <div class="bar standings-controls">
+        <label><span class="control-label">Sort by</span>
+          <select id="overallSortKey" class="input">
+            <option value="total_score" selected>Total Score</option>
+            <option value="booyahs">Booyahs</option>
+            <option value="elims">Total Elims</option>
+            <option value="ranking_score">Rank Score</option>
+            <option value="dmg_pm">Damage / match</option>
+            <option value="total_pm">Total / match</option>
+            <option value="elims_pm">Elims / match</option>
+            <option value="matches">Matches</option>
+            <option value="damage">Total Damage</option>
+            <option value="team">Team (A→Z)</option>
+          </select>
+        </label>
+        <button class="btn secondary" id="overallSortDir" data-dir="desc">Desc</button>
+        <label id="manualQualiControl">Qualification cutoff
+          <select id="overallQualiCutoff" class="input" title="Teams below this total-points position will be highlighted in red">
+            <option value="">Off</option>
+          </select>
+        </label>
+        <span class="muted quali-cutoff-help" id="overallQualiHelp"><span class="quali-status-dot off"></span>Select a Top position to activate the qualification line.</span>
+      </div>
+      <div class="rank-color-legend" aria-label="Rank color legend">
+        <span><i class="rank-swatch gold"></i>1st</span>
+        <span><i class="rank-swatch silver"></i>2nd</span>
+        <span><i class="rank-swatch bronze"></i>3rd</span>
+        <span><i class="rank-swatch contender"></i>Top field</span>
+        <span><i class="rank-swatch danger"></i>Below cutoff</span>
+      </div>
+      </div>
+      <div class="summary-layout summary-layout-table-only premium-summary-layout">
+        <div class="card summary-table-card"><div id="tblOverall">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <section class="section quick-popups-section" id="quickPopupsSection" aria-label="Quick reference popups">
+    <div class="quick-popups-head">
+      <h2>Quick Popups</h2>
+    </div>
+    <aside class="asset-rail asset-rail-inline" aria-label="Quick resource popups">
+      <button class="btn secondary" type="button" data-open-resource="skills"><span class="dot skill"></span>Skills</button>
+      <button class="btn secondary" type="button" data-open-resource="pets"><span class="dot pet"></span>Pets</button>
+      <button class="btn secondary" type="button" data-open-resource="weapons"><span class="dot weapon"></span>Weapons</button>
+      <button class="btn secondary" type="button" data-open-resource="loadouts"><span class="dot loadout"></span>Loadout</button>
+      <button class="btn secondary" type="button" data-open-resource="maps"><span class="dot map"></span>Map</button>
+    </aside>
+  </section>
+
+  <section class="section team-selection-section" aria-labelledby="teamSelectionTitle">
+    <div class="team-selection-head">
+      <div class="team-selection-title">
+        <span class="team-selection-kicker">Team Profiles</span>
+        <h2 id="teamSelectionTitle">Team Selection</h2>
+        <p>Select a team to open its full performance profile.</p>
+      </div>
+      <span class="chip team-selection-current"><span class="selected-label">Selected</span><span id="selectedTeamChip">—</span></span>
+    </div>
+    <div class="team-selection-toolbar">
+      <label class="team-selection-search" aria-label="Search teams">
+        <input type="search" id="teamSearch" placeholder="Search Free Fire team…" class="input" autocomplete="off">
+      </label>
+    </div>
+    <div id="teamGrid" class="team-grid" aria-live="polite">Loading teams…</div>
+  </section>
+
+
+
+  <details class="accordion" id="accLiveFeed">
+    <summary><span>Live Feed — Latest Match</span><span class="muted" id="liveFeedHint">Latest match status</span></summary>
+    <div class="accordion-body">
+      <div id="liveFeedBox" class="live-feed-empty">Loading latest live feed…</div>
+    </div>
+  </details>
+
+  <details class="accordion preset-mini" id="miniPresetBuilder">
+    <summary><span>Mini Preset Builder</span><span class="muted">Quick build reference</span></summary>
+    <div class="accordion-body">
+      <div class="preset-mini-head">
+        <div class="muted" style="font-size:.82rem;margin-top:4px">Click an empty slot to pick from the popup library. Click a filled slot for details.</div>
+        <div class="preset-pills">
+          <button class="btn secondary" id="presetResetBtn" type="button">Reset Preset</button>
+        </div>
+      </div>
+      <div class="preset-row-wrap"><div class="preset-row-title"><span><span class="dot skill"></span> Active Skill</span><span class="preset-row-controls"><span class="muted" id="presetActiveCount">4 slots</span><button class="preset-add-slot" type="button" data-add-preset-slot="active">+ Slot</button></span></div><div class="preset-row" id="presetActiveRow"></div></div>
+      <div class="preset-row-wrap"><div class="preset-row-title"><span><span class="dot skill"></span> Passive Skills</span><span class="preset-row-controls"><span class="muted" id="presetPassiveCount">4 slots</span><button class="preset-add-slot" type="button" data-add-preset-slot="passive">+ Slot</button></span></div><div class="preset-row" id="presetPassiveRow"></div></div>
+      <div class="preset-row-wrap"><div class="preset-row-title"><span><span class="dot pet"></span> Pet</span><span class="preset-row-controls"><span class="muted" id="presetPetCount">4 slots</span><button class="preset-add-slot" type="button" data-add-preset-slot="pet">+ Slot</button></span></div><div class="preset-row" id="presetPetRow"></div></div>
+      <div class="preset-row-wrap"><div class="preset-row-title"><span><span class="dot loadout"></span> Loadouts</span><span class="preset-row-controls"><span class="muted" id="presetLoadoutCount">Fixed 4 slots</span></span></div><div class="preset-row fixed-loadout-row" id="presetLoadoutRow"></div></div>
+    </div>
+  </details>
+</div>
+</div>
+  </main>
+</div>
+
+<div class="team-modal" id="teamModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="teamTitle">
+  <div class="team-modal-backdrop" id="teamModalBackdrop"></div>
+  <section class="team-modal-card" id="teamModalCard" role="document" tabindex="-1">
+    <div class="team-modal-head modal-premium-head">
+      <div class="modal-team-identity">
+        <div id="modalTeamLogo" class="modal-team-logo" aria-hidden="true"><span>—</span></div>
+        <div class="modal-heading-copy">
+          <div class="eyebrow">Selected Team</div>
+          <h2 id="teamTitle">Team Overview</h2>
+          <div class="muted" id="modalTeamMeta">Choose a team to open details.</div>
+        </div>
+      </div>
+      <div class="team-modal-actions">
+        <label class="modal-team-picker" title="Switch selected team">
+          <span>Selected</span>
+          <select id="modalTeamSelect" class="input modal-team-select" aria-label="Switch selected team">
+            <option value="">—</option>
+          </select>
+        </label>
+        <button class="icon-btn" id="teamModalClose" title="Close team profile" aria-label="Close team profile">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="team-modal-tabs" role="tablist" aria-label="Team profile sections">
+      <button class="team-tab active" id="tab-overview" role="tab" aria-selected="true" aria-controls="panel-overview" tabindex="0" type="button" data-tab="overview">Overview</button>
+      <button class="team-tab" id="tab-players" role="tab" aria-selected="false" aria-controls="panel-players" tabindex="-1" type="button" data-tab="players">Player</button>
+      <button class="team-tab" id="tab-skills" role="tab" aria-selected="false" aria-controls="panel-skills" tabindex="-1" type="button" data-tab="skills">Skill + Loadout</button>
+      <button class="team-tab" id="tab-matches" role="tab" aria-selected="false" aria-controls="panel-matches" tabindex="-1" type="button" data-tab="matches">Match Log</button>
+    </div>
+
+    <div class="team-resource-strip" aria-label="Open reference popup over team profile">
+      <span class="team-resource-label">Quick Reference</span>
+      <button class="btn secondary" type="button" data-open-resource="skills"><span class="dot skill"></span>Skills</button>
+      <button class="btn secondary" type="button" data-open-resource="pets"><span class="dot pet"></span>Pets</button>
+      <button class="btn secondary" type="button" data-open-resource="weapons"><span class="dot weapon"></span>Weapons</button>
+      <button class="btn secondary" type="button" data-open-resource="loadouts"><span class="dot loadout"></span>Loadout</button>
+      <button class="btn secondary" type="button" data-open-resource="maps"><span class="dot map"></span>Map</button>
+    </div>
+
+    <div class="team-card-filter" id="teamCardFilter">
+      <span class="team-card-filter-title">Team Card Filter</span>
+      <label>Tournament <select id="teamCardTournament" class="input"><option value="__all__">All</option></select></label>
+      <label>Stage <select id="teamCardStage" class="input"><option value="__all__">All</option></select></label>
+      <label>Day <select id="teamCardDay" class="input"><option value="__all__">All</option></select></label>
+      <label>Match # <select id="teamCardMatchNo" class="input"><option value="__all__">All</option></select></label>
+      <button class="btn secondary" type="button" id="teamCardResetLatest">Reset to Latest</button>
+    </div>
+
+    <div class="team-modal-body">
+      <section class="team-tab-panel active" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0" data-panel="overview">
+        <div id="teamProfileHero">Select a team.</div>
+        <div class="card" style="margin-top:12px">
+          <div class="insight-toolbar">
+            <h3 style="margin:0">Team Insight Cards</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <span class="muted" id="aiInsightStatus">Rule-based insights loaded.</span>
+              <button class="btn brand" id="generateAiInsightsBtn" type="button">Generate AI Insights</button>
+            </div>
+          </div>
+          <div id="teamInsightCards" class="insight-grid">—</div>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <div class="card"><h3>Key KPIs</h3><div id="teamKpis">Select a team.</div></div>
+          <div class="card"><h3>Loadout Snapshot (Team)</h3><div id="teamLoadoutSnap" class="muted">—</div></div>
+        </div>
+        <div class="card" style="margin-top:12px"><h3>Team Story</h3><div id="teamStory" class="small muted">—</div></div>
+      </section>
+
+      <section class="team-tab-panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players" tabindex="0" hidden data-panel="players">
+        <div id="rosterCards" class="roster-grid">Select a team…</div>
+        <div class="card"><h3>Players — Stats + Loadout <span class="muted" id="playersHint"></span></h3><div id="tblPlayers">Select a team…</div></div>
+      </section>
+
+      <section class="team-tab-panel" id="panel-skills" role="tabpanel" aria-labelledby="tab-skills" tabindex="0" hidden data-panel="skills">
+        <div class="skills-usage-grid">
+          <div class="card"><h3>Team Active Skill Usage</h3><div id="tblActive">—</div></div>
+          <div class="card"><h3>Team Passive Skill Usage</h3><div id="tblPassive">—</div></div>
+          <div class="card"><h3>Team Pet Usage</h3><div id="tblPet">—</div></div>
+        </div>
+      </section>
+
+      <section class="team-tab-panel" id="panel-matches" role="tabpanel" aria-labelledby="tab-matches" tabindex="0" hidden data-panel="matches">
+        <div class="card"><h3>Match Log</h3><div id="teamMatchLog">—</div></div>
+      </section>
+
+      <div class="card team-compare-section" id="teamCompareSection">
+        <div class="team-compare-head">
+          <div>
+            <h3>Head-to-Head Comparison</h3>
+            <div class="muted">Compare team totals and selected players inside the current filter scope.</div>
+          </div>
+          <label class="team-compare-picker">
+            Compare Against
+            <select id="teamCompareSelect" class="input">
+              <option value="">Select team…</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="teamHeadToHeadBox" class="team-h2h-grid">
+          <div class="muted">Select a comparison team.</div>
+        </div>
+
+        <div class="player-compare-head">
+          <h3>Player Comparison</h3>
+          <div class="muted">Automatically lists all players from the selected team and comparison team, ordered by role.</div>
+        </div>
+
+        <div id="playerCompareBox" class="player-compare-grid">
+          <div class="muted">No players selected for comparison.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<div class="resource-modal" id="resourceModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="resourceModalTitle">
+  <div class="resource-modal-backdrop" id="resourceModalBackdrop"></div>
+  <section class="resource-modal-card" id="resourceModalCard" role="document" tabindex="-1">
+    <div class="resource-modal-top modal-premium-head">
+      <div style="min-width:0">
+        <h3 id="resourceModalTitle">Resources</h3>
+        <p id="resourceModalSub">Browse Free Fire reference data.</p>
+      </div>
+      <button class="icon-btn" id="resourceModalClose" aria-label="Close resource popup" title="Close" type="button">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="resource-modal-body">
+      <div class="resource-modal-controls">
+        <input class="resource-search" id="resourceSearch" type="search" placeholder="Search…" aria-label="Search reference items" />
+        <span class="chip" id="resourceCount">0 items</span>
+      </div>
+      <div class="resource-modal-nav" id="resourceModalNav" aria-label="Resource popup navigation">
+        <button class="btn secondary resource-nav-btn" id="resourceBackBtn" type="button">← Back</button>
+        <div class="resource-modal-step" id="resourceStepLabel">Reference<b>Character</b></div>
+        <button class="btn brand resource-nav-btn" id="resourceNextBtn" type="button">Next →</button>
+      </div>
+      <div class="resource-grid" id="resourceGrid" aria-live="polite"><div class="modal-state modal-state-loading"><span class="modal-spinner" aria-hidden="true"></span><b>Loading reference data…</b></div></div>
+    </div>
+  </section>
+</div>
+
+<div class="item-detail-modal" id="itemDetailModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="itemDetailTitle">
+  <div class="item-detail-backdrop" id="itemDetailBackdrop"></div>
+  <section class="item-detail-card" id="itemDetailCard" role="document" tabindex="-1">
+    <div class="item-detail-top modal-premium-head">
+      <div class="item-detail-heading" style="min-width:0">
+        <h3 id="itemDetailTitle">Item Details</h3>
+        <p id="itemDetailSub">Free Fire reference item</p>
+      </div>
+      <div class="modal-head-actions">
+        <button class="btn secondary modal-back-btn" id="itemDetailBack" type="button" hidden>← Back</button>
+        <button class="icon-btn" id="itemDetailClose" aria-label="Close item details" title="Close" type="button">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="item-detail-body" id="itemDetailBody" aria-live="polite"></div>
+  </section>
+</div>
+
+
+<div class="auth-modal" id="authModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+  <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
+  <section class="auth-modal-card" id="authModalCard" role="document" tabindex="-1">
+    <div class="auth-modal-brand" aria-hidden="true">EWC</div>
+    <button class="icon-btn auth-modal-close" id="authModalClose" type="button" aria-label="Close sign-in dialog" title="Close">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="auth-modal-copy">
+      <span class="auth-eyebrow">Protected dashboard</span>
+      <h2 id="authModalTitle">Sign in to Free Fire Data Center</h2>
+      <p>Use your Supabase account to load team data, live feeds, profiles, and tournament progression.</p>
+    </div>
+    <form class="auth-form" id="authLoginForm" novalidate>
+      <label class="auth-field" for="authEmail">
+        <span>Email</span>
+        <input id="authEmail" name="email" type="email" autocomplete="email" inputmode="email" placeholder="you@example.com" required>
+      </label>
+      <label class="auth-field" for="authPassword">
+        <span>Password</span>
+        <div class="auth-password-wrap">
+          <input id="authPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+          <button class="auth-password-toggle" id="authPasswordToggle" type="button" aria-pressed="false">Show</button>
+        </div>
+      </label>
+      <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+      <button class="btn brand auth-submit" id="authSubmitBtn" type="submit">Sign In</button>
+    </form>
+    <div class="auth-modal-foot">Your session stays signed in on this device until you log out.</div>
+  </section>
+</div>
+
+<div id="modalLiveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+<script src="assets/js/app.js?v=iphone-portrait-summary"></script>
+  <script src="assets/js/gloo-rush-launcher.js?v=1"></script>
+  <script src="assets/js/card-arena-launcher.js?v=1"></script>
 </body>
 </html>
