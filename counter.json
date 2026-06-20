@@ -1,0 +1,554 @@
+[
+  {
+    "name": "A124",
+    "skill": "THRILL OF BATTLE",
+    "role": "ATTACK",
+    "description": "8m electromagnetic wave that disables enemy skill activation for 20s and inflicts 25 damage.",
+    "counter_category": "pre-shield / mitigation / disengage",
+    "counters": [
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Force field helps absorb the engage if activated before A124 gets in range."
+      },
+      {
+        "name": "Kenta",
+        "skill": "SWORDSMAN'S WRATH",
+        "reason": "Front-facing damage reduction helps survive the close-range punish window."
+      },
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Fast dash helps escape the 8m disable zone."
+      }
+    ]
+  },
+  {
+    "name": "Alok",
+    "skill": "DROP THAT BEAT",
+    "role": "SURVIVAL",
+    "description": "Creates a 5m aura that increases movement speed and restores HP for 10s.",
+    "counter_category": "interrupt / slow / anti-sustain",
+    "counters": [
+      {
+        "name": "A124",
+        "skill": "THRILL OF BATTLE",
+        "reason": "Can deny activation in close-range engagements."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slow and firing-speed reduction reduce Alok's chase value."
+      },
+      {
+        "name": "Nero",
+        "skill": "CRYO MIND",
+        "reason": "Anti-Gloo zone and HP drain punish teams trying to stabilize in the aura."
+      }
+    ]
+  },
+  {
+    "name": "Chrono",
+    "skill": "TIME TURNER",
+    "role": "TEAM WORK",
+    "description": "Creates a 10-second force field that blocks 1000 damage.",
+    "counter_category": "post-shield punish / anti-cover pressure",
+    "counters": [
+      {
+        "name": "Skyler",
+        "skill": "RIPTIDE RHYTHM",
+        "reason": "Strong at breaking nearby Gloo setups and forcing movement after the shield ends."
+      },
+      {
+        "name": "Ignis",
+        "skill": "FLAME MIRAGE",
+        "reason": "Can burn exit paths and punish where the user leaves the shield."
+      },
+      {
+        "name": "Iris",
+        "skill": "WALL BRAWL",
+        "reason": "Useful when Chrono is layered with Gloo cover and defensive setups."
+      }
+    ]
+  },
+  {
+    "name": "Clu",
+    "skill": "TRACING STEPS",
+    "role": "INFO",
+    "description": "Reveals enemies within 80m who are not crouching or prone and shares info with teammates.",
+    "counter_category": "anti-detection / misdirection",
+    "counters": [
+      {
+        "name": "Morse",
+        "skill": "STEALTH BYTES",
+        "reason": "Cannot be detected while in stealth mode."
+      },
+      {
+        "name": "Wukong",
+        "skill": "CAMOUFLAGE",
+        "reason": "Disguise and patient positioning reduce the value of scans."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Mannequin pressure and swaps create confusion around real positioning."
+      }
+    ]
+  },
+  {
+    "name": "Dimitri",
+    "skill": "HEALING HEARTBEAT",
+    "role": "TEAM WORK",
+    "description": "Creates a healing zone where allies recover HP and can self-revive while downed.",
+    "counter_category": "zone denial / anti-heal hold",
+    "counters": [
+      {
+        "name": "Ignis",
+        "skill": "FLAME MIRAGE",
+        "reason": "Burns the area and punishes stationary healing setups."
+      },
+      {
+        "name": "Nero",
+        "skill": "CRYO MIND",
+        "reason": "Prevents comfortable bunker play and adds HP drain pressure."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slows and debuffs targets before the healing zone can swing the fight."
+      }
+    ]
+  },
+  {
+    "name": "Homer",
+    "skill": "SENSES SHOCKWAVE",
+    "role": "INFO",
+    "description": "Sends a drone that slows enemy movement and firing speed while dealing damage.",
+    "counter_category": "defensive stall / burst reposition",
+    "counters": [
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Lets a team turtle through the slow-and-focus window."
+      },
+      {
+        "name": "Kenta",
+        "skill": "SWORDSMAN'S WRATH",
+        "reason": "Protects frontal hold positions while waiting out the debuff."
+      },
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Can quickly break away before follow-up damage lands."
+      }
+    ]
+  },
+  {
+    "name": "Ignis",
+    "skill": "FLAME MIRAGE",
+    "role": "ATTACK",
+    "description": "Deploys a moving flaming screen that damages enemies and Gloo Walls.",
+    "counter_category": "mobility / lane escape",
+    "counters": [
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Provides emergency safety during flame pressure."
+      },
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Dash helps cross or sidestep the burning lane."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Can reposition out of the danger line and create angle confusion."
+      }
+    ]
+  },
+  {
+    "name": "Iris",
+    "skill": "WALL BRAWL",
+    "role": "INFO",
+    "description": "For 15s, firing at Gloo marks nearby enemies and penetrates Gloo to damage them.",
+    "counter_category": "anti-gloo dependency / wall break",
+    "counters": [
+      {
+        "name": "Skyler",
+        "skill": "RIPTIDE RHYTHM",
+        "reason": "Removing Gloo cover reduces Iris's special value."
+      },
+      {
+        "name": "Oscar",
+        "skill": "VALIANT DASH",
+        "reason": "Destroys the first Gloo Walls in his path and breaks cover setups."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Gives a brief safety window to reposition after cover is compromised."
+      }
+    ]
+  },
+  {
+    "name": "K",
+    "skill": "MASTER OF ALL",
+    "role": "SURVIVAL",
+    "description": "Provides EP utility through mode switching, including EP conversion and regeneration.",
+    "counter_category": "anti-sustain tempo / force fast fights",
+    "counters": [
+      {
+        "name": "A124",
+        "skill": "THRILL OF BATTLE",
+        "reason": "Close-range skill denial can disrupt sustain timing."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Debuffs reduce the user's ability to get long-value trades."
+      },
+      {
+        "name": "Clu",
+        "skill": "TRACING STEPS",
+        "reason": "Info pressure helps force faster collapses before sustain matters."
+      }
+    ]
+  },
+  {
+    "name": "Kassie",
+    "skill": "BASIC THERAPY / FOCUSED THERAPY",
+    "role": "TEAM WORK",
+    "description": "Creates a healing bond with a teammate and can trigger a large instant heal.",
+    "counter_category": "force separation / burst the linked duo",
+    "counters": [
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slows bonded teammates and makes isolation easier."
+      },
+      {
+        "name": "Ignis",
+        "skill": "FLAME MIRAGE",
+        "reason": "Punishes teams trying to hold one line while bonded."
+      },
+      {
+        "name": "Clu",
+        "skill": "TRACING STEPS",
+        "reason": "Provides info to focus the supported target quickly."
+      }
+    ]
+  },
+  {
+    "name": "Kenta",
+    "skill": "SWORDSMAN'S WRATH",
+    "role": "SURVIVAL",
+    "description": "Creates a frontal shield that reduces incoming weapon damage.",
+    "counter_category": "re-angle / attack from the side / bait shots",
+    "counters": [
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Dash helps break frontal alignment."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Teleport repositioning changes the fight angle."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slows Kenta and punishes him when he tries to fire through shield uptime."
+      }
+    ]
+  },
+  {
+    "name": "Koda",
+    "skill": "AURORA VISION",
+    "role": "SURVIVAL",
+    "description": "Boosts movement speed and reveals enemies behind cover within 50m.",
+    "counter_category": "anti-detection / low-profile play / misdirection",
+    "counters": [
+      {
+        "name": "Morse",
+        "skill": "STEALTH BYTES",
+        "reason": "Stealth prevents enemy detection during the active window."
+      },
+      {
+        "name": "Wukong",
+        "skill": "CAMOUFLAGE",
+        "reason": "Crouch-prone discipline and disguise reduce scan value."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Fake presence and teleporting make reads less reliable."
+      }
+    ]
+  },
+  {
+    "name": "Morse",
+    "skill": "STEALTH BYTES",
+    "role": "SURVIVAL",
+    "description": "Enters stealth, becomes hard to see, cannot be detected, and gains movement speed.",
+    "counter_category": "predictive control / trap exits",
+    "counters": [
+      {
+        "name": "Clu",
+        "skill": "TRACING STEPS",
+        "reason": "Strong once Morse exits stealth or teammates around him are exposed."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Can punish likely exit timings and nearby re-entry paths."
+      },
+      {
+        "name": "Ryden",
+        "skill": "SPIDER TRAP",
+        "reason": "Trap placement is strong against predicted escape routes."
+      }
+    ]
+  },
+  {
+    "name": "Nero",
+    "skill": "CRYO MIND",
+    "role": "ATTACK",
+    "description": "Throws a plushie that creates a zone where enemies lose HP and cannot place Gloo Walls.",
+    "counter_category": "leave the zone / survive the collapse",
+    "counters": [
+      {
+        "name": "Skyler",
+        "skill": "RIPTIDE RHYTHM",
+        "reason": "Useful when fights are heavily tied to Gloo control."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Provides a stall window if caught in the anti-Gloo zone."
+      },
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Fast reposition helps escape the dangerous area."
+      }
+    ]
+  },
+  {
+    "name": "Orion",
+    "skill": "CRIMSON CRUSH",
+    "role": "SURVIVAL",
+    "description": "Consumes Crimson Energy to become untouchable for a short time while draining HP from nearby enemies.",
+    "counter_category": "kite the duration / punish after invulnerability",
+    "counters": [
+      {
+        "name": "Steffie",
+        "skill": "PAINTED REFUGE",
+        "reason": "Helps reduce follow-up ammo damage after Orion exits protection."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Lets a team absorb the immediate post-activation collapse."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Excellent for punishing Orion once he commits into close range."
+      }
+    ]
+  },
+  {
+    "name": "Oscar",
+    "skill": "VALIANT DASH",
+    "role": "ATTACK",
+    "description": "Dashes forward, detonates Gloo Walls, damages enemies, and knocks them back.",
+    "counter_category": "survive first contact / punish landing point",
+    "counters": [
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Safest direct answer to a hard entry."
+      },
+      {
+        "name": "Kenta",
+        "skill": "SWORDSMAN'S WRATH",
+        "reason": "Front-facing mitigation helps live through the dash hit."
+      },
+      {
+        "name": "Ryden",
+        "skill": "SPIDER TRAP",
+        "reason": "Punishes predictable paths and post-dash positioning."
+      }
+    ]
+  },
+  {
+    "name": "Ryden",
+    "skill": "SPIDER TRAP",
+    "role": "ATTACK",
+    "description": "Deploys an explosive spider that catches enemies, slows them heavily, and drains HP.",
+    "counter_category": "mobility / angle change / team protection",
+    "counters": [
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Dash helps avoid or break trap pathing."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Teleport and decoy pressure can waste trap value."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Provides cover if someone gets trapped and focused."
+      }
+    ]
+  },
+  {
+    "name": "Santino",
+    "skill": "SHAPE SPLITTER",
+    "role": "SURVIVAL",
+    "description": "Spawns a mannequin and allows position swaps with it.",
+    "counter_category": "persistent info / punish swap timing",
+    "counters": [
+      {
+        "name": "Clu",
+        "skill": "TRACING STEPS",
+        "reason": "Shared scan info helps identify the real target after repositioning."
+      },
+      {
+        "name": "Koda",
+        "skill": "AURORA VISION",
+        "reason": "Repeated cover detection is strong against teleport mind games."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Can punish Santino right after the swap or retreat."
+      }
+    ]
+  },
+  {
+    "name": "Skyler",
+    "skill": "RIPTIDE RHYTHM",
+    "role": "ATTACK",
+    "description": "Sends a sonic wave that destroys nearby Gloo Walls.",
+    "counter_category": "reposition immediately / avoid static cover dependence",
+    "counters": [
+      {
+        "name": "Tatsuya",
+        "skill": "REBEL RUSH",
+        "reason": "Fast movement helps leave broken-cover positions."
+      },
+      {
+        "name": "Santino",
+        "skill": "SHAPE SPLITTER",
+        "reason": "Teleport repositioning reduces the value of the wave."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Provides emergency safety when your Gloo line is broken."
+      }
+    ]
+  },
+  {
+    "name": "Steffie",
+    "skill": "PAINTED REFUGE",
+    "role": "TEAM WORK",
+    "description": "Creates a zone that nullifies throwables, restores armor, and reduces ammo damage.",
+    "counter_category": "overwrite the zone / force them out",
+    "counters": [
+      {
+        "name": "Ignis",
+        "skill": "FLAME MIRAGE",
+        "reason": "Area denial punishes teams holding one fixed spot."
+      },
+      {
+        "name": "Nero",
+        "skill": "CRYO MIND",
+        "reason": "Anti-Gloo and HP drain pressure bunker play."
+      },
+      {
+        "name": "A124",
+        "skill": "THRILL OF BATTLE",
+        "reason": "Close-range activation denial is strong when enemies anchor tightly."
+      }
+    ]
+  },
+  {
+    "name": "Tatsuya",
+    "skill": "REBEL RUSH",
+    "role": "SURVIVAL",
+    "description": "Rapid dash forward that can reset on knockdowns.",
+    "counter_category": "path punish / deny the burst entry",
+    "counters": [
+      {
+        "name": "Ryden",
+        "skill": "SPIDER TRAP",
+        "reason": "Strong against predictable dash routes."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slow and fire-rate debuff reduce follow-up after the dash."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Blocks immediate burst when Tatsuya dives in."
+      }
+    ]
+  },
+  {
+    "name": "Wukong",
+    "skill": "CAMOUFLAGE",
+    "role": "SURVIVAL",
+    "description": "Transforms into a bush for 10s and resets cooldown on takedown.",
+    "counter_category": "info check / reveal hidden angle",
+    "counters": [
+      {
+        "name": "Clu",
+        "skill": "TRACING STEPS",
+        "reason": "Scan value is strong once Wukong moves or exits disguise."
+      },
+      {
+        "name": "Koda",
+        "skill": "AURORA VISION",
+        "reason": "Helps reveal suspicious cover positions."
+      },
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Drone pressure checks hidden positions and punishes the reveal."
+      }
+    ]
+  },
+  {
+    "name": "Xayne",
+    "skill": "XTREME ENCOUNTER",
+    "role": "SURVIVAL",
+    "description": "Enters a temporary state with bonus Shield Points that can refresh on knockdowns.",
+    "counter_category": "stall the window / reduce burst conversion",
+    "counters": [
+      {
+        "name": "Homer",
+        "skill": "SENSES SHOCKWAVE",
+        "reason": "Slows the push and lowers her ability to convert aggression."
+      },
+      {
+        "name": "Chrono",
+        "skill": "TIME TURNER",
+        "reason": "Prevents the shielded engage from becoming a clean knock."
+      },
+      {
+        "name": "Kenta",
+        "skill": "SWORDSMAN'S WRATH",
+        "reason": "Helps absorb her frontal all-in timing."
+      }
+    ]
+  }
+]

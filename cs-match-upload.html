@@ -1,0 +1,1544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Free Fire CS Match Data Uploader</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+  <style>
+    :root{
+      --bg:#07090f; --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.10);
+      --ink:#f4f6ff; --muted:#aab1c5;
+      --brand:#ffbd59; --brand2:#ff7733; --accent:#4dd3ff;
+      --radius:16px; --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --good:#71d083; --bad:#ff6b6b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, rgba(77,211,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,189,89,.20), transparent 55%),
+        radial-gradient(900px 600px at 80% 110%, rgba(255,119,51,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      font-family:var(--sans);
+      overflow-x:hidden;
+    }
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(7,9,15,.80), rgba(7,9,15,.55));
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1280px;margin:0 auto;padding:14px 16px}
+    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .fflogo{
+      width:44px;height:44px;border-radius:14px;
+      object-fit:contain;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: 0 14px 40px rgba(0,0,0,.30);
+      padding:6px;
+    }
+    h1{font-size:16px;margin:0;letter-spacing:.3px}
+    .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn, input, select, textarea{font-family:inherit}
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+      user-select:none;
+    }
+    .btn:hover{border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(255,189,89,.35);
+      background: linear-gradient(180deg, rgba(255,189,89,.16), rgba(255,119,51,.10));
+    }
+    .btn.good{
+      border-color: rgba(113,208,131,.35);
+      background: linear-gradient(180deg, rgba(113,208,131,.16), rgba(113,208,131,.08));
+    }
+    .btn.bad{
+      border-color: rgba(255,107,107,.35);
+      background: linear-gradient(180deg, rgba(255,107,107,.16), rgba(255,107,107,.08));
+    }
+
+    main{max-width:1280px;margin:0 auto;padding:16px}
+    .grid{display:grid;grid-template-columns: 1.05fr .95fr;gap:14px}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .card .hd h2{font-size:14px;margin:0;letter-spacing:.25px}
+    .card .bd{padding:14px}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .row + .row{margin-top:10px}
+
+    .field{display:flex;flex-direction:column;gap:6px;min-width:220px;flex:1}
+    label{font-size:12px;color:var(--muted)}
+
+    input[type="text"], input[type="password"], input[type="url"], select, textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color: var(--ink);
+      border-radius: 12px;
+      padding:10px 10px;
+      outline:none;
+    }
+    select{
+      color-scheme: dark;
+      background: rgba(0,0,0,.25);
+      color: var(--ink);
+    }
+    select option, select optgroup{
+      background-color: #0b1020;
+      color: var(--ink);
+    }
+
+    textarea{
+      font-family: var(--mono);
+      min-height: 260px;
+      resize: vertical;
+      line-height:1.35;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(77,211,255,.45);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12);
+    }
+    .hint{font-size:12px;color:var(--muted);line-height:1.3}
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color:var(--ink);
+      display:inline-flex;gap:8px;align-items:center;
+    }
+    .dot{width:8px;height:8px;border-radius:50%}
+    .dot.good{background:var(--good)}
+    .dot.bad{background:var(--bad)}
+    .dot.neutral{background:var(--accent)}
+
+    .split{display:grid;grid-template-columns: 1fr 1fr;gap:10px}
+    @media (max-width: 980px){ .split{grid-template-columns:1fr} }
+
+    .tablewrap{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      overflow:hidden;
+      background: rgba(0,0,0,.22);
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead th{
+      position: sticky; top: 0;
+      background: rgba(7,9,15,.92);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:10px 10px;
+      text-align:left;
+      white-space:nowrap;
+      z-index:2;
+    }
+    tbody td{
+      border-top:1px solid rgba(255,255,255,.06);
+      padding:8px 10px;
+      vertical-align:top;
+      max-width: 380px;
+      word-break: break-word;
+      color: rgba(244,246,255,.92);
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.03)}
+
+    .small{font-size:11px;color:var(--muted)}
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:3px 7px;border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      color: rgba(244,246,255,.88);
+    }
+
+    .colbox{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .colbox .colhd{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .colbox .colbd{max-height: 260px;overflow:auto}
+    .colrow{
+      display:grid;
+      grid-template-columns: 26px 1fr 1fr;
+      gap:10px;
+      padding:8px 12px;
+      border-top:1px solid rgba(255,255,255,.06);
+      align-items:center;
+    }
+    .colrow:first-child{border-top:0}
+    .colrow input[type="text"]{padding:8px 9px;border-radius:10px}
+    .colrow .k{font-family:var(--mono);font-size:11px;color:rgba(244,246,255,.90)}
+    .status{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-size:12px;
+      color: rgba(244,246,255,.92);
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .progress{
+      height:10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(77,211,255,.75), rgba(255,189,89,.72), rgba(255,119,51,.72));
+      transition: width .2s ease;
+    }
+
+    .checkrow{
+      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+    }
+    .checkrow input{width:auto}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img
+          class="fflogo"
+          src="https://upload.wikimedia.org/wikipedia/en/7/7d/Garena_Free_Fire_logo.png"
+          alt="Free Fire"
+          onerror="this.style.display='none'"
+        />
+        <div>
+          <h1>Free Fire CS Match Data Uploader</h1>
+          <div class="sub">Paste / upload JSON, flatten & explode arrays, preview table, then insert/upsert into Supabase.</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="btnSample">Load sample</button>
+        <button class="btn bad" id="btnClear">Clear</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- LEFT -->
+    <section class="card">
+      <div class="hd">
+        <h2>1) JSON Input</h2>
+        <div class="pill" id="pillState"><span class="dot neutral"></span><span id="pillText">Waiting for JSON</span></div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="field" style="min-width:280px">
+            <label>Paste JSON</label>
+            <textarea id="jsonText" placeholder='Paste JSON here (array or object)…'></textarea>
+            <div class="hint">
+              If your JSON is a big object, set <span class="kbd">Records array path</span> to where the rows live (example: <span class="kbd">data.matches</span>).
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width:260px;flex:1.2">
+            <label>Records array path (optional)</label>
+            <input id="pathText" type="text" placeholder="e.g. data.matches"/>
+            <div class="hint">Leave blank to auto-detect the first array of objects.</div>
+          </div>
+          <div class="field" style="min-width:160px;flex:.6">
+            <label>Max preview rows</label>
+            <select id="maxRows">
+              <option value="50">50</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+              <option value="2000" selected>2000</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width:220px;flex:.8">
+            <label>Flatten arrays of objects</label>
+            <select id="arrMode">
+              <option value="keep" selected>Keep as JSON</option>
+              <option value="index">Explode to columns with [index] (teams[0].tag)</option>
+            </select>
+            <div class="hint">Keep as JSON is safest for big/nested data.</div>
+          </div>
+
+          <div class="field" style="min-width:260px;flex:1.2">
+            <label>Explode paths (editable, comma-separated)</label>
+            <input id="explodePaths" type="text" value="team_stats, player_stats" placeholder="e.g. team_stats, player_stats"/>
+            <div class="hint">Default: team_stats, player_stats</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width:220px;flex:1">
+            <label>Explode dataset (recommended)</label>
+              <select id="explodePick">
+                <option value="">(No explode) Base records</option>
+                <option value="__input__" selected>Use explode paths input (sequential; may multiply rows)</option>
+              </select>
+            <div class="hint">
+              Default uses sequential explode: <span class="kbd">team_stats</span> then <span class="kbd">player_stats</span>.
+            </div>
+          </div>
+
+          <div class="field" style="min-width:220px;flex:1">
+            <label>Auto-detect explode paths</label>
+            <div class="checkrow">
+              <input id="autoExplode" type="checkbox" />
+              <div>
+                <div style="font-size:12px">Detect arrays-of-objects and auto-fill explode paths</div>
+                <div class="small">Leave OFF to keep your defaults.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Default columns -->
+        <div class="row">
+          <div class="field">
+            <label>Default Mode column value</label>
+            <select id="defMode">
+              <option value="BR" selected>BR</option>
+              <option value="CS">CS</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Default Tournament column value</label>
+            <input id="defTournament" type="text" placeholder="e.g. FFWS Global Finals 2025"/>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Default Stage column value</label>
+            <input id="defStage" type="text" placeholder="e.g. Finals / Group Stage"/>
+          </div>
+          <div class="field">
+            <label>Default Year column value</label>
+            <input id="defYear" type="text" placeholder="e.g. 2026"/>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Default Week column value</label>
+            <input id="defWeek" type="text" placeholder="e.g. W1 / 1"/>
+          </div>
+          <div class="field">
+            <label>Default Day column value</label>
+            <input id="defDay" type="text" placeholder="e.g. D1 / 1"/>
+          </div>
+        </div>
+
+        <!-- ✅ NEW: Match Number -->
+        <div class="row">
+          <div class="field">
+            <label>Default MatchNumber column value</label>
+            <input id="defMatchNo" type="text" placeholder="e.g. 1 / Match 1 / 12"/>
+            <div class="hint">Adds <span class="kbd">MatchNumber</span> to every row. Useful for series order.</div>
+          </div>
+          <div class="field">
+            <label>Default match_id column value</label>
+            <input id="defMatchId" type="text" placeholder="e.g. 1725487677733611520"/>
+          </div>
+        </div>
+
+        <div class="hint">
+          Default columns apply to every row:
+          <span class="kbd">Mode</span>, <span class="kbd">Tournament</span>, <span class="kbd">Stage</span>, <span class="kbd">Year</span>,
+          <span class="kbd">Week</span>, <span class="kbd">Day</span>, <span class="kbd">MatchNumber</span>, <span class="kbd">match_id</span>.
+        </div>
+
+        <div class="row">
+          <div class="field" style="min-width:260px">
+            <label>Load JSON file</label>
+            <input id="fileInput" type="file" accept=".json,application/json"/>
+          </div>
+          <div class="field" style="min-width:260px">
+            <label>Fetch JSON from URL</label>
+            <div class="row" style="gap:8px;flex-wrap:nowrap">
+              <input id="fetchUrl" type="url" placeholder="https://example.com/data.json"/>
+              <button class="btn" id="btnFetch">Fetch</button>
+            </div>
+            <div class="hint">CORS must allow the browser to fetch.</div>
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:flex-end">
+          <button class="btn primary" id="btnParse">Parse & Build Table</button>
+        </div>
+
+        <div class="status" id="parseStatus">No data parsed yet.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <section class="card">
+      <div class="hd">
+        <h2>2) Preview & Upload</h2>
+        <div class="pill"><span class="dot neutral"></span><span id="metaText">0 rows • 0 cols</span></div>
+      </div>
+      <div class="bd">
+
+        <div class="split">
+          <div class="colbox">
+            <div class="colhd">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <div style="font-size:12px">Columns</div>
+                <div class="small">Include/rename before upload</div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn" id="btnAll">All</button>
+                <button class="btn" id="btnNone">None</button>
+              </div>
+            </div>
+            <div class="colbd" id="colList">
+              <div class="small" style="padding:10px 12px;color:var(--muted)">No columns yet.</div>
+            </div>
+          </div>
+
+          <div>
+            <div class="row">
+              <div class="field">
+                <label>Supabase URL</label>
+                <input id="sbUrl" type="text" placeholder="https://xxxx.supabase.co"/>
+              </div>
+            </div>
+            <div class="row">
+              <div class="field">
+                <label>Supabase anon key</label>
+                <input id="sbKey" type="password" placeholder="anon public key"/>
+                <div class="hint">Anon uploads require proper GRANT + RLS policies.</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field" style="flex:1">
+                <label>Table name</label>
+                <input id="sbTable" type="text" value="ff_stats_raw"/>
+              </div>
+              <div class="field" style="flex:.8">
+                <label>Mode</label>
+                <select id="sbMode">
+                  <option value="insert">Insert</option>
+                  <option value="upsert" selected>Upsert</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field">
+                <label>On conflict (Upsert only)</label>
+                <input id="sbConflict" type="text" value="match_id,team_id,player_stats_account_id"/>
+                <div class="hint">Default: match_id,team_id,player_stats_account_id</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field" style="flex:.7">
+                <label>Chunk size</label>
+                <select id="sbChunk">
+                  <option value="100">100</option>
+                  <option value="250">250</option>
+                  <option value="500" selected>500</option>
+                  <option value="1000">1000</option>
+                </select>
+              </div>
+              <div class="field" style="flex:1.3">
+                <label>Upload rows</label>
+                <select id="sbRows">
+                  <option value="all" selected>All parsed rows</option>
+                  <option value="preview">Preview rows only</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="field" style="min-width:220px">
+                <label>Auto timestamps</label>
+                <div class="checkrow">
+                  <input id="autoTimestamps" type="checkbox" checked />
+                  <div>
+                    <div style="font-size:12px">Add <span class="kbd">created_at</span> & <span class="kbd">updated_at</span> on upload</div>
+                    <div class="small">Uncheck if your table doesn’t have these columns.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row" style="justify-content:flex-end">
+              <button class="btn good" id="btnUpload">Upload to Supabase</button>
+            </div>
+
+            <div class="progress"><div class="bar" id="bar"></div></div>
+            <div class="status" id="upStatus">Ready.</div>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="tablewrap" style="max-height:360px; overflow:auto">
+          <table id="table">
+            <thead><tr id="theadRow"></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="row" style="justify-content:flex-end;margin-top:10px">
+          <button class="btn" id="btnCSV">Download CSV (selected cols)</button>
+          <button class="btn" id="btnJSON">Download JSON rows</button>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  function setPill(state, text){
+    const pill = $("pillState");
+    const dot = pill.querySelector(".dot");
+    dot.classList.remove("good","bad","neutral");
+    dot.classList.add(state);
+    $("pillText").textContent = text;
+  }
+
+  function safeString(v){
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string") return v;
+    if (typeof v === "number" || typeof v === "boolean") return String(v);
+    return JSON.stringify(v);
+  }
+
+  function isPlainObject(x){
+    return x && typeof x === "object" && !Array.isArray(x);
+  }
+
+  function parseYearMaybe(v){
+    const s = (v ?? "").toString().trim();
+    if(!s) return null;
+    return /^[0-9]{4}$/.test(s) ? parseInt(s, 10) : s;
+  }
+
+  function parseMatchNoMaybe(v){
+    const s = (v ?? "").toString().trim();
+    if(!s) return null;
+    return /^[0-9]+$/.test(s) ? parseInt(s, 10) : s; // number if numeric, else keep string
+  }
+
+  function toDbSafeKey(key){
+    let s = String(key ?? "").trim();
+    if(!s) return s;
+    s = s.replace(/\[(\d+)\]/g, "_$1_");
+    s = s.replace(/\./g, "_");
+    s = s.replace(/[^a-zA-Z0-9_]/g, "_");
+    s = s.replace(/_+/g, "_");
+    s = s.replace(/^_+|_+$/g, "");
+    if(/^\d/.test(s)) s = "c_" + s;
+    if(!s) s = "col";
+    return s;
+  }
+
+  function isPrimitive(x){
+    return x === null || x === undefined || ["string","number","boolean"].includes(typeof x);
+  }
+
+  function shouldExplodePrimitiveArrayKey(key){
+    const last = String(key || "").split(".").pop();
+    return last === "skill_ids" || last === "skillIds";
+  }
+
+  function getByPath(root, path){
+    if(!path) return root;
+    const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+    let cur = root;
+    for(const p of parts){
+      if(cur == null) return undefined;
+      cur = cur[p];
+    }
+    return cur;
+  }
+
+  function setByPath(root, path, value){
+    const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+    if(!parts.length) return;
+    let cur = root;
+    for(let i=0;i<parts.length-1;i++){
+      const p = parts[i];
+      if(cur[p] == null || typeof cur[p] !== "object") cur[p] = {};
+      cur = cur[p];
+    }
+    cur[parts[parts.length-1]] = value;
+  }
+
+  function deleteByPath(root, path){
+    const parts = path.replace(/\[(\d+)\]/g, ".$1").split(".").filter(Boolean);
+    if(!parts.length) return;
+    let cur = root;
+    for(let i=0;i<parts.length-1;i++){
+      const p = parts[i];
+      if(cur == null || typeof cur !== "object") return;
+      cur = cur[p];
+    }
+    if(cur && typeof cur === "object"){
+      delete cur[parts[parts.length-1]];
+    }
+  }
+
+  function deepCloneJSON(x){
+    return JSON.parse(JSON.stringify(x));
+  }
+
+  function findFirstArrayOfObjects(root){
+    const q = [{v: root, path: ""}];
+    const seen = new Set();
+    while(q.length){
+      const {v, path} = q.shift();
+      if(!v || typeof v !== "object") continue;
+      if(seen.has(v)) continue;
+      seen.add(v);
+
+      if(Array.isArray(v) && v.length && isPlainObject(v[0])){
+        return {arr: v, path: path || "(root)"};
+      }
+      if(Array.isArray(v)){
+        for(let i=0;i<Math.min(v.length, 6);i++){
+          q.push({v: v[i], path: path ? `${path}[${i}]` : `[${i}]`});
+        }
+      }else{
+        for(const k of Object.keys(v)){
+          q.push({v: v[k], path: path ? `${path}.${k}` : k});
+        }
+      }
+    }
+    return {arr: null, path: ""};
+  }
+
+  function detectArrayObjectPaths(records, opts={}){
+    const maxDepth = opts.maxDepth ?? 7;
+    const maxPaths = opts.maxPaths ?? 80;
+    const sampleN  = opts.sampleN  ?? 10;
+
+    const paths = new Set();
+    const sample = (records || []).slice(0, sampleN).filter(isPlainObject);
+
+    function visit(node, path, depth){
+      if(paths.size >= maxPaths) return;
+      if(depth > maxDepth) return;
+      if(node == null || typeof node !== "object") return;
+
+      if(Array.isArray(node)){
+        for(let i=0;i<Math.min(node.length, 3);i++){
+          visit(node[i], path, depth+1);
+        }
+        return;
+      }
+
+      for(const [k, v] of Object.entries(node)){
+        const nextPath = path ? `${path}.${k}` : k;
+
+        if(Array.isArray(v)){
+          const firstObj = v.find(isPlainObject);
+          if(firstObj){
+            paths.add(nextPath);
+            visit(firstObj, nextPath, depth+1);
+          } else {
+            for(let i=0;i<Math.min(v.length, 3);i++){
+              visit(v[i], nextPath, depth+1);
+            }
+          }
+        } else if(isPlainObject(v)){
+          visit(v, nextPath, depth+1);
+        }
+      }
+    }
+
+    for(const rec of sample) visit(rec, "", 0);
+
+    const out = Array.from(paths);
+    out.sort((a,b)=>{
+      const ap = a.includes("player_stats") ? 0 : 1;
+      const bp = b.includes("player_stats") ? 0 : 1;
+      if(ap !== bp) return ap - bp;
+      return a.localeCompare(b);
+    });
+    return out;
+  }
+
+  function flattenObject(obj, prefix="", out={}, arrMode="keep"){
+    for(const [k, v] of Object.entries(obj || {})){
+      const key = prefix ? `${prefix}.${k}` : k;
+
+      if (v === null || v === undefined){
+        out[key] = null;
+      } else if (Array.isArray(v)){
+        if (v.length === 0){
+          out[key] = [];
+        } else if (v.every(isPrimitive)){
+          if(shouldExplodePrimitiveArrayKey(key)){
+            const cap = 50;
+            v.slice(0, cap).forEach((item, idx) => {
+              out[`${key}[${idx}]`] = item;
+            });
+            if(v.length > cap){
+              out[`${key}_truncated`] = v.length;
+            }
+          } else {
+            out[key] = v.map(x => x==null ? "" : String(x)).join(" | ");
+          }
+        } else if (v.every(isPlainObject) && arrMode === "index"){
+          v.forEach((item, idx)=>{
+            flattenObject(item, `${key}[${idx}]`, out, arrMode);
+          });
+        } else {
+          out[key] = v; // keep JSON
+        }
+      } else if (isPlainObject(v)){
+        flattenObject(v, key, out, arrMode);
+      } else {
+        out[key] = v;
+      }
+    }
+    return out;
+  }
+
+  function explodeObjects(records, explodePaths){
+    let current = records;
+    for(const rawP of explodePaths){
+      const p = rawP.trim();
+      if(!p) continue;
+
+      const next = [];
+      for(const rec of current){
+        if(!isPlainObject(rec)){
+          next.push(rec);
+          continue;
+        }
+        const arr = getByPath(rec, p);
+        if(!Array.isArray(arr) || !arr.length){
+          next.push(rec);
+          continue;
+        }
+
+        const firstObj = arr.find(isPlainObject);
+        if(!firstObj){
+          next.push(rec);
+          continue;
+        }
+
+        for(const item of arr.filter(isPlainObject)){
+          const cloned = deepCloneJSON(rec);
+          deleteByPath(cloned, p);
+          setByPath(cloned, p, item);
+          next.push(cloned);
+        }
+      }
+      current = next;
+    }
+    return current;
+  }
+
+  function toCSV(rows, cols){
+    const esc = (s) => {
+      const str = s == null ? "" : String(s);
+      if(/[",\n\r]/.test(str)) return `"${str.replace(/"/g,'""')}"`;
+      return str;
+    };
+    const header = cols.map(esc).join(",");
+    const lines = rows.map(r => cols.map(c => esc(r[c])).join(","));
+    return [header, ...lines].join("\n");
+  }
+
+  function downloadText(filename, content, mime="text/plain"){
+    const blob = new Blob([content], {type:mime});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 800);
+  }
+
+  function inferMatchIdFromRaw(raw){
+    if(!raw) return null;
+    if(raw.match_id) return String(raw.match_id);
+    if(raw.matchId)  return String(raw.matchId);
+    const m1 = getByPath(raw, "match.match_id"); if(m1) return String(m1);
+    const m2 = getByPath(raw, "match.matchId");  if(m2) return String(m2);
+    const v1 = getByPath(raw, "data.match_id");  if(v1) return String(v1);
+    const v2 = getByPath(raw, "data.matchId");   if(v2) return String(v2);
+    const v3 = getByPath(raw, "data.matches[0].match_id"); if(v3) return String(v3);
+    const v4 = getByPath(raw, "data.matches[0].matchId");  if(v4) return String(v4);
+    return null;
+  }
+
+  function inferMatchIdFromRecord(rec){
+    if(!rec || typeof rec !== "object") return null;
+    if(rec.match_id) return String(rec.match_id);
+    if(rec.matchId) return String(rec.matchId);
+    const a = getByPath(rec, "match.match_id"); if(a) return String(a);
+    const b = getByPath(rec, "match.matchId");  if(b) return String(b);
+    return null;
+  }
+
+  function explodePathsInputList(){
+    return ($("explodePaths").value || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // -----------------------------
+  // App state
+  // -----------------------------
+  let RAW = null;
+  let BASE_RECORDS = [];
+  let DETECTED_PATHS = [];
+
+  let ROWS = [];
+  let COLS = [];
+  let COLCFG = {};
+
+  function updateMeta(){
+    $("metaText").textContent = `${ROWS.length} rows • ${COLS.length} cols`;
+  }
+
+  function getSelectedCols(){
+    const keys = [];
+    const names = [];
+    for(const c of COLS){
+      const cfg = COLCFG[c];
+      if(cfg && cfg.include){
+        keys.push(c);
+        names.push(cfg.name || toDbSafeKey(c));
+      }
+    }
+    return {keys, names};
+  }
+
+  function renderColList(){
+    const box = $("colList");
+    box.innerHTML = "";
+
+    if(!COLS.length){
+      box.innerHTML = `<div class="small" style="padding:10px 12px;color:var(--muted)">No columns yet.</div>`;
+      return;
+    }
+
+    for(const c of COLS){
+      const cfg = COLCFG[c] ?? (COLCFG[c] = { include:true, name: toDbSafeKey(c) });
+
+      const row = document.createElement("div");
+      row.className = "colrow";
+      row.innerHTML = `
+        <input type="checkbox" ${cfg.include ? "checked":""} aria-label="include"/>
+        <div class="k" title="${c}">${c}</div>
+        <input type="text" value="${cfg.name}" aria-label="rename"/>
+      `;
+
+      const cb = row.querySelector('input[type="checkbox"]');
+      const inp = row.querySelector('input[type="text"]');
+
+      cb.addEventListener("change", ()=>{
+        COLCFG[c].include = cb.checked;
+        renderTable();
+      });
+
+      inp.addEventListener("input", ()=>{
+        const val = (inp.value || "").trim();
+        COLCFG[c].name = val ? val : toDbSafeKey(c);
+        renderTable();
+      });
+
+      box.appendChild(row);
+    }
+  }
+
+  function renderTable(){
+    const {keys, names} = getSelectedCols();
+    const max = parseInt($("maxRows").value,10);
+    const previewRows = ROWS.slice(0, max);
+
+    const thRow = $("theadRow");
+    const tb = $("tbody");
+
+    if(!keys.length){
+      thRow.innerHTML = `<th style="color:rgba(244,246,255,.65)">(No columns selected)</th>`;
+      tb.innerHTML = "";
+      return;
+    }
+
+    thRow.innerHTML = "";
+    for(const n of names){
+      const th = document.createElement("th");
+      th.textContent = n;
+      thRow.appendChild(th);
+    }
+
+    tb.innerHTML = "";
+    for(const r of previewRows){
+      const tr = document.createElement("tr");
+      for(const k of keys){
+        const td = document.createElement("td");
+        td.textContent = safeString(r[k]);
+        tr.appendChild(td);
+      }
+      tb.appendChild(tr);
+    }
+  }
+
+  function setStatus(a, b, c){
+    let elId, msg, isError;
+
+    if(typeof b === "boolean"){
+      elId = "upStatus";
+      msg = a;
+      isError = b;
+    } else {
+      elId = a;
+      msg = b;
+      isError = !!c;
+    }
+
+    const el = $(elId);
+    if(!el) return;
+    el.textContent = msg ?? "";
+    el.style.borderColor = isError ? "rgba(255,107,107,.35)" : "rgba(255,255,255,.10)";
+    el.style.background  = isError ? "rgba(255,107,107,.08)" : "rgba(0,0,0,.18)";
+  }
+
+  function injectDefaultsIntoRecords(records){
+    const modeVal = ($("defMode").value ?? "").trim();
+    const tVal = ($("defTournament").value ?? "").trim();
+    const sVal = ($("defStage").value ?? "").trim();
+    const yVal = parseYearMaybe($("defYear").value);
+
+    const wVal = ($("defWeek").value ?? "").trim();
+    const dVal = ($("defDay").value ?? "").trim();
+
+    const matchNoVal = parseMatchNoMaybe($("defMatchNo").value);
+    const midVal = ($("defMatchId").value ?? "").trim();
+
+    return records.map(r=>{
+      if(!isPlainObject(r)) return r;
+
+      if(!("Mode" in r)) r.Mode = modeVal || null;
+      if(!("Tournament" in r)) r.Tournament = tVal || null;
+      if(!("Stage" in r)) r.Stage = sVal || null;
+      if(!("Year" in r)) r.Year = yVal;
+
+      if(!("Week" in r)) r.Week = wVal || null;
+      if(!("Day" in r)) r.Day = dVal || null;
+
+      // ✅ NEW: MatchNumber default
+      if(!("MatchNumber" in r)) r.MatchNumber = matchNoVal;
+
+      if(!("match_id" in r) || r.match_id == null || r.match_id === ""){
+        const inferred = inferMatchIdFromRecord(r);
+        r.match_id = inferred || midVal || null;
+      }
+
+      return r;
+    });
+  }
+
+  function renderExplodePickOptions(paths){
+    const sel = $("explodePick");
+    const current = sel.value;
+
+    while(sel.options.length > 2) sel.remove(2);
+
+    for(const p of (paths || [])){
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.textContent = `Explode: ${p}`;
+      sel.appendChild(opt);
+    }
+
+    const values = new Set(Array.from(sel.options).map(o => o.value));
+    if(values.has(current)){
+      sel.value = current;
+      return;
+    }
+    sel.value = "__input__"; // keep your default
+  }
+
+  function rebuildDataset(){
+    if(!BASE_RECORDS || !BASE_RECORDS.length){
+      ROWS = []; COLS = []; COLCFG = {};
+      updateMeta();
+      renderColList();
+      renderTable();
+      return;
+    }
+
+    const arrMode = $("arrMode").value || "keep";
+    const pick = $("explodePick").value || "";
+    let explodePaths = [];
+
+    if(pick === "__input__"){
+      explodePaths = explodePathsInputList();
+    } else if(pick){
+      explodePaths = [pick];
+    } else {
+      explodePaths = [];
+    }
+
+    let shaped = BASE_RECORDS;
+    if(explodePaths.length){
+      try{
+        shaped = explodeObjects(BASE_RECORDS, explodePaths);
+      }catch(err){
+        setPill("bad","Explode failed");
+        setStatus("parseStatus", `Explode error:\n${err.message}`, true);
+        return;
+      }
+    }
+
+    const flat = [];
+    for(const rec of shaped){
+      if(isPlainObject(rec)){
+        flat.push(flattenObject(rec, "", {}, arrMode));
+      }else{
+        flat.push({value: rec});
+      }
+    }
+
+    const colSet = new Set();
+    for(const r of flat) Object.keys(r).forEach(k => colSet.add(k));
+    // ✅ include MatchNumber
+    ["match_id","MatchNumber","Mode","Tournament","Stage","Year","Week","Day"].forEach(k => colSet.add(k));
+
+    const cols = Array.from(colSet);
+    const common = ["match_id","MatchNumber","Mode","Tournament","Stage","Year","Week","Day"];
+    cols.sort((a,b)=>{
+      const ia = common.indexOf(a), ib = common.indexOf(b);
+      if(ia !== -1 || ib !== -1){
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      }
+      return a.localeCompare(b);
+    });
+
+    ROWS = flat;
+    COLS = cols;
+
+    COLCFG = {};
+    for(const c of COLS){
+      COLCFG[c] = { include:true, name: toDbSafeKey(c) };
+    }
+
+    updateMeta();
+    renderColList();
+    renderTable();
+
+    const label = pick === "" ? "(base)" : (pick === "__input__" ? "(sequential input)" : `(explode: ${pick})`);
+    setPill("good","Parsed");
+    setStatus("parseStatus",
+`Parsed OK.
+Base rows: ${BASE_RECORDS.length}
+Current rows: ${ROWS.length} ${label}
+Columns: ${COLS.length}
+Preview shows up to ${$("maxRows").value} rows.`
+    );
+  }
+
+  function buildFromJSON(){
+    const txt = $("jsonText").value.trim();
+    if(!txt){
+      setPill("bad", "No JSON");
+      setStatus("parseStatus", "Paste JSON first.", true);
+      return;
+    }
+
+    try{
+      RAW = JSON.parse(txt);
+    }catch(e){
+      setPill("bad", "Invalid JSON");
+      setStatus("parseStatus", "JSON parse error:\n" + e.message, true);
+      return;
+    }
+
+    const inferred = inferMatchIdFromRaw(RAW);
+    if(inferred && !$("defMatchId").value.trim()){
+      $("defMatchId").value = inferred;
+    }
+
+    const path = $("pathText").value.trim();
+    let records = null;
+    let usedPath = "";
+
+    if(path){
+      const v = getByPath(RAW, path);
+      if(!Array.isArray(v)){
+        setPill("bad", "Path not array");
+        setStatus("parseStatus", `Path "${path}" did not resolve to an array.`, true);
+        return;
+      }
+      records = v;
+      usedPath = path;
+    }else{
+      if(Array.isArray(RAW)) { records = RAW; usedPath = "(root array)"; }
+      else{
+        const found = findFirstArrayOfObjects(RAW);
+        records = found.arr;
+        usedPath = found.path || "(none)";
+      }
+    }
+
+    if(!records || !records.length){
+      setPill("bad", "No records");
+      setStatus("parseStatus", `Could not find rows to tabulate.\nAuto-detected: ${usedPath}`, true);
+      return;
+    }
+
+    BASE_RECORDS = injectDefaultsIntoRecords(records.filter(r => r != null && isPlainObject(r)));
+
+    if($("autoExplode").checked){
+      DETECTED_PATHS = detectArrayObjectPaths(BASE_RECORDS, {maxDepth: 7, maxPaths: 80, sampleN: 10});
+      if(DETECTED_PATHS.length){
+        $("explodePaths").value = DETECTED_PATHS.join(", ");
+      }
+      renderExplodePickOptions(DETECTED_PATHS);
+    } else {
+      DETECTED_PATHS = explodePathsInputList();
+      renderExplodePickOptions(DETECTED_PATHS);
+    }
+
+    setPill("good", "Parsed base");
+    setStatus("parseStatus",
+`Base parsed OK.
+Base rows: ${BASE_RECORDS.length}
+Records path: ${usedPath}
+
+Default explode: team_stats, player_stats`
+    );
+
+    rebuildDataset();
+  }
+
+  // -----------------------------
+  // Supabase upload
+  // -----------------------------
+  function setProgress(pct){
+    $("bar").style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  }
+
+  function buildUploadRows(limitMode){
+    const {keys, names} = getSelectedCols();
+    const sourceRows = (limitMode === "preview")
+      ? ROWS.slice(0, parseInt($("maxRows").value,10))
+      : ROWS;
+
+    const addTimestamps = $("autoTimestamps").checked;
+    const nowIso = new Date().toISOString();
+
+    return sourceRows.map(r=>{
+      const o = {};
+      for(let i=0;i<keys.length;i++){
+        const srcKey = keys[i];
+        const dbKey = names[i];
+        o[dbKey] = r[srcKey];
+      }
+
+      if(addTimestamps){
+        if(!("created_at" in o) || o.created_at == null || o.created_at === "") o.created_at = nowIso;
+        o.updated_at = nowIso;
+      }
+      return o;
+    });
+  }
+
+  function resolveOnConflict(raw){
+    const typed = (raw || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    if(!typed.length) return "";
+
+    const dbNames = new Set(Object.values(COLCFG).map(x => x?.name).filter(Boolean));
+
+    return typed.map(col=>{
+      if(COLCFG[col]?.name) return COLCFG[col].name;
+      if(dbNames.has(col)) return col;
+      return toDbSafeKey(col);
+    }).join(",");
+  }
+
+  async function uploadToSupabase(){
+    if(!ROWS.length){
+      setStatus("upStatus", "No rows to upload. Parse JSON first.", true);
+      setProgress(0);
+      return;
+    }
+
+    const url = $("sbUrl").value.trim();
+    const key = $("sbKey").value.trim();
+    const table = $("sbTable").value.trim();
+    const mode = $("sbMode").value;
+    const onConflictInput = $("sbConflict").value.trim();
+    const chunkSize = parseInt($("sbChunk").value,10);
+    const rowMode = $("sbRows").value;
+
+    if(!url || !key || !table){
+      setStatus("upStatus", "Missing Supabase URL / anon key / table name.", true);
+      setProgress(0);
+      return;
+    }
+
+    const onConflict = resolveOnConflict(onConflictInput);
+    if(mode === "upsert" && !onConflict){
+      setStatus("upStatus", "Upsert requires an On conflict column(s).", true);
+      setProgress(0);
+      return;
+    }
+
+    setStatus("upStatus", "Preparing rows…");
+    setProgress(0);
+
+    const sb = supabase.createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+
+    const rows = buildUploadRows(rowMode);
+    const total = rows.length;
+    if(!total){
+      setStatus("upStatus", "Nothing to upload after column selection.", true);
+      setProgress(0);
+      return;
+    }
+
+    const chunks = [];
+    for(let i=0;i<rows.length;i+=chunkSize){
+      chunks.push(rows.slice(i, i+chunkSize));
+    }
+
+    let ok = 0;
+
+    for(let i=0;i<chunks.length;i++){
+      const batch = chunks[i];
+      setStatus("upStatus", `Uploading ${i+1}/${chunks.length}…
+Batch size: ${batch.length}
+Uploaded: ${ok}/${total}
+
+${mode === "upsert" ? `onConflict: ${onConflict}` : ""}`);
+      setProgress(Math.round((i / chunks.length) * 100));
+
+      try{
+        const opts = { returning: "minimal" };
+        const { error } = (mode === "insert")
+          ? await sb.from(table).insert(batch, opts)
+          : await sb.from(table).upsert(batch, { onConflict: onConflict.replace(/\s+/g,""), ...opts });
+
+        if (error) {
+          console.error(error);
+          setStatus(
+            "Supabase error:\n" + JSON.stringify(error, null, 2) +
+            "\n\nTips:\n- Ensure GRANT INSERT for anon\n- Ensure RLS allows anon inserts OR use authenticated user\n- Ensure column types match\n- Ensure onConflict columns exist + have UNIQUE constraint/index\n- If your table doesn’t have created_at/updated_at, uncheck Auto timestamps",
+            true
+          );
+          setProgress(Math.round(((i+1)/chunks.length)*100));
+          return;
+        }
+
+        ok += batch.length;
+      }catch(e){
+        setStatus("upStatus", `Network/runtime error on batch ${i+1}:\n${e.message}`, true);
+        setProgress(Math.round(((i+1)/chunks.length)*100));
+        return;
+      }
+    }
+
+    setProgress(100);
+    setStatus("upStatus", `Done ✅
+Uploaded: ${ok}/${total}
+Mode: ${mode}${mode==="upsert" ? ` (onConflict: ${onConflict})` : ""}`);
+  }
+
+  // -----------------------------
+  // Events
+  // -----------------------------
+  $("btnParse").addEventListener("click", buildFromJSON);
+
+  $("btnClear").addEventListener("click", ()=>{
+    $("jsonText").value = "";
+    $("pathText").value = "";
+    $("explodePaths").value = "team_stats, player_stats";
+    $("explodePick").value = "__input__";
+    $("fetchUrl").value = "";
+    $("arrMode").value = "keep";
+    $("maxRows").value = "2000";
+
+    $("autoExplode").checked = false;
+
+    $("defMode").value = "BR";
+    $("defTournament").value = "";
+    $("defStage").value = "";
+    $("defYear").value = String(new Date().getFullYear());
+    $("defWeek").value = "";
+    $("defDay").value = "";
+
+    // ✅ NEW: reset match number
+    $("defMatchNo").value = "";
+
+    $("defMatchId").value = "";
+
+    $("sbTable").value = "ff_stats_raw";
+    $("sbMode").value = "upsert";
+    $("sbConflict").value = "match_id,team_id,player_stats_account_id";
+
+    $("autoTimestamps").checked = true;
+
+    RAW = null;
+    BASE_RECORDS = [];
+    DETECTED_PATHS = [];
+    ROWS = []; COLS = []; COLCFG = {};
+
+    $("colList").innerHTML = `<div class="small" style="padding:10px 12px;color:var(--muted)">No columns yet.</div>`;
+    $("theadRow").innerHTML = "";
+    $("tbody").innerHTML = "";
+    updateMeta();
+    setPill("neutral","Waiting for JSON");
+    setStatus("parseStatus","No data parsed yet.");
+    setStatus("upStatus","Ready.");
+    setProgress(0);
+
+    renderExplodePickOptions(explodePathsInputList());
+  });
+
+  $("btnSample").addEventListener("click", ()=>{
+    const sample = {
+      data: {
+        matches: [
+          {
+            match_id: "1725487677733611520",
+            MatchNumber: 1,
+            map_id: 4,
+            team_stats: [
+              {
+                team_id: 1,
+                team_name: "ABC",
+                player_stats: [
+                  { account_id: 111, nickname: "A1", kills: 3, damage: 812, skill_ids:[101,202,303] },
+                  { account_id: 222, nickname: "A2", kills: 2, damage: 540, skill_ids:[404,505] }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    };
+    $("jsonText").value = JSON.stringify(sample, null, 2);
+    $("pathText").value = "data.matches";
+    $("arrMode").value = "keep";
+    $("maxRows").value = "2000";
+
+    $("autoExplode").checked = false;
+
+    $("defMode").value = "BR";
+    $("defTournament").value = "Sample Cup";
+    $("defStage").value = "Finals";
+    $("defYear").value = String(new Date().getFullYear());
+    $("defWeek").value = "W1";
+    $("defDay").value = "D1";
+
+    // ✅ NEW: sample match number
+    $("defMatchNo").value = "1";
+
+    $("defMatchId").value = "1725487677733611520";
+
+    $("explodePaths").value = "team_stats, player_stats";
+    $("explodePick").value = "__input__";
+    renderExplodePickOptions(explodePathsInputList());
+
+    $("sbTable").value = "ff_stats_raw";
+    $("sbConflict").value = "match_id,team_id,player_stats_account_id";
+
+    setPill("neutral","Sample loaded");
+    setStatus("parseStatus","Sample loaded. Click Parse & Build Table.");
+  });
+
+  $("fileInput").addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    try{
+      const txt = await f.text();
+      $("jsonText").value = txt;
+      setPill("neutral", "File loaded");
+      setStatus("parseStatus", `Loaded file: ${f.name}\nClick Parse & Build Table.`);
+    }catch(err){
+      setPill("bad","File read failed");
+      setStatus("parseStatus", "Could not read file:\n" + err.message, true);
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  $("btnFetch").addEventListener("click", async ()=>{
+    const url = $("fetchUrl").value.trim();
+    if(!url){
+      setStatus("parseStatus","Enter a URL first.", true);
+      return;
+    }
+    setPill("neutral","Fetching…");
+    setStatus("parseStatus","Fetching JSON from URL…");
+    try{
+      const res = await fetch(url, {cache:"no-store"});
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const txt = await res.text();
+      $("jsonText").value = txt;
+      setPill("neutral","Fetched");
+      setStatus("parseStatus","Fetched OK. Click Parse & Build Table.");
+    }catch(e){
+      setPill("bad","Fetch failed");
+      setStatus("parseStatus", `Fetch failed:\n${e.message}\n\nThis is often CORS.`, true);
+    }
+  });
+
+  $("btnAll").addEventListener("click", ()=>{
+    for(const c of COLS){ COLCFG[c].include = true; }
+    renderColList(); renderTable();
+  });
+
+  $("btnNone").addEventListener("click", ()=>{
+    for(const c of COLS){ COLCFG[c].include = false; }
+    renderColList(); renderTable();
+  });
+
+  $("maxRows").addEventListener("change", ()=>{
+    if(ROWS.length) renderTable();
+  });
+
+  $("explodePick").addEventListener("change", ()=>{
+    if(BASE_RECORDS.length) rebuildDataset();
+  });
+
+  $("arrMode").addEventListener("change", ()=>{
+    if(BASE_RECORDS.length) rebuildDataset();
+  });
+
+  $("autoExplode").addEventListener("change", ()=>{
+    if(!$("jsonText").value.trim()) return;
+    buildFromJSON();
+  });
+
+  $("explodePaths").addEventListener("change", ()=>{
+    if(!$("autoExplode").checked){
+      renderExplodePickOptions(explodePathsInputList());
+      if(BASE_RECORDS.length) rebuildDataset();
+    }
+  });
+
+  $("btnUpload").addEventListener("click", uploadToSupabase);
+
+  $("btnCSV").addEventListener("click", ()=>{
+    if(!ROWS.length){ alert("Parse JSON first."); return; }
+    const {keys, names} = getSelectedCols();
+    if(!keys.length){ alert("No columns selected."); return; }
+    const rowMode = $("sbRows").value;
+    const rows = buildUploadRows(rowMode);
+
+    const cols = names;
+    const normalized = rows.map(r=>{
+      const out = {};
+      for(const c of cols){
+        const v = r[c];
+        out[c] = (Array.isArray(v) || isPlainObject(v)) ? safeString(v) : v;
+      }
+      return out;
+    });
+
+    const csv = toCSV(normalized, cols);
+    downloadText("table_export.csv", csv, "text/csv");
+  });
+
+  $("btnJSON").addEventListener("click", ()=>{
+    if(!ROWS.length){ alert("Parse JSON first."); return; }
+    const rowMode = $("sbRows").value;
+    const rows = buildUploadRows(rowMode);
+    downloadText("rows_export.json", JSON.stringify(rows, null, 2), "application/json");
+  });
+
+  // init defaults
+  (function initDefaults(){
+    $("defYear").value = String(new Date().getFullYear());
+
+    // your defaults
+    $("arrMode").value = "keep";
+    $("explodePaths").value = "team_stats, player_stats";
+    $("explodePick").value = "__input__";
+
+    $("sbTable").value = "ff_stats_raw";
+    $("sbMode").value = "upsert";
+    $("sbConflict").value = "match_id,team_id,player_stats_account_id";
+
+    $("autoExplode").checked = false;
+    renderExplodePickOptions(explodePathsInputList());
+    updateMeta();
+    setPill("neutral","Waiting for JSON");
+  })();
+</script>
+</body>
+</html>

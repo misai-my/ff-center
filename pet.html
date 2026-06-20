@@ -1,0 +1,1706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Pet Gallery</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --sb-w: 260px;
+      --sb-w-collapsed: 82px;
+
+      --role-info:#4dd3ff;
+      --role-attack:#ff5a5a;
+      --role-survival:#8be27a;
+      --role-inventory:#ff59c7;
+      --role-movement:#b58cff;
+      --role-other:#ffbd59;
+
+      --pet-min: 128px;
+      --pet-gap: 10px;
+      --pet-pad: 8px;
+      --pet-radius: 14px;
+      --pet-thumb-radius: 12px;
+    }
+
+    :root { color-scheme: light dark; }
+
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+    }
+    body.sb-lock{ overflow:hidden; }
+
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      filter: blur(.2px);
+      pointer-events:none;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    a{color:inherit}
+    select, input{
+      color-scheme: dark;
+      background: rgba(0,0,0,.28);
+      color: var(--ink);
+    }
+    select option{ background:#0b1020; color:var(--ink); }
+
+    .app{
+      min-height: 100vh;
+      display:flex;
+      gap:18px;
+      padding:18px;
+      max-width: 1440px;
+      margin: 0 auto;
+      align-items:flex-start;
+    }
+
+    .sb-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 80;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+    }
+    .sb-backdrop.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .sidebar{
+      width: var(--sb-w);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position: sticky;
+      top: 18px;
+      height: calc(100vh - 36px);
+      transition: width .18s ease;
+      flex:0 0 auto;
+      z-index: 90;
+    }
+    .sidebar.collapsed{ width: var(--sb-w-collapsed); }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 16px 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.5px;
+      color:var(--brand);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size: 1.05rem;
+      letter-spacing:.6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+    .brand small{
+      display:block;
+      color: var(--muted);
+      font-size:.78rem;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+
+    .nav{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav::-webkit-scrollbar{width:10px}
+    .nav::-webkit-scrollbar-thumb{background: rgba(255,255,255,.08); border-radius:10px}
+    .nav::-webkit-scrollbar-track{background: transparent}
+
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--muted);
+      text-decoration:none;
+      transition: .2s ease;
+      cursor:pointer;
+      min-width:0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-item:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.08);
+      color: var(--ink);
+    }
+    .nav-item.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.14), rgba(77,211,255,.09));
+      border-color: rgba(255,189,89,.22);
+      color: var(--ink);
+    }
+    .nav-ico{
+      width:26px;height:26px;border-radius:10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      flex: 0 0 auto;
+    }
+    .nav-ico svg{width:14px;height:14px;opacity:.9}
+    .nav-label{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      min-width:0;
+    }
+
+    .sidebar.collapsed .brand h1,
+    .sidebar.collapsed .brand small,
+    .sidebar.collapsed .nav-label{display:none;}
+    .sidebar.collapsed .brand{justify-content:center;}
+    .sidebar.collapsed .brand-left{justify-content:center;}
+    .sidebar.collapsed .nav-item{
+      justify-content:center;
+      gap:0;
+      padding:10px 8px;
+    }
+
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width: 0;
+      gap: 14px;
+    }
+
+    .topbar{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      position: sticky;
+      top: 18px;
+      z-index: 60;
+    }
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      min-width: 0;
+      justify-content: space-between;
+    }
+    .search input{
+      width:100%;
+      background: transparent;
+      border:0;
+      outline:none;
+      color: var(--ink);
+      font-size: .95rem;
+      min-width: 0;
+      flex:1;
+    }
+    .search input::placeholder{color: rgba(170,177,197,.75)}
+    #themeIcon svg{ width:18px; height:18px; opacity:.92; display:block; }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+
+    .icon-btn{
+      width:42px;height:42px;border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition:.2s ease;
+      color: var(--ink);
+      flex:0 0 auto;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .icon-btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.08)}
+    .icon-btn svg{width:18px;height:18px;opacity:.92}
+
+    .userchip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      max-width: 260px;
+      min-width: 0;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(255,189,89,.30), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      flex:0 0 auto;
+    }
+    .usertext{min-width:0}
+    .usertext b{
+      display:block;
+      font-size:.92rem;
+      font-family: Orbitron, sans-serif;
+      color:var(--brand);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .usertext span{
+      display:block;
+      font-size:.78rem;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .logout{
+      color: rgba(255,255,255,.70);
+      text-decoration:none;
+      font-size:.85rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      transition:.2s ease;
+      cursor:pointer;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logout:hover{
+      border-color: rgba(255,77,77,.35);
+      color: #ff8d8d;
+      box-shadow: 0 0 0 3px rgba(255,77,77,.10);
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card-inner{padding:14px}
+
+    .hero{
+      position:relative;
+      height: 150px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.10)),
+        url('https://i.imgur.com/qXFpizS.jpg') center/cover no-repeat;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(420px 220px at 55% 45%, rgba(255,189,89,.16), transparent 60%);
+      pointer-events:none;
+    }
+    .hero-content{
+      position:absolute;
+      left:16px; right:16px; bottom:14px;
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hero-title h2{
+      font-family: Orbitron, sans-serif;
+      font-size: 1.45rem;
+      color: var(--brand);
+      text-shadow: 0 0 18px rgba(255,189,89,.20);
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .controls-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .controls-right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.86);
+      font-weight:800;
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:50%;
+      display:inline-block;
+      box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+    }
+    .dot.info{background: var(--role-info);}
+    .dot.attack{background: var(--role-attack);}
+    .dot.survival{background: var(--role-survival);}
+    .dot.inventory{background: var(--role-inventory);}
+    .dot.movement{background: var(--role-movement);}
+    .dot.other{background: var(--role-other);}
+
+    .field{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .field label{
+      font-size:.82rem;
+      font-weight:900;
+      color: rgba(244,246,255,.85);
+    }
+    .field select{
+      border:0;
+      outline:none;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .btn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.88);
+      cursor:pointer;
+      font-weight:900;
+      font-size:.82rem;
+      transition:.2s ease;
+      white-space:nowrap;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn:hover{
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+      border-color: rgba(77,211,255,.22);
+    }
+
+    .section-title{
+      margin: 16px 0 10px 0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.4px;
+      font-size: 1.02rem;
+      color: rgba(244,246,255,.92);
+    }
+    .section-title .hint{
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color: var(--muted);
+      font-weight:700;
+      font-size: .82rem;
+      margin-left: 8px;
+      letter-spacing: 0;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--pet-min), 1fr));
+      gap: var(--pet-gap);
+    }
+
+    .pet-card{
+      position:relative;
+      padding: var(--pet-pad);
+      border-radius: var(--pet-radius);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      cursor:pointer;
+      transition:.18s ease;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pet-card:hover{
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+      border-color: rgba(255,189,89,.18);
+    }
+
+    .pet-thumb{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--pet-thumb-radius);
+      background: rgba(0,0,0,.18);
+      border: 2px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      position:relative;
+    }
+    .pet-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: center;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    .pet-fallback{
+      width:100%;
+      height:100%;
+      display:grid;
+      place-items:center;
+      font-family: Orbitron, sans-serif;
+      color: rgba(244,246,255,.92);
+      letter-spacing:.6px;
+      background:
+        radial-gradient(120px 120px at 30% 25%, rgba(77,211,255,.14), transparent 60%),
+        radial-gradient(120px 120px at 80% 30%, rgba(255,189,89,.14), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.08));
+    }
+
+    .role-dot{
+      position:absolute;
+      top:8px; right:8px;
+      width:9px; height:9px;
+      border-radius:50%;
+      box-shadow: 0 0 0 3px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.22);
+      background: var(--role-other);
+    }
+
+    .pet-name{
+      font-size:.82rem;
+      font-weight:1000;
+      color: rgba(244,246,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-align:center;
+      padding: 0 2px;
+    }
+    .pet-sub{
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:-2px;
+    }
+    .chip{
+      font-size:.66rem;
+      font-weight:900;
+      color: rgba(244,246,255,.86);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 999px;
+      padding: 5px 7px;
+      white-space:nowrap;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .empty-msg{
+      grid-column: 1 / -1;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      color: var(--muted);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    /* Modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modal.show{display:flex;}
+
+    .modal-card{
+      width: min(840px, 100%);
+      background: rgba(14, 18, 28, .92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 28px;
+      box-shadow: 0 26px 80px rgba(0,0,0,.65);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      max-height: 90vh;
+      color: var(--ink);
+    }
+
+    .modal-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:16px;
+      padding: 22px 22px 16px 22px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal-top h3{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.6px;
+      color: var(--brand);
+      font-size: 1.7rem;
+      line-height: 1.9rem;
+    }
+    .modal-top p{
+      margin:8px 0 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight:700;
+      letter-spacing:.2px;
+      white-space:normal;
+    }
+
+    .modal-body{
+      padding: 18px 22px 22px 22px;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+      justify-content:flex-start;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .badge-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .badge-row .pill{
+      font-size: .95rem;
+      padding: 10px 14px;
+    }
+
+    .badge-row .dot{
+      width: 11px;
+      height: 11px;
+    }
+
+    .info-block{
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding: 16px 18px;
+    }
+
+    .info-block b{
+      display:block;
+      margin:0 0 8px 0;
+      color: var(--ink);
+      font-size: 1.08rem;
+      font-weight:1000;
+    }
+    .info-block .txt{
+      margin:0;
+      color: color-mix(in srgb, var(--ink) 88%, transparent);
+      font-size: 1.02rem;
+      line-height: 1.55rem;
+      white-space: normal;
+    }
+
+    #infoClose.icon-btn{
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      flex: 0 0 48px;
+    }
+
+    #infoClose.icon-btn svg{
+      width: 20px;
+      height: 20px;
+    }
+
+    @media (max-width: 980px){
+      body::before, body::after{display:none;}
+
+      .app{
+        padding: 10px;
+        gap: 12px;
+        flex-direction: column;
+        max-width: 100%;
+        margin: 0;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+
+      .sidebar{
+        position: fixed;
+        top: env(safe-area-inset-top);
+        left: 0;
+        height: calc(100dvh - env(safe-area-inset-top));
+        width: min(88vw, 340px);
+        transform: translateX(-110%);
+        transition: transform .18s ease;
+        border-radius: 0 22px 22px 0;
+        box-shadow: 0 30px 90px rgba(0,0,0,.70);
+        z-index: 90;
+      }
+      .sidebar.open{ transform: translateX(0); }
+
+      .sidebar.collapsed{ width: min(88vw, 340px); }
+      .sidebar.collapsed .brand h1,
+      .sidebar.collapsed .brand small,
+      .sidebar.collapsed .nav-label{display:block;}
+      .sidebar.collapsed .brand{justify-content:flex-start;}
+      .sidebar.collapsed .brand-left{justify-content:flex-start;}
+      .sidebar.collapsed .nav-item{
+        justify-content:flex-start;
+        gap:10px;
+        padding:10px 10px;
+      }
+
+      .topbar{
+        top: env(safe-area-inset-top);
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        margin: -10px -10px 0 -10px;
+        padding: 10px 10px;
+        gap: 10px;
+      }
+
+      .usertext span{display:none;}
+      .usertext b{max-width: 45vw; font-size: .88rem;}
+
+      :root{ --pet-min: 118px; }
+
+      .hero{height: 120px;}
+      .hero-content{left:12px; right:12px; bottom:12px;}
+      .hero-title h2{font-size: 1.18rem;}
+
+      .modal{
+        align-items:flex-end;
+        padding: 10px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+      .modal-card{
+        width: 100%;
+        border-radius: 22px;
+        max-height: 92vh;
+      }
+      .modal-top{
+        padding: 18px 18px 14px 18px;
+      }
+      .modal-top h3{
+        font-size: 1.3rem;
+        line-height: 1.45rem;
+      }
+      .modal-top p{
+        font-size: .92rem;
+      }
+      .modal-body{
+        padding: 14px 18px 18px 18px;
+        gap: 12px;
+      }
+      .info-block{
+        padding: 14px 16px;
+      }
+      .info-block b{
+        font-size: 1rem;
+      }
+      .info-block .txt{
+        font-size: .96rem;
+        line-height: 1.45rem;
+      }
+    }
+
+    @media (max-width: 560px){
+      .modal-top{padding: 16px;}
+      .modal-top h3{
+        font-size: 1.12rem;
+        line-height: 1.25rem;
+      }
+    }
+
+    body.theme-light{
+      --bg:#f4f6ff;
+      --bg2:#e9eefc;
+      --panel: rgba(255,255,255,.78);
+      --panel2: rgba(255,255,255,.86);
+      --line: rgba(10,15,30,.10);
+      --ink:#0b1020;
+      --muted:#4d556a;
+      --shadow: 0 18px 60px rgba(0,0,0,.14);
+    }
+
+    body.theme-light select,
+    body.theme-light input{
+      color-scheme: light;
+    }
+
+    body.theme-light .search,
+    body.theme-light .field,
+    body.theme-light .btn,
+    body.theme-light .pill,
+    body.theme-light .chip,
+    body.theme-light .icon-btn,
+    body.theme-light .userchip{
+      background: rgba(255,255,255,.72) !important;
+      border-color: rgba(10,15,30,.12) !important;
+      color: var(--ink) !important;
+      box-shadow: none;
+    }
+
+    body.theme-light .search input::placeholder{
+      color: rgba(77,85,106,.70);
+    }
+
+    body.theme-light .pet-card{
+      background: rgba(255,255,255,.68);
+      border-color: rgba(10,15,30,.10);
+    }
+
+    body.theme-light .pet-card:hover{
+      background: rgba(255,255,255,.86);
+      border-color: rgba(255,189,89,.35);
+    }
+
+    body.theme-light .pet-thumb{
+      background: rgba(255,255,255,.55);
+      border-color: rgba(10,15,30,.10);
+    }
+
+    body.theme-light .modal-card{
+      background: rgba(255,255,255,.92);
+      border-color: rgba(10,15,30,.12);
+    }
+
+    body.theme-light .info-block{
+      background: rgba(255,255,255,.75);
+      border-color: rgba(10,15,30,.10);
+    }
+
+    body.theme-light .logout{
+      background: rgba(255,255,255,.72);
+      border-color: rgba(10,15,30,.12);
+      color: rgba(10,15,30,.75);
+    }
+
+    #themeIcon svg{ width:18px; height:18px; opacity:.92; display:block; }
+  </style>
+</head>
+
+<body>
+  <div class="sb-backdrop" id="sbBackdrop" aria-hidden="true"></div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="logo">FF</div>
+          <div class="brand-text">
+            <h1>Free Fire</h1>
+            <small class="muted">Caster Dashboard</small>
+          </div>
+        </div>
+      </div>
+
+     <nav class="nav" id="nav">
+        <a class="nav-item active" href="home.html" data-page="home.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M7 14c-1.7 0-3-1.3-3-3S5.3 8 7 8s3 1.3 3 3-1.3 3-3 3Zm10 0c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3ZM7 20c-2.8 0-5-1.8-5-4v-1h6v1c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-1h6v1c0 2.2-2.2 4-5 4H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21l6-6m0 0 2 2 8-8-2-2-8 8Zm0 0-2-2 4-4 2 2-4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="loadout.html" data-page="loadout.html" title="Loadout">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 7V6a3 3 0 0 1 6 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 20V11a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 12h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 20v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            </span>
+          <span class="nav-label">Loadout</span>
+        </a>
+
+        <a class="nav-item" href="preset.html" data-page="preset.html" title="Preset Builder">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14.5 4.5a5 5 0 0 0-6.7 6.7l-4.3 4.3a2 2 0 0 0 2.8 2.8l4.3-4.3A5 5 0 0 0 19.5 9.5l-3 3-2-2 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 4l1-1M20 6h1M18 5V4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Preset Builder</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M10 6 4 8v14l6-2 4 2 6-2V6l-6 2-4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <!-- BR Data (analytics / chart) -->
+        <a class="nav-item" href="br-team.html" data-page="br-team.html" title="BR Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 19H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 17V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M16 17V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 11l4-3 4 5 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">BR Data</span>
+        </a>
+        
+        <!-- CS Draft (document + pencil) -->
+        <a class="nav-item" href="clash-draft-team.html" data-page="clash-draft-team.html" title="CS Draft">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 3h7l3 3v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 3v4a2 2 0 0 0 2 2h4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 16l1-3 6-6 2 2-6 6-3 1Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Draft</span>
+        </a>
+
+        <!-- CS Data (crossed swords) -->
+        <a class="nav-item" href="clash-data.html" data-page="clash-data.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Data</span>
+        </a>
+
+         <!-- CS COMPARE (crossed swords) -->
+        <a class="nav-item" href="clash-compare.html" data-page="clash-compare.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Compare</span>
+        </a>
+
+        <a class="nav-item active" href="store.html" data-page="store.html" title="Stores">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 7h16M6 7l1 12h10l1-12M9 11h6M10 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Stores</span>
+        </a>
+        
+        <!-- Split View (two panes) -->
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Split View</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="sbToggle" aria-label="Sidebar" title="Sidebar" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path id="sbTogglePath" d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;opacity:.85">
+            <path d="M21 21l-4.3-4.3m1.3-5.2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Search pets (name / role / skill)..." />
+        </div>
+
+        <button class="icon-btn" id="themeToggle"
+              type="button"
+              title="Toggle Light/Dark"
+              aria-label="Toggle theme"
+              aria-pressed="false">
+          <span id="themeIcon" aria-hidden="true"></span>
+        </button>
+
+        <div class="top-actions">
+          <div class="userchip">
+            <div class="avatar"></div>
+            <div class="usertext">
+              <b id="gamertag">PlayerOne</b>
+              <span id="userEmail" class="muted">loading…</span>
+            </div>
+          </div>
+
+          <a class="logout" href="#" id="logoutBtn">Logout</a>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-title">
+              <h2>Pet Gallery</h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-inner">
+          <div class="controls">
+            <div class="controls-left">
+              <span class="pill"><span class="dot info"></span>INFO</span>
+              <span class="pill"><span class="dot attack"></span>ATTACK</span>
+              <span class="pill"><span class="dot survival"></span>SURVIVAL</span>
+              <span class="pill"><span class="dot inventory"></span>INVENTORY</span>
+              <span class="pill"><span class="dot movement"></span>MOVEMENT</span>
+              <span class="pill"><span class="dot other"></span>OTHER</span>
+              <span class="pill" id="countPill" style="display:none;"></span>
+            </div>
+
+            <div class="controls-right">
+              <button class="btn" id="langToggle" type="button" title="Toggle description language" aria-pressed="false">
+                Desc: EN
+              </button>
+
+              <div class="field">
+                <label for="filterRole">Role</label>
+                <select id="filterRole">
+                  <option value="">All</option>
+                  <option value="INFO">INFO</option>
+                  <option value="ATTACK">ATTACK</option>
+                  <option value="SURVIVAL">SURVIVAL</option>
+                  <option value="INVENTORY">INVENTORY</option>
+                  <option value="MOVEMENT">MOVEMENT</option>
+                  <option value="OTHER">OTHER</option>
+                </select>
+              </div>
+
+              <a class="btn" href="home.html">← Dashboard</a>
+            </div>
+          </div>
+
+          <div class="section-title">All Pets <span class="hint" id="hintText">(tap a pet for details)</span></div>
+          <div class="grid" id="petGrid">
+            <div class="empty-msg">Loading…</div>
+          </div>
+
+          <div class="muted" style="font-size:.8rem; padding: 14px 2px 2px 2px;">
+            Free Fire Caster © 2025 — Misai Productions Sdn. Bhd.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="infoModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Pet Info">
+      <div class="modal-top">
+        <div style="min-width:0">
+          <h3 id="infoName">—</h3>
+          <p id="infoSub">—</p>
+        </div>
+        <button class="icon-btn" id="infoClose" aria-label="Close" title="Close" type="button">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="badge-row" id="infoBadges"></div>
+
+        <div class="info-block">
+          <b id="infoSkillTitle">Skill: —</b>
+          <p class="txt" id="infoSkillDesc">—</p>
+        </div>
+
+        <div class="info-block">
+          <b>Role</b>
+          <p class="txt" id="infoRole">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const client = supabase.createClient(
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+    );
+
+    async function ensureSession(){
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return null;
+      }
+      return session;
+    }
+
+    async function logout(){
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    const sbBackdrop = document.getElementById('sbBackdrop');
+
+    const mqMobile = window.matchMedia('(max-width: 980px)');
+    const KEY_COLLAPSE = 'ff_sidebar_collapsed_v1';
+
+    const sbBtn = document.getElementById('sbToggle');
+    const sbPath = document.getElementById('sbTogglePath');
+
+    function isMobile(){ return mqMobile.matches; }
+    function setPath(d){ if (sbPath) sbPath.setAttribute('d', d); }
+
+    function syncSidebarIcon(){
+      if (isMobile()){
+        setPath(sidebar.classList.contains('open')
+          ? 'M6 6l12 12M18 6L6 18'
+          : 'M4 7h16M4 12h16M4 17h16'
+        );
+      } else {
+        setPath(sidebar.classList.contains('collapsed')
+          ? 'M10 7l5 5-5 5'
+          : 'M14 7l-5 5 5 5'
+        );
+      }
+    }
+
+    function openMobileSidebar(){
+      sidebar.classList.add('open');
+      sbBackdrop.classList.add('show');
+      sbBackdrop.setAttribute('aria-hidden','false');
+      document.body.classList.add('sb-lock');
+      syncSidebarIcon();
+    }
+
+    function closeMobileSidebar(){
+      sidebar.classList.remove('open');
+      sbBackdrop.classList.remove('show');
+      sbBackdrop.setAttribute('aria-hidden','true');
+      document.body.classList.remove('sb-lock');
+      syncSidebarIcon();
+    }
+
+    (function initSidebar(){
+      const saved = localStorage.getItem(KEY_COLLAPSE);
+      if (saved === '1') sidebar.classList.add('collapsed');
+
+      syncSidebarIcon();
+
+      sbBtn?.addEventListener('click', () => {
+        if (isMobile()){
+          sidebar.classList.contains('open') ? closeMobileSidebar() : openMobileSidebar();
+          return;
+        }
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(KEY_COLLAPSE, sidebar.classList.contains('collapsed') ? '1' : '0');
+        syncSidebarIcon();
+      });
+
+      sbBackdrop?.addEventListener('click', closeMobileSidebar);
+
+      sidebar.querySelectorAll('.nav-item').forEach(a => {
+        a.addEventListener('click', () => { if (isMobile()) closeMobileSidebar(); });
+      });
+
+      mqMobile.addEventListener?.('change', () => {
+        closeMobileSidebar();
+        syncSidebarIcon();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('open')){
+          closeMobileSidebar();
+        }
+      });
+    })();
+
+    (function setActiveNav(){
+      const here = (location.pathname.split('/').pop() || 'pet.html').toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(a => {
+        const page = (a.getAttribute('data-page') || '').toLowerCase();
+        a.classList.toggle('active', page === here);
+      });
+    })();
+
+    const KEY_LANG = 'ff_pet_desc_lang_v2';
+    const langToggle = document.getElementById('langToggle');
+    let useMS = (localStorage.getItem(KEY_LANG) === 'ms');
+    let lastOpenedPet = null;
+
+    function safeText(v){ return (v ?? '').toString(); }
+    function tidy(v){
+      return safeText(v)
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .replace(/\s*\n+\s*/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+    function getMSDesc(p){ return tidy(p?.description_ms ?? ''); }
+
+    function getDisplayDesc(p){
+      const en = tidy(p?.description ?? '');
+      const ms = getMSDesc(p);
+      if (useMS) return ms || en || '—';
+      return en || ms || '—';
+    }
+
+    function syncLangUI(){
+      if (!langToggle) return;
+      langToggle.textContent = useMS ? 'Desc: MS' : 'Desc: EN';
+      langToggle.setAttribute('aria-pressed', useMS ? 'true' : 'false');
+    }
+
+    langToggle?.addEventListener('click', () => {
+      useMS = !useMS;
+      localStorage.setItem(KEY_LANG, useMS ? 'ms' : 'en');
+      syncLangUI();
+      if (infoModal.classList.contains('show') && lastOpenedPet){
+        openInfo(lastOpenedPet, true);
+      }
+    });
+
+    const KEY_THEME = 'ff_theme_v1';
+    const OLD_KEY_THEME = 'ff_theme_pet_v1';
+
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon   = document.getElementById('themeIcon');
+
+    const ICON_SUN = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path
+          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    const ICON_MOON = `
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+
+    function setMetaThemeColor(isLight){
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', isLight ? '#f4f6ff' : '#07090f');
+    }
+
+    function applyTheme(mode){
+      const isLight = (mode === 'light');
+      document.body.classList.toggle('theme-light', isLight);
+
+      if (themeIcon) themeIcon.innerHTML = isLight ? ICON_MOON : ICON_SUN;
+
+      if (themeToggle){
+        themeToggle.setAttribute('aria-pressed', isLight ? 'true' : 'false');
+        themeToggle.title = isLight ? 'Switch to Dark mode' : 'Switch to Light mode';
+        themeToggle.setAttribute('aria-label', isLight ? 'Switch to Dark mode' : 'Switch to Light mode');
+      }
+
+      setMetaThemeColor(isLight);
+    }
+
+    function initTheme(){
+      const saved = localStorage.getItem(KEY_THEME) || localStorage.getItem(OLD_KEY_THEME) || 'dark';
+      try{
+        localStorage.setItem(KEY_THEME, saved);
+        localStorage.removeItem(OLD_KEY_THEME);
+      }catch(_){}
+      applyTheme(saved);
+    }
+
+    themeToggle?.addEventListener('click', () => {
+      const next = document.body.classList.contains('theme-light') ? 'dark' : 'light';
+      try{ localStorage.setItem(KEY_THEME, next); }catch(_){}
+      applyTheme(next);
+    });
+
+    function normalizeRole(role){
+      const r = tidy(role).toUpperCase();
+      if (['INFO','ATTACK','SURVIVAL','INVENTORY','MOVEMENT'].includes(r)) return r;
+      return 'OTHER';
+    }
+    function roleKey(role){
+      const r = normalizeRole(role);
+      if (r === 'INFO') return 'info';
+      if (r === 'ATTACK') return 'attack';
+      if (r === 'SURVIVAL') return 'survival';
+      if (r === 'INVENTORY') return 'inventory';
+      if (r === 'MOVEMENT') return 'movement';
+      return 'other';
+    }
+    function roleColorVar(role){
+      const k = roleKey(role);
+      return {
+        info: 'var(--role-info)',
+        attack: 'var(--role-attack)',
+        survival: 'var(--role-survival)',
+        inventory: 'var(--role-inventory)',
+        movement: 'var(--role-movement)',
+        other: 'var(--role-other)'
+      }[k] || 'var(--role-other)';
+    }
+
+    const PET_URL = 'https://misai-my.github.io/freefire-esports/pet.json';
+    let allPets = [];
+    let currentSearch = '';
+    let currentRoleFilter = '';
+
+    const petGrid = document.getElementById('petGrid');
+    const filterRole = document.getElementById('filterRole');
+    const countPill = document.getElementById('countPill');
+    const topSearch = document.getElementById('searchInput');
+
+    function makeSearchBlob(p){
+      return [
+        tidy(p?.name),
+        tidy(p?.role),
+        tidy(p?.skill),
+        tidy(p?.description),
+        getMSDesc(p)
+      ].filter(Boolean).join(' ').toLowerCase();
+    }
+
+    function makeFallbackThumb(letter){
+      const wrap = document.createElement('div');
+      wrap.className = 'pet-fallback';
+      wrap.textContent = (letter || 'P').toUpperCase();
+      return wrap;
+    }
+
+    function makePetCard(p){
+      const card = document.createElement('div');
+      card.className = 'pet-card';
+      card.tabIndex = 0;
+
+      const name = tidy(p?.name) || 'Unknown Pet';
+      const role = normalizeRole(p?.role);
+      const skill = tidy(p?.skill) || '';
+
+      card.dataset.search = makeSearchBlob(p);
+      card.dataset.role = role;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'pet-thumb';
+
+      const dot = document.createElement('span');
+      dot.className = 'role-dot';
+      dot.style.background = roleColorVar(role);
+
+      const imgUrl = tidy(p?.image_url || '');
+      if (imgUrl){
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = name;
+        img.loading = 'lazy';
+        img.referrerPolicy = 'no-referrer';
+        img.addEventListener('error', () => {
+          thumb.innerHTML = '';
+          thumb.appendChild(makeFallbackThumb(name[0] || 'P'));
+          thumb.appendChild(dot);
+        });
+        thumb.appendChild(img);
+      } else {
+        thumb.appendChild(makeFallbackThumb(name[0] || 'P'));
+      }
+
+      thumb.appendChild(dot);
+
+      const nm = document.createElement('div');
+      nm.className = 'pet-name';
+      nm.textContent = name;
+
+      const sub = document.createElement('div');
+      sub.className = 'pet-sub';
+
+      const chipRole = document.createElement('span');
+      chipRole.className = 'chip';
+      chipRole.textContent = role;
+      sub.appendChild(chipRole);
+
+      if (skill){
+        const chipSkill = document.createElement('span');
+        chipSkill.className = 'chip';
+        chipSkill.textContent = skill;
+        sub.appendChild(chipSkill);
+      }
+
+      card.appendChild(thumb);
+      card.appendChild(nm);
+      card.appendChild(sub);
+
+      card.addEventListener('click', () => openInfo(p));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openInfo(p);
+        }
+      });
+
+      return card;
+    }
+
+    function ensureEmptyMsg(){
+      let msg = petGrid.querySelector('.empty-msg');
+      if (!msg){
+        msg = document.createElement('div');
+        msg.className = 'empty-msg';
+        msg.textContent = 'No pets match your filters.';
+        petGrid.appendChild(msg);
+      }
+      return msg;
+    }
+
+    let rafPending = false;
+    function applyFilters(){
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+
+        const q = (currentSearch || '').toLowerCase().trim();
+        const role = (currentRoleFilter || '').toUpperCase().trim();
+
+        const cards = [...petGrid.querySelectorAll('.pet-card')];
+        let visible = 0;
+
+        cards.forEach(el => {
+          const blob = el.dataset.search || '';
+          const r = (el.dataset.role || '').toUpperCase();
+          const hit = (!q || blob.includes(q)) && (!role || r === role);
+          el.style.display = hit ? '' : 'none';
+          if (hit) visible++;
+        });
+
+        const empty = ensureEmptyMsg();
+        empty.style.display = visible ? 'none' : '';
+
+        if (countPill){
+          countPill.style.display = '';
+          countPill.textContent = `Showing: ${visible} pet${visible===1?'':'s'}`;
+        }
+      });
+    }
+
+    function renderPets(){
+      petGrid.innerHTML = '';
+
+      const pets = Array.isArray(allPets) ? allPets.slice() : [];
+      pets.sort((a,b) => tidy(a?.name).localeCompare(tidy(b?.name)));
+
+      if (!pets.length){
+        petGrid.innerHTML = '<div class="empty-msg">No pets found in pet.json.</div>';
+        if (countPill) countPill.style.display = 'none';
+        return;
+      }
+
+      pets.forEach(p => petGrid.appendChild(makePetCard(p)));
+      applyFilters();
+    }
+
+    async function loadPets(){
+      petGrid.innerHTML = '<div class="empty-msg">Loading…</div>';
+
+      const url = `${PET_URL}?v=${Date.now()}`;
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      allPets = Array.isArray(data) ? data : [];
+      renderPets();
+    }
+
+    const infoModal = document.getElementById('infoModal');
+    const infoClose = document.getElementById('infoClose');
+    const infoName = document.getElementById('infoName');
+    const infoSub = document.getElementById('infoSub');
+    const infoBadges = document.getElementById('infoBadges');
+    const infoSkillTitle = document.getElementById('infoSkillTitle');
+    const infoSkillDesc = document.getElementById('infoSkillDesc');
+    const infoRole = document.getElementById('infoRole');
+
+    function badgeDot(color, label){
+      const el = document.createElement('span');
+      el.className = 'pill';
+      const d = document.createElement('span');
+      d.className = 'dot other';
+      d.style.background = color;
+      el.appendChild(d);
+      el.appendChild(document.createTextNode(label));
+      return el;
+    }
+
+    function openInfo(p, keepOpen=false){
+      lastOpenedPet = p;
+
+      const name = tidy(p?.name) || '—';
+      const role = normalizeRole(p?.role);
+      const skill = tidy(p?.skill) || '—';
+      const desc = getDisplayDesc(p);
+
+      infoName.textContent = name;
+      infoSub.textContent = [role, 'PET'].filter(Boolean).join(' • ');
+
+      infoBadges.innerHTML = '';
+      infoBadges.appendChild(badgeDot(roleColorVar(role), role));
+
+      infoSkillTitle.textContent = 'Skill: ' + (skill || '—') + (useMS ? ' • MS' : ' • EN');
+      infoSkillDesc.textContent = desc || '—';
+      infoRole.textContent = role || '—';
+
+      if (!keepOpen){
+        infoModal.classList.add('show');
+        infoModal.setAttribute('aria-hidden','false');
+      }
+    }
+
+    function closeInfo(){
+      infoModal.classList.remove('show');
+      infoModal.setAttribute('aria-hidden','true');
+    }
+
+    infoClose?.addEventListener('click', closeInfo);
+    infoModal?.addEventListener('click', (e) => { if (e.target === infoModal) closeInfo(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && infoModal.classList.contains('show')) closeInfo(); });
+
+    topSearch?.addEventListener('input', (e) => {
+      currentSearch = e.target.value || '';
+      applyFilters();
+    });
+
+    filterRole?.addEventListener('change', (e) => {
+      currentRoleFilter = e.target.value || '';
+      applyFilters();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      syncLangUI();
+      initTheme();
+
+      const session = await ensureSession();
+      if (!session) return;
+
+      const email = session.user?.email || '';
+      document.getElementById('userEmail').textContent = email || 'signed in';
+      const username = email ? email.split('@')[0] : 'PlayerOne';
+      document.getElementById('gamertag').textContent = username;
+
+      try{
+        await loadPets();
+      }catch(err){
+        console.error('Error loading pet data:', err);
+        petGrid.innerHTML = '<div class="empty-msg">Error loading pet data.</div>';
+        if (countPill) countPill.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

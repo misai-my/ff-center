@@ -1,14 +1,12 @@
 {
-  "name": "free-fire-data-center",
-  "version": "1.0.0",
+  "name": "freefire-caster-command-center",
+  "version": "1.1.0",
   "private": true,
-  "description": "Standalone Free Fire Data Center repository with bundled reference data and assets.",
+  "description": "Static Free Fire esports command center package for caster desk, BR data, CS draft, galleries, reports, and uploads.",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "start": "python -m http.server 5173",
+    "serve": "python -m http.server 5173",
+    "audit": "node tools/audit-package.mjs"
   },
-  "devDependencies": {
-    "vite": "^7.0.0"
-  }
+  "devDependencies": {}
 }

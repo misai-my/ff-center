@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Fire Dashboard</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Supabase JS v2 (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --sb-w: 260px;
+      --sb-w-collapsed: 82px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      filter: blur(.2px);
+      pointer-events:none;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    a{color:inherit}
+
+    /* ====== Fix: dropdown not white-on-white ====== */
+    select{
+      color-scheme: dark;
+      background: rgba(0,0,0,.28);
+      color: var(--ink);
+    }
+    select:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12);
+      border-color: rgba(77,211,255,.22) !important;
+    }
+    select option{
+      background: #0b1020;
+      color: var(--ink);
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      gap:18px;
+      padding:18px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width: var(--sb-w);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      transition: width .18s ease;
+    }
+    .sidebar.collapsed{ width: var(--sb-w-collapsed); }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 16px 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.5px;
+      color:var(--brand);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size: 1.05rem;
+      letter-spacing:.6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+    .brand small{
+      display:block;
+      color: var(--muted);
+      font-size:.78rem;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+
+    .nav{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+    }
+    .nav::-webkit-scrollbar{width:10px}
+    .nav::-webkit-scrollbar-thumb{background: rgba(255,255,255,.08); border-radius:10px}
+    .nav::-webkit-scrollbar-track{background: transparent}
+
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--muted);
+      text-decoration:none;
+      transition: .2s ease;
+      cursor:pointer;
+      min-width:0;
+    }
+    .nav-item:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.08);
+      color: var(--ink);
+    }
+    .nav-item.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.14), rgba(77,211,255,.09));
+      border-color: rgba(255,189,89,.22);
+      color: var(--ink);
+    }
+    .nav-ico{
+      width:26px;height:26px;border-radius:10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      flex: 0 0 auto;
+    }
+    .nav-ico svg{width:14px;height:14px;opacity:.9}
+    .nav-label{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      min-width:0;
+    }
+
+    .sidebar.collapsed .brand h1,
+    .sidebar.collapsed .brand small,
+    .sidebar.collapsed .nav-label{display:none;}
+    .sidebar.collapsed .brand{justify-content:center;}
+    .sidebar.collapsed .brand-left{justify-content:center;}
+    .sidebar.collapsed .nav-item{
+      justify-content:center;
+      gap:0;
+      padding:10px 8px;
+    }
+
+    /* Main */
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width: 0;
+      gap: 14px;
+    }
+
+    /* Topbar */
+    .topbar{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      min-width: 0;
+    }
+    .search input{
+      width:100%;
+      background: transparent;
+      border:0;
+      outline:none;
+      color: var(--ink);
+      font-size: .95rem;
+    }
+    .search input::placeholder{color: rgba(170,177,197,.75)}
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+
+    .icon-btn{
+      width:42px;height:42px;border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition:.2s ease;
+      color: var(--ink);
+      flex:0 0 auto;
+    }
+    .icon-btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.08)}
+    .icon-btn svg{width:18px;height:18px;opacity:.92}
+
+    .userchip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      max-width: 260px;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(255,189,89,.30), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .usertext{min-width:0}
+    .usertext b{
+      display:block;
+      font-size:.92rem;
+      font-family: Orbitron, sans-serif;
+      color: var(--brand);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .usertext span{display:block; font-size:.78rem; color: var(--muted)}
+
+    .logout{
+      color: rgba(255,255,255,.70);
+      text-decoration:none;
+      font-size:.85rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      transition:.2s ease;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .logout:hover{
+      border-color: rgba(255,77,77,.35);
+      color: #ff8d8d;
+      box-shadow: 0 0 0 3px rgba(255,77,77,.10);
+    }
+
+    /* Content */
+    .content{
+      min-height: 0;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    /* Cards */
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card-inner{padding:14px}
+
+    /* Hero */
+    .hero{
+      position:relative;
+      height: 170px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.10)),
+        url('https://i.imgur.com/qXFpizS.jpg') center/cover no-repeat;
+      overflow:hidden;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(420px 220px at 55% 45%, rgba(255,189,89,.16), transparent 60%);
+      pointer-events:none;
+      z-index: 1;
+    }
+    .hero-content{
+      position:absolute;
+      left:16px; right:16px; bottom:14px;
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 3;
+    }
+    .hero-title h2{
+      font-family: Orbitron, sans-serif;
+      font-size: 1.55rem;
+      color: var(--brand);
+      text-shadow: 0 0 18px rgba(255,189,89,.20);
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== Hero Character Carousel Overlay (Aesthetic Only) ===== */
+    .hero-carousel{
+      position:absolute;
+      left:16px; right:16px;
+      top:50px;
+      height:78px;
+      z-index: 2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: none;
+    }
+
+    .hero-carousel-track{
+      --chip: 150px;
+      --gap: 12px;
+      --visible: 3;
+      width: calc(var(--visible) * var(--chip) + (var(--visible) - 1) * var(--gap));
+      height: var(--chip);
+      overflow:hidden;
+
+      border-radius: 18px;
+      background: rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+
+      display:flex;
+      align-items:center;
+      padding: 6px;
+    }
+
+    .hero-carousel-strip{
+      display:flex;
+      gap: var(--gap);
+      align-items:center;
+      will-change: transform;
+      transform: translateX(0);
+    }
+
+    .hero-chip{
+      width: var(--chip);
+      height: var(--chip);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+      filter: saturate(1.03) contrast(1.02);
+    }
+    .hero-chip img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    @media (max-width: 520px){
+      .hero-carousel{ height:70px; }
+      .hero-carousel-track{
+        --chip: 60px;
+        --gap: 10px;
+        border-radius: 16px;
+      }
+      .hero-chip{ border-radius: 16px; }
+    }
+
+    /* Horizontal Quick View */
+    .quickbar{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .qv-item{
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      transition: .2s ease;
+      min-width:0;
+    }
+    .qv-item:hover{
+      background: rgba(255,255,255,.07);
+      transform: translateY(-1px);
+    }
+
+    .qv-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      min-width:0;
+    }
+    .qv-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+      font-weight:700;
+      color: rgba(244,246,255,.92);
+      letter-spacing:.2px;
+      font-size:.9rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .qv-count{
+      font-size:.75rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.78);
+      flex:0 0 auto;
+    }
+    .qv-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .qv-btn{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.88);
+      cursor:pointer;
+      font-weight:700;
+      font-size:.82rem;
+      transition:.2s ease;
+      white-space:nowrap;
+    }
+    .qv-btn:hover{
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+      border-color: rgba(77,211,255,.22);
+    }
+
+    .qv-body{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+    .qv-thumb{
+      width:54px;
+      height:54px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+    }
+    .qv-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    .qv-meta{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1;
+    }
+    .qv-meta b{
+      font-size:.95rem;
+      font-weight:800;
+      color: rgba(244,246,255,.92);
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.15rem;
+    }
+    .qv-meta span{
+      color: var(--muted);
+      font-size:.84rem;
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.22rem;
+    }
+
+    .tap-more{cursor:pointer}
+    .tap-more:hover{color: rgba(244,246,255,.92);}
+
+    /* Modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modal.show{display:flex;}
+    .modal-card{
+      width: min(1040px, 100%);
+      max-height: min(84vh, 820px);
+      background: rgba(14, 18, 28, .92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: 0 26px 80px rgba(0,0,0,.65);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal-top h3{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.6px;
+      color: var(--brand);
+      font-size: 1.05rem;
+    }
+    .modal-top p{
+      margin:6px 0 0 0;
+      color: var(--muted);
+      font-size:.85rem;
+    }
+
+    .modal-controls{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .modal-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .modal-controls input{
+      flex:1;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.95rem;
+      min-width: 220px;
+    }
+    .modal-controls select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.92rem;
+      min-width: 220px;
+    }
+    .modal-count{
+      flex:0 0 auto;
+      font-size:.78rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.80);
+      white-space:nowrap;
+    }
+
+    .filter-pills{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .pill-btn{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.86);
+      cursor:pointer;
+      font-weight:800;
+      font-size:.82rem;
+      transition:.18s ease;
+      white-space:nowrap;
+    }
+    .pill-btn:hover{
+      background: rgba(0,0,0,.28);
+      border-color: rgba(77,211,255,.22);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+    }
+    .pill-btn.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.18), rgba(255,119,51,.10));
+      border-color: rgba(255,189,89,.25);
+      color: rgba(244,246,255,.95);
+    }
+
+    .modal-grid{
+      padding: 14px;
+      overflow:auto;
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 12px;
+    }
+    .modal-grid::-webkit-scrollbar{width:10px}
+    .modal-grid::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius:10px}
+    .modal-grid::-webkit-scrollbar-track{background: transparent}
+
+    .pick-card{
+      padding: 10px 10px 8px 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      cursor:pointer;
+      transition:.18s ease;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+    .pick-card:hover{
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+      border-color: rgba(255,189,89,.18);
+    }
+    .pick-thumb{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+    }
+    .pick-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+    .pick-name{
+      font-size:.82rem;
+      font-weight:800;
+      color: rgba(244,246,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-align:center;
+    }
+
+    /* Loadout Details */
+    .ld-wrap{
+      padding: 14px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .ld-head{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .ld-img{
+      width:64px;height:64px;border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .ld-img img{width:100%;height:100%;object-fit:contain;display:block;}
+    .ld-title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .ld-title b{
+      font-family: Orbitron, sans-serif;
+      color: var(--brand);
+      letter-spacing:.4px;
+      font-size: 1.02rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 720px;
+    }
+    .ld-title span{
+      color: var(--muted);
+      font-size:.85rem;
+    }
+
+    details.ld-block{
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    details.ld-block > summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      font-weight:900;
+      color: rgba(244,246,255,.92);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    details.ld-block > summary::-webkit-details-marker{display:none;}
+    .ld-pill{
+      font-size:.72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.78);
+      flex:0 0 auto;
+    }
+    .ld-text{
+      padding: 0 12px 12px 12px;
+      color: rgba(244,246,255,.86);
+      line-height: 1.35rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 1200px){
+      .quickbar{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 980px){
+      .quickbar{ grid-template-columns: 1fr; }
+      .modal-controls input{min-width: 0; width:100%;}
+      .modal-controls select{min-width: 0; width:100%;}
+    }
+
+    /* ===== Map Window bar (Dashboard) ===== */
+    .mapbar{
+      margin-top:12px;
+      padding:12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .mapbar-left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .mapbar-left b{
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.4px;
+      color: var(--accent);
+      font-size:.95rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .mapbar-left span{
+      color: var(--muted);
+      font-size:.83rem;
+      white-space:normal;
+    }
+    .mapbar-actions{display:flex;gap:8px;flex:0 0 auto;}
+    a.qv-btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;}
+
+    /* ===== Map Image Viewer Modal ===== */
+    .modal-card.map-card{
+      height: min(88vh, 920px);
+    }
+    .map-toolbar{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .map-toolbar .left{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      min-width: 0;
+    }
+    .map-toolbar select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.92rem;
+      min-width: 220px;
+    }
+    .map-toolbar .right{
+      display:flex; align-items:center; gap:8px; flex: 0 0 auto;
+    }
+    .map-hint{
+      color: var(--muted);
+      font-size:.82rem;
+      max-width: 520px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .map-viewport{
+      position:relative;
+      flex:1;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      touch-action: none;
+      border-top: 1px solid rgba(255,255,255,.08);
+      min-height: 520px;
+    }
+    .map-viewport::after{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: radial-gradient(420px 220px at 60% 15%, rgba(77,211,255,.08), transparent 55%);
+    }
+
+    .map-img{
+      position:absolute;
+      left:0; top:0;
+      transform-origin: 0 0;
+      user-select:none;
+      -webkit-user-drag: none;
+      pointer-events:none;
+      will-change: transform;
+      filter: saturate(1.02) contrast(1.02);
+      display:block;
+      max-width:none;
+      max-height:none;
+    }
+
+    /* ===========================
+       MOBILE SIDEBAR DRAWER FIX
+       =========================== */
+    body.sb-lock{ overflow:hidden; }
+
+    .sb-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      display:none;
+      z-index: 998;
+    }
+    .sb-backdrop.show{ display:block; }
+
+    @media (max-width: 980px){
+      .app{
+        display:block;
+        padding: 12px;
+        gap: 0;
+      }
+
+      .sidebar{
+        position: fixed;
+        top: 12px;
+        bottom: 12px;
+        left: 12px;
+        width: min(320px, 86vw);
+        z-index: 999;
+        transform: translateX(calc(-100% - 18px));
+        transition: transform .22s ease;
+      }
+      .sidebar.open{ transform: translateX(0); }
+
+      /* Ignore collapsed visuals on mobile drawer */
+      .sidebar.collapsed{ width: min(320px, 86vw); }
+      .sidebar.collapsed .brand h1,
+      .sidebar.collapsed .brand small,
+      .sidebar.collapsed .nav-label{ display: initial; }
+      .sidebar.collapsed .brand{ justify-content:flex-start; }
+      .sidebar.collapsed .brand-left{ justify-content:flex-start; }
+      .sidebar.collapsed .nav-item{
+        justify-content:flex-start;
+        gap:10px;
+        padding:10px 10px;
+      }
+
+      .main{ width:100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="logo">FF</div>
+          <div class="brand-text">
+            <h1>Free Fire</h1>
+            <small class="muted">Caster Dashboard</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a class="nav-item active" href="dashboard.html" data-page="dashboard.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M7 14c-1.7 0-3-1.3-3-3S5.3 8 7 8s3 1.3 3 3-1.3 3-3 3Zm10 0c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3ZM7 20c-2.8 0-5-1.8-5-4v-1h6v1c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-1h6v1c0 2.2-2.2 4-5 4H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21l6-6m0 0 2 2 8-8-2-2-8 8Zm0 0-2-2 4-4 2 2-4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M10 6 4 8v14l6-2 4 2 6-2V6l-6 2-4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 12h16M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Split View</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Mobile sidebar backdrop -->
+    <div class="sb-backdrop" id="sbBackdrop" aria-hidden="true"></div>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path id="sbTogglePath" d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;opacity:.85">
+            <path d="M21 21l-4.3-4.3m1.3-5.2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Search pages..." />
+        </div>
+
+        <div class="top-actions">
+          <div class="userchip">
+            <div class="avatar"></div>
+            <div class="usertext">
+              <b id="gamertag">PlayerOne</b>
+              <span id="userEmail" class="muted">loading…</span>
+            </div>
+          </div>
+
+          <a class="logout" href="#" id="logoutBtn">Logout</a>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="card">
+          <div class="hero">
+            <!-- Aesthetic carousel overlay -->
+            <div class="hero-carousel" aria-hidden="true">
+              <div class="hero-carousel-track" id="heroCarouselTrack"></div>
+            </div>
+
+            <div class="hero-content">
+              <div class="hero-title">
+                <h2>Free Fire Dashboard</h2>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-inner">
+            <div class="quickbar">
+              <!-- Character -->
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Character
+                    <span class="qv-count" id="charCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="character">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="charThumb" alt="Character" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="charName">—</b>
+                    <span id="charDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pet -->
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Pet
+                    <span class="qv-count" id="petCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="pet">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="petThumb" alt="Pet" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="petName">—</b>
+                    <span id="petDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Weapon -->
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Weapon
+                    <span class="qv-count" id="weaponCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="weapon">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="weaponThumb" alt="Weapon" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="weaponName">—</b>
+                    <span id="weaponDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Loadout -->
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Loadout
+                    <span class="qv-count" id="loadoutCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="loadout">Choose</button>
+                    <button class="qv-btn" id="loadoutDetailsBtn" title="View full BR/CS details">Details</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="loadoutThumb" alt="Loadout" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="loadoutName">—</b>
+                    <span id="loadoutDesc" class="tap-more" title="Click to view full details">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Map Window bar -->
+            <div class="mapbar">
+              <div class="mapbar-left">
+                <b>Map Window</b>
+                <span>Pan: drag. Zoom: mouse wheel / trackpad. Touch: drag + pinch zoom.</span>
+              </div>
+              <div class="mapbar-actions">
+                <button class="qv-btn" id="openMapBtn">Open</button>
+              </div>
+            </div>
+
+            <div class="muted" style="font-size:.8rem; padding: 10px 2px 0 2px;">
+              Free Fire Caster © 2025 — Neptune
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Picker Modal -->
+  <div class="modal" id="pickerModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Picker">
+      <div class="modal-top">
+        <div>
+          <h3 id="pickerTitle">Select</h3>
+          <p id="pickerSub">Click an item to apply it to Quick View.</p>
+        </div>
+        <button class="icon-btn" id="pickerClose" aria-label="Close picker" title="Close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-controls">
+        <div class="modal-row">
+          <input id="pickerSearch" placeholder="Search..." />
+          <select id="pickerFilterSelect" style="display:none"></select>
+          <div class="modal-count" id="pickerCount">—</div>
+        </div>
+        <div class="filter-pills" id="pickerFilterPills" style="display:none"></div>
+      </div>
+
+      <div class="modal-grid" id="pickerGrid"></div>
+    </div>
+  </div>
+
+  <!-- Loadout Details Modal -->
+  <div class="modal" id="loadoutModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Loadout Details">
+      <div class="modal-top">
+        <div>
+          <h3 id="loadoutModalTitle">Loadout Details</h3>
+          <p id="loadoutModalSub">Full BR / CS details for your selected loadout.</p>
+        </div>
+        <button class="icon-btn" id="loadoutClose" aria-label="Close loadout details" title="Close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="ld-wrap">
+        <div class="ld-head">
+          <div class="ld-img"><img id="ldImg" alt="Loadout" loading="lazy" referrerpolicy="no-referrer" /></div>
+          <div class="ld-title">
+            <b id="ldName">—</b>
+            <span id="ldHint">BR and CS effects (full text)</span>
+          </div>
+        </div>
+
+        <details class="ld-block" open>
+          <summary>
+            BR
+            <span class="ld-pill">Battle Royale</span>
+          </summary>
+          <div class="ld-text" id="ldBR">—</div>
+        </details>
+
+        <details class="ld-block" open>
+          <summary>
+            CS
+            <span class="ld-pill">Clash Squad</span>
+          </summary>
+          <div class="ld-text" id="ldCS">—</div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map Image Viewer Modal -->
+  <div class="modal" id="mapModal" aria-hidden="true">
+    <div class="modal-card map-card" role="dialog" aria-modal="true" aria-label="Map Window">
+      <div class="modal-top">
+        <div>
+          <h3>Map Window</h3>
+          <p class="muted">Map image viewer (no iframe). Drag to pan, wheel/pinch to zoom.</p>
+        </div>
+        <button class="icon-btn" id="mapClose" aria-label="Close map window" title="Close">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="map-toolbar">
+        <div class="left">
+          <select id="mapImgSelect" aria-label="Select map"></select>
+          <div class="map-hint" id="mapStatus">Ready</div>
+        </div>
+        <div class="right">
+          <button class="qv-btn" id="zoomOutBtn">-</button>
+          <button class="qv-btn" id="zoomInBtn">+</button>
+          <button class="qv-btn" id="fitBtn">Fit</button>
+          <button class="qv-btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <div class="map-viewport" id="mapViewport">
+        <img id="mapImg" class="map-img" alt="Map" referrerpolicy="no-referrer" crossorigin="anonymous" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Supabase Auth
+     ***********************/
+    const client = supabase.createClient(
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+    );
+
+    async function ensureSession(){
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return null;
+      }
+      return session;
+    }
+
+    async function logout(){
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    }
+
+    /***********************
+     * Sidebar (Desktop collapse + Mobile drawer)
+     ***********************/
+    const sidebar = document.getElementById('sidebar');
+    const sbBackdrop = document.getElementById('sbBackdrop');
+
+    (function initSidebarCollapse(){
+      const key = 'ff_sidebar_collapsed_v1';
+      const btn = document.getElementById('sbToggle');
+      const path = document.getElementById('sbTogglePath');
+
+      const isMobile = () => window.matchMedia('(max-width: 980px)').matches;
+
+      function setBackdrop(on){
+        if (!sbBackdrop) return;
+        sbBackdrop.classList.toggle('show', !!on);
+        sbBackdrop.setAttribute('aria-hidden', on ? 'false' : 'true');
+        document.body.classList.toggle('sb-lock', !!on);
+      }
+
+      function applyDesktopCollapsedFromStorage(){
+        const saved = localStorage.getItem(key) === '1';
+        sidebar.classList.toggle('collapsed', saved);
+      }
+
+      function syncIcon(){
+        if (!path) return;
+
+        if (isMobile()){
+          const open = sidebar.classList.contains('open');
+          path.setAttribute('d', open
+            ? 'M6 6l12 12M18 6L6 18'        // X
+            : 'M4 7h16M4 12h16M4 17h16'     // hamburger
+          );
+          btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+          return;
+        }
+
+        const collapsed = sidebar.classList.contains('collapsed');
+        path.setAttribute('d', collapsed
+          ? 'M10 7l5 5-5 5'
+          : 'M14 7l-5 5 5 5'
+        );
+        btn?.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+
+      function closeMobileDrawer(){
+        sidebar.classList.remove('open');
+        setBackdrop(false);
+        syncIcon();
+      }
+
+      // Initial state: only apply collapsed on desktop
+      if (isMobile()){
+        sidebar.classList.remove('collapsed');
+      } else {
+        applyDesktopCollapsedFromStorage();
+      }
+      syncIcon();
+
+      btn?.addEventListener('click', () => {
+        if (isMobile()){
+          const willOpen = !sidebar.classList.contains('open');
+          sidebar.classList.toggle('open', willOpen);
+          setBackdrop(willOpen);
+          syncIcon();
+          return;
+        }
+
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
+        syncIcon();
+      });
+
+      sbBackdrop?.addEventListener('click', closeMobileDrawer);
+
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        a.addEventListener('click', () => {
+          if (isMobile()) closeMobileDrawer();
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        if (isMobile()){
+          sidebar.classList.remove('collapsed'); // ensure labels show
+          setBackdrop(sidebar.classList.contains('open'));
+        } else {
+          sidebar.classList.remove('open');
+          setBackdrop(false);
+          applyDesktopCollapsedFromStorage();
+        }
+        syncIcon();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('open')){
+          closeMobileDrawer();
+        }
+      });
+    })();
+
+    (function setActiveNav(){
+      const here = (location.pathname.split('/').pop() || 'dashboard.html').toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(a => {
+        const page = (a.getAttribute('data-page') || '').toLowerCase();
+        a.classList.toggle('active', page === here);
+      });
+    })();
+
+    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+      const q = (e.target.value || '').toLowerCase().trim();
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        const txt = a.textContent.toLowerCase();
+        a.style.display = (!q || txt.includes(q)) ? '' : 'none';
+      });
+    });
+
+    /***********************
+     * Data (Quick View)
+     ***********************/
+    const DATA = {
+      character: { url:'https://misai-my.github.io/freefire-esports/character.json', items:[], selected:0 },
+      pet:       { url:'https://misai-my.github.io/freefire-esports/pet.json',       items:[], selected:0 },
+      weapon:    { url:'https://misai-my.github.io/freefire-esports/weapon.json',    items:[], selected:0 },
+      loadout:   { url:'https://misai-my.github.io/freefire-esports/loadout.json',   items:[], selected:0 },
+    };
+
+    const FILTER_STATE = {
+      character: 'all',
+      pet: 'all',
+      weapon: 'all',
+      loadout: 'all'
+    };
+
+    function safeText(v){ return (v ?? '').toString(); }
+    function norm(v){ return safeText(v).trim(); }
+    function normLower(v){ return norm(v).toLowerCase(); }
+
+    function pickImg(item){
+      return item?.image_url || item?.icon || item?.img || 'https://i.imgur.com/qXFpizS.jpg';
+    }
+
+    function getCategory(type, item){
+      if (!item) return 'Other';
+      if (type === 'pet'){
+        return norm(item.category || item.type || item.pet_type || item.group || item.role || 'Other') || 'Other';
+      }
+      return norm(item.category || item.type || item.weapon_type || item.class || item.group || 'Other') || 'Other';
+    }
+
+    function buildDesc(type, item){
+      if (!item) return '—';
+
+      if (type === 'character'){
+        const skill = safeText(item.skill || '');
+        const d = safeText(item.description || '');
+        return (skill ? skill : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'pet'){
+        const skill = safeText(item.skill || item.ability || '');
+        const d = safeText(item.description || '');
+        return (skill ? skill : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'weapon'){
+        const t = safeText(item.type || item.category || '');
+        const d = safeText(item.description || item.special || item.desc || '');
+        return (t ? t : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'loadout'){
+        const details = item.details || {};
+        const br = safeText(details.br || '');
+        const cs = safeText(details.cs || '');
+
+        const headLine = (txt, max=170) => {
+          const t = safeText(txt).trim();
+          if (!t) return '';
+          const first = (t.split('\n').find(l => l.trim()) || t).trim();
+          return first.length > max ? first.slice(0, max-1) + '…' : first;
+        };
+
+        const brHead = headLine(br);
+        const csHead = headLine(cs);
+
+        const parts = [];
+        if (brHead) parts.push(`BR: ${brHead}`);
+        if (csHead) parts.push(`CS: ${csHead}`);
+
+        return parts.join('  ') || '—';
+      }
+
+      return '—';
+    }
+
+    async function loadJson(url){
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Fetch failed: ' + url);
+      return await res.json();
+    }
+
+    function applyQuickView(type){
+      const state = DATA[type];
+      const item = state.items[state.selected] || state.items[0];
+      if (!item) return;
+
+      const img = pickImg(item);
+      const name = safeText(item.name || '—');
+      const desc = buildDesc(type, item);
+
+      if (type === 'character'){
+        document.getElementById('charThumb').src = img;
+        document.getElementById('charName').textContent = name;
+        document.getElementById('charDesc').textContent = desc || '—';
+      } else if (type === 'pet'){
+        document.getElementById('petThumb').src = img;
+        document.getElementById('petName').textContent = name;
+        document.getElementById('petDesc').textContent = desc || '—';
+      } else if (type === 'weapon'){
+        document.getElementById('weaponThumb').src = img;
+        document.getElementById('weaponName').textContent = name;
+        document.getElementById('weaponDesc').textContent = desc || '—';
+      } else if (type === 'loadout'){
+        document.getElementById('loadoutThumb').src = img;
+        document.getElementById('loadoutName').textContent = name;
+        document.getElementById('loadoutDesc').textContent = desc || '—';
+      }
+    }
+
+    function setCounts(){
+      document.getElementById('charCount').textContent = DATA.character.items.length ? DATA.character.items.length.toLocaleString() : '—';
+      document.getElementById('petCount').textContent = DATA.pet.items.length ? DATA.pet.items.length.toLocaleString() : '—';
+      document.getElementById('weaponCount').textContent = DATA.weapon.items.length ? DATA.weapon.items.length.toLocaleString() : '—';
+      document.getElementById('loadoutCount').textContent = DATA.loadout.items.length ? DATA.loadout.items.length.toLocaleString() : '—';
+    }
+
+    /***********************
+     * Hero Carousel (Aesthetic Only)
+     * - shows 3
+     * - pauses 3 seconds
+     * - advances ONE item each tick
+     ***********************/
+    const heroCarouselTrack = document.getElementById('heroCarouselTrack');
+    let heroCarouselTimer = null;
+
+    function shuffleCopy(arr){
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function stopHeroCarousel(){
+      if (heroCarouselTimer) {
+        clearInterval(heroCarouselTimer);
+        heroCarouselTimer = null;
+      }
+    }
+
+    function buildHeroCarousel(){
+      if (!heroCarouselTrack) return;
+
+      stopHeroCarousel();
+
+      const items = DATA.character.items || [];
+      if (!items.length){
+        heroCarouselTrack.innerHTML = '';
+        return;
+      }
+
+      const indices = items.map((_, i) => i);
+      const shuffled = shuffleCopy(indices);
+
+      const takeN = Math.min(24, shuffled.length);
+      const seq = shuffled.slice(0, takeN);
+      const finalSeq = seq.concat(seq.slice());
+
+      heroCarouselTrack.innerHTML = `
+        <div class="hero-carousel-strip" id="heroCarouselStrip">
+          ${finalSeq.map(idx => {
+            const it = items[idx];
+            const name = safeText(it?.name || '—');
+            const img = pickImg(it);
+            return `
+              <div class="hero-chip" title="${name}">
+                <img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      const strip = document.getElementById('heroCarouselStrip');
+      if (!strip) return;
+
+      const styles = getComputedStyle(heroCarouselTrack);
+      const chip = parseFloat(styles.getPropertyValue('--chip')) || 66;
+      const gap = parseFloat(styles.getPropertyValue('--gap')) || 12;
+      const step = chip + gap;
+
+      const TICK_MS = 3000;
+      const SLIDE_MS = 520;
+
+      heroCarouselTimer = setInterval(() => {
+        strip.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.75,.2,1)`;
+        strip.style.transform = `translateX(-${step}px)`;
+
+        window.setTimeout(() => {
+          const first = strip.firstElementChild;
+          if (first) strip.appendChild(first);
+
+          strip.style.transition = 'none';
+          strip.style.transform = 'translateX(0)';
+          void strip.offsetHeight;
+        }, SLIDE_MS + 20);
+      }, TICK_MS);
+    }
+
+    /***********************
+     * Picker Modal
+     ***********************/
+    const modal = document.getElementById('pickerModal');
+    const pickerTitle = document.getElementById('pickerTitle');
+    const pickerSub = document.getElementById('pickerSub');
+    const pickerSearch = document.getElementById('pickerSearch');
+    const pickerCount = document.getElementById('pickerCount');
+    const pickerGrid = document.getElementById('pickerGrid');
+    const pickerClose = document.getElementById('pickerClose');
+    const pickerFilterSelect = document.getElementById('pickerFilterSelect');
+    const pickerFilterPills = document.getElementById('pickerFilterPills');
+
+    let currentPickerType = 'character';
+
+    function openPicker(type){
+      currentPickerType = type;
+      const label =
+        type === 'character' ? 'Character' :
+        type === 'pet' ? 'Pet' :
+        type === 'weapon' ? 'Weapon' :
+        'Loadout';
+
+      pickerTitle.textContent = `Select ${label}`;
+      pickerSub.textContent = `Click a ${label.toLowerCase()} to apply it to Quick View.`;
+      pickerSearch.value = '';
+
+      setupPickerFilters();
+      renderPickerGrid();
+
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      setTimeout(() => pickerSearch.focus(), 0);
+    }
+
+    function closePicker(){
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+    }
+
+    function setupPickerFilters(){
+      pickerFilterSelect.onchange = null;
+
+      if (currentPickerType === 'character'){
+        pickerFilterSelect.style.display = 'none';
+        pickerFilterPills.style.display = 'flex';
+
+        const options = [
+          { id:'all', label:'All' },
+          { id:'brmeta', label:'BR Meta' },
+          { id:'csmeta', label:'CS Meta' },
+          { id:'active', label:'Active' },
+          { id:'passive', label:'Passive' },
+        ];
+
+        pickerFilterPills.innerHTML = options.map(opt => `
+          <button class="pill-btn ${FILTER_STATE.character === opt.id ? 'active' : ''}" data-f="${opt.id}">
+            ${opt.label}
+          </button>
+        `).join('');
+
+        pickerFilterPills.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            FILTER_STATE.character = btn.getAttribute('data-f') || 'all';
+            pickerFilterPills.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+            renderPickerGrid();
+          });
+        });
+
+      } else if (currentPickerType === 'pet' || currentPickerType === 'weapon') {
+        pickerFilterPills.style.display = 'none';
+        pickerFilterSelect.style.display = 'inline-flex';
+
+        const items = DATA[currentPickerType].items || [];
+        const cats = Array.from(new Set(items.map(it => getCategory(currentPickerType, it)).filter(Boolean)))
+          .sort((a,b) => a.localeCompare(b));
+
+        const stateKey = currentPickerType;
+        const current = FILTER_STATE[stateKey] || 'all';
+
+        pickerFilterSelect.innerHTML = [
+          `<option value="all">All</option>`,
+          ...cats.map(c => `<option value="${c}">${c}</option>`)
+        ].join('');
+
+        pickerFilterSelect.value = cats.includes(current) ? current : 'all';
+        FILTER_STATE[stateKey] = pickerFilterSelect.value;
+
+        pickerFilterSelect.onchange = () => {
+          FILTER_STATE[stateKey] = pickerFilterSelect.value || 'all';
+          renderPickerGrid();
+        };
+      } else {
+        pickerFilterPills.style.display = 'none';
+        pickerFilterSelect.style.display = 'none';
+      }
+    }
+
+    function passesTypeFilter(it){
+      if (!it) return false;
+
+      if (currentPickerType === 'character'){
+        const f = FILTER_STATE.character || 'all';
+        if (f === 'all') return true;
+        if (f === 'brmeta') return normLower(it.meta || 'no') === 'yes';
+        if (f === 'csmeta') return normLower(it.cs_meta || 'no') === 'yes';
+        if (f === 'active') return normLower(it.skill_type || '') !== 'passive';
+        if (f === 'passive') return normLower(it.skill_type || '') === 'passive';
+        return true;
+      }
+
+      if (currentPickerType === 'pet'){
+        const f = FILTER_STATE.pet || 'all';
+        if (f === 'all') return true;
+        return getCategory('pet', it) === f;
+      }
+
+      if (currentPickerType === 'weapon'){
+        const fw = FILTER_STATE.weapon || 'all';
+        if (fw === 'all') return true;
+        return getCategory('weapon', it) === fw;
+      }
+
+      return true;
+    }
+
+    function renderPickerGrid(){
+      const state = DATA[currentPickerType];
+      const q = (pickerSearch.value || '').toLowerCase().trim();
+      const all = state.items || [];
+
+      const filtered = all.filter(it => {
+        if (!passesTypeFilter(it)) return false;
+        if (!q) return true;
+
+        const name = safeText(it?.name).toLowerCase();
+        const dbr = safeText(it?.details?.br || '');
+        const dcs = safeText(it?.details?.cs || '');
+
+        const skill = safeText(it?.skill || it?.type || it?.ability || it?.category || '').toLowerCase();
+        const desc = safeText(it?.description || it?.special || it?.desc || dbr || dcs).toLowerCase();
+        const detailsBlob = (dbr + ' ' + dcs).toLowerCase();
+
+        return name.includes(q) || skill.includes(q) || desc.includes(q) || detailsBlob.includes(q);
+      });
+
+      pickerCount.textContent = `${filtered.length.toLocaleString()} item${filtered.length===1?'':'s'}`;
+
+      pickerGrid.innerHTML = filtered.map(it => {
+        const idx = all.indexOf(it);
+        const img = pickImg(it);
+        const name = safeText(it?.name || '—');
+        const tip = buildDesc(currentPickerType, it);
+        return `
+          <div class="pick-card" data-idx="${idx}" title="${name}${tip ? ' — ' + tip : ''}">
+            <div class="pick-thumb"><img src="${img}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" /></div>
+            <div class="pick-name">${name}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    pickerClose?.addEventListener('click', closePicker);
+    modal?.addEventListener('click', (e) => { if (e.target === modal) closePicker(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('show')) closePicker(); });
+    pickerSearch?.addEventListener('input', renderPickerGrid);
+
+    pickerGrid?.addEventListener('click', (e) => {
+      const card = e.target.closest('.pick-card');
+      if (!card) return;
+      const idx = Number(card.getAttribute('data-idx'));
+      if (Number.isNaN(idx)) return;
+
+      DATA[currentPickerType].selected = idx;
+      applyQuickView(currentPickerType);
+      closePicker();
+    });
+
+    document.querySelectorAll('[data-open]').forEach(btn => {
+      btn.addEventListener('click', () => openPicker(btn.getAttribute('data-open')));
+    });
+
+    /***********************
+     * Loadout Details Modal
+     ***********************/
+    const loadoutModal = document.getElementById('loadoutModal');
+    const loadoutClose = document.getElementById('loadoutClose');
+    const loadoutDetailsBtn = document.getElementById('loadoutDetailsBtn');
+    const loadoutDescEl = document.getElementById('loadoutDesc');
+
+    function getSelectedLoadout(){
+      const list = DATA.loadout.items || [];
+      const idx = Number(DATA.loadout.selected || 0);
+      return list[idx] || list[0] || null;
+    }
+
+    function openLoadoutDetails(){
+      const it = getSelectedLoadout();
+      if (!it) return;
+
+      document.getElementById('ldImg').src = pickImg(it);
+      document.getElementById('ldName').textContent = safeText(it.name || '—');
+
+      const br = safeText(it?.details?.br || '—').trim() || '—';
+      const cs = safeText(it?.details?.cs || '—').trim() || '—';
+
+      document.getElementById('ldBR').textContent = br;
+      document.getElementById('ldCS').textContent = cs;
+
+      loadoutModal.classList.add('show');
+      loadoutModal.setAttribute('aria-hidden','false');
+    }
+
+    function closeLoadoutDetails(){
+      loadoutModal.classList.remove('show');
+      loadoutModal.setAttribute('aria-hidden','true');
+    }
+
+    loadoutDetailsBtn?.addEventListener('click', openLoadoutDetails);
+    loadoutDescEl?.addEventListener('click', openLoadoutDetails);
+    loadoutClose?.addEventListener('click', closeLoadoutDetails);
+    loadoutModal?.addEventListener('click', (e) => { if (e.target === loadoutModal) closeLoadoutDetails(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && loadoutModal.classList.contains('show')) closeLoadoutDetails();
+    });
+
+    /***********************
+     * Map Image Viewer (Zoom + Pan + Selection)
+     ***********************/
+    const mapModal = document.getElementById('mapModal');
+    const mapClose = document.getElementById('mapClose');
+    const openMapBtn = document.getElementById('openMapBtn');
+
+    const mapViewport = document.getElementById('mapViewport');
+    const mapImg = document.getElementById('mapImg');
+    const mapImgSelect = document.getElementById('mapImgSelect');
+    const mapStatus = document.getElementById('mapStatus');
+
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const fitBtn = document.getElementById('fitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const MAPS = [
+      { name: 'Bermuda',  url: 'https://i.imgur.com/V6iUHaA.jpeg' },
+      { name: 'Purgatory',url: 'https://i.imgur.com/ieY0LHk.jpeg' },
+      { name: 'Kalahari', url: 'https://i.imgur.com/4Yz12P9.jpeg' },
+      { name: 'NeXTerra', url: 'https://i.imgur.com/x5he05R.jpeg' },
+      { name: 'Alpine',   url: 'https://i.imgur.com/48O1Jf8.jpeg' },
+      { name: 'Solara',   url: 'https://i.imgur.com/IX1oY9Z.jpeg' },
+    ];
+
+    const view = {
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      minScale: 0.05,
+      maxScale: 5,
+      imgW: 1,
+      imgH: 1,
+      isLoaded: false,
+    };
+
+    const pointers = new Map();
+    let dragStart = null;
+    let pinchStart = null;
+
+    function setStatus(text){ mapStatus.textContent = text; }
+
+    function applyTransform(){
+      mapImg.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+    }
+
+    function clampTransform(){
+      const vw = mapViewport.clientWidth || 1;
+      const vh = mapViewport.clientHeight || 1;
+      const w = view.imgW * view.scale;
+      const h = view.imgH * view.scale;
+
+      if (w <= vw) {
+        view.tx = Math.round((vw - w) / 2);
+      } else {
+        const minTx = vw - w;
+        const maxTx = 0;
+        view.tx = Math.min(maxTx, Math.max(minTx, view.tx));
+      }
+
+      if (h <= vh) {
+        view.ty = Math.round((vh - h) / 2);
+      } else {
+        const minTy = vh - h;
+        const maxTy = 0;
+        view.ty = Math.min(maxTy, Math.max(minTy, view.ty));
+      }
+    }
+
+    function zoomAt(clientX, clientY, factor){
+      const rect = mapViewport.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      const oldScale = view.scale;
+      const newScale = Math.min(view.maxScale, Math.max(view.minScale, oldScale * factor));
+      if (newScale === oldScale) return;
+
+      const ix = (px - view.tx) / oldScale;
+      const iy = (py - view.ty) / oldScale;
+
+      view.scale = newScale;
+      view.tx = px - ix * newScale;
+      view.ty = py - iy * newScale;
+
+      clampTransform();
+      applyTransform();
+      setStatus(`Zoom: ${(view.scale * 100).toFixed(0)}%`);
+    }
+
+    function fitToViewport(){
+      if (!view.isLoaded) return;
+
+      const vw = mapViewport.clientWidth || 1;
+      const vh = mapViewport.clientHeight || 1;
+
+      if (!mapModal.classList.contains('show') || vw < 5 || vh < 5) return;
+
+      const sx = vw / view.imgW;
+      const sy = vh / view.imgH;
+      view.scale = Math.min(sx, sy);
+      view.scale = Math.min(view.maxScale, Math.max(view.minScale, view.scale));
+
+      const w = view.imgW * view.scale;
+      const h = view.imgH * view.scale;
+      view.tx = Math.round((vw - w) / 2);
+      view.ty = Math.round((vh - h) / 2);
+
+      applyTransform();
+      setStatus('Fit');
+    }
+
+    function resetView(){ fitToViewport(); }
+
+    function setMapByUrl(url){
+      setStatus('Loading…');
+      view.isLoaded = false;
+      mapImg.src = url;
+    }
+
+    (function initMapSelect(){
+      mapImgSelect.innerHTML = MAPS.map(m => `<option value="${m.url}">${m.name}</option>`).join('');
+      mapImgSelect.value = MAPS[0].url;
+    })();
+
+    mapImg.addEventListener('load', () => {
+      view.imgW = mapImg.naturalWidth || 1;
+      view.imgH = mapImg.naturalHeight || 1;
+
+      mapImg.style.width = view.imgW + 'px';
+      mapImg.style.height = view.imgH + 'px';
+
+      view.isLoaded = true;
+
+      if (mapModal.classList.contains('show')) {
+        fitToViewport();
+        setStatus('Drag to pan • Wheel/pinch to zoom');
+      } else {
+        setStatus('Ready');
+      }
+    });
+
+    mapImg.addEventListener('error', () => {
+      setStatus('Failed to load map image (blocked/404). Try referrerpolicy or self-host images.');
+      console.error('Map image failed:', mapImg.src);
+    });
+
+    mapImgSelect.addEventListener('change', () => {
+      setMapByUrl(mapImgSelect.value);
+    });
+
+    mapViewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!view.isLoaded) return;
+      const factor = (e.deltaY > 0) ? 0.92 : 1.08;
+      zoomAt(e.clientX, e.clientY, factor);
+    }, { passive: false });
+
+    function getClientPos(e){ return { x: e.clientX, y: e.clientY }; }
+
+    mapViewport.addEventListener('pointerdown', (e) => {
+      if (!view.isLoaded) return;
+      mapViewport.setPointerCapture(e.pointerId);
+      const p = getClientPos(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1) {
+        dragStart = { x: p.x, y: p.y, tx: view.tx, ty: view.ty };
+        pinchStart = null;
+      } else if (pointers.size === 2) {
+        const pts = Array.from(pointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const rect = mapViewport.getBoundingClientRect();
+        const cx = (pts[0].x + pts[1].x) / 2 - rect.left;
+        const cy = (pts[0].y + pts[1].y) / 2 - rect.top;
+
+        const ix = (cx - view.tx) / view.scale;
+        const iy = (cy - view.ty) / view.scale;
+
+        pinchStart = { dist, scale: view.scale, cx, cy, ix, iy };
+        dragStart = null;
+      }
+    });
+
+    mapViewport.addEventListener('pointermove', (e) => {
+      if (!view.isLoaded) return;
+      if (!pointers.has(e.pointerId)) return;
+
+      const p = getClientPos(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1 && dragStart) {
+        const dx = p.x - dragStart.x;
+        const dy = p.y - dragStart.y;
+        view.tx = dragStart.tx + dx;
+        view.ty = dragStart.ty + dy;
+        clampTransform();
+        applyTransform();
+        return;
+      }
+
+      if (pointers.size === 2 && pinchStart) {
+        const pts = Array.from(pointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const factor = dist / (pinchStart.dist || 1);
+        const newScale = Math.min(view.maxScale, Math.max(view.minScale, pinchStart.scale * factor));
+        view.scale = newScale;
+
+        view.tx = pinchStart.cx - pinchStart.ix * newScale;
+        view.ty = pinchStart.cy - pinchStart.iy * newScale;
+
+        clampTransform();
+        applyTransform();
+        setStatus(`Zoom: ${(view.scale * 100).toFixed(0)}%`);
+      }
+    });
+
+    function endPointer(e){
+      pointers.delete(e.pointerId);
+      if (pointers.size === 1) {
+        const remaining = Array.from(pointers.values())[0];
+        if (remaining) dragStart = { x: remaining.x, y: remaining.y, tx: view.tx, ty: view.ty };
+        pinchStart = null;
+      } else {
+        dragStart = null;
+        pinchStart = null;
+      }
+    }
+
+    mapViewport.addEventListener('pointerup', endPointer);
+    mapViewport.addEventListener('pointercancel', endPointer);
+    mapViewport.addEventListener('pointerleave', (e) => {
+      if (!mapViewport.hasPointerCapture(e.pointerId)) endPointer(e);
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+      if (!view.isLoaded) return;
+      const r = mapViewport.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1.12);
+    });
+    zoomOutBtn.addEventListener('click', () => {
+      if (!view.isLoaded) return;
+      const r = mapViewport.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 0.88);
+    });
+    fitBtn.addEventListener('click', fitToViewport);
+    resetBtn.addEventListener('click', resetView);
+
+    const ro = new ResizeObserver(() => {
+      if (!mapModal.classList.contains('show')) return;
+      if (!view.isLoaded) return;
+      clampTransform();
+      applyTransform();
+    });
+    ro.observe(mapViewport);
+
+    function openMapWindow(){
+      mapModal.classList.add('show');
+      mapModal.setAttribute('aria-hidden','false');
+
+      if (!mapImgSelect.value) mapImgSelect.value = MAPS[0].url;
+      if (!mapImg.src) setMapByUrl(mapImgSelect.value);
+
+      requestAnimationFrame(() => {
+        if (view.isLoaded) {
+          fitToViewport();
+          setStatus('Drag to pan • Wheel/pinch to zoom');
+        }
+      });
+    }
+
+    function closeMapWindow(){
+      mapModal.classList.remove('show');
+      mapModal.setAttribute('aria-hidden','true');
+      pointers.clear();
+      dragStart = null;
+      pinchStart = null;
+    }
+
+    openMapBtn?.addEventListener('click', openMapWindow);
+    mapClose?.addEventListener('click', closeMapWindow);
+    mapModal?.addEventListener('click', (e) => { if (e.target === mapModal) closeMapWindow(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mapModal.classList.contains('show')) closeMapWindow();
+    });
+
+    /***********************
+     * Init
+     ***********************/
+    window.addEventListener('DOMContentLoaded', async () => {
+      const session = await ensureSession();
+      if (!session) return;
+
+      const email = session.user?.email || '';
+      document.getElementById('userEmail').textContent = email || 'signed in';
+      const username = email ? email.split('@')[0] : 'PlayerOne';
+      document.getElementById('gamertag').textContent = username;
+
+      document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+      });
+
+      setMapByUrl(MAPS[0].url);
+
+      try{
+        const [chars, pets, weapons, loadouts] = await Promise.all([
+          loadJson(DATA.character.url),
+          loadJson(DATA.pet.url),
+          loadJson(DATA.weapon.url),
+          loadJson(DATA.loadout.url),
+        ]);
+
+        DATA.character.items = Array.isArray(chars) ? chars : [];
+        DATA.pet.items = Array.isArray(pets) ? pets : [];
+        DATA.weapon.items = Array.isArray(weapons) ? weapons : [];
+        DATA.loadout.items = Array.isArray(loadouts) ? loadouts : [];
+
+        buildHeroCarousel();
+        setCounts();
+
+        DATA.character.selected = 0;
+        DATA.pet.selected = 0;
+        DATA.weapon.selected = 0;
+        DATA.loadout.selected = 0;
+
+        applyQuickView('character');
+        applyQuickView('pet');
+        applyQuickView('weapon');
+        applyQuickView('loadout');
+      }catch(err){
+        console.error(err);
+        setCounts();
+      }
+    });
+
+    window.addEventListener('beforeunload', stopHeroCarousel);
+  </script>
+
+  <!-- Global full-site search -->
+  <script src="assets/js/global-search-index.js" defer></script>
+  <script src="assets/js/global-site-search.js" defer></script>
+</body>
+</html>

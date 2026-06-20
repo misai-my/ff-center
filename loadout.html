@@ -1,0 +1,2591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <!-- ✅ notch + safe-area support -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Loadout Gallery</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Supabase JS v2 (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --sb-w: 260px;
+      --sb-w-collapsed: 82px;
+
+      /* Grid sizing */
+      --item-min: 180px;
+      --item-gap: 12px;
+      --item-pad: 10px;
+      --item-radius: 16px;
+      --thumb-radius: 14px;
+    }
+
+    /* =========================
+     Theme palettes (dark/light)
+     ========================= */
+  
+  /* default is DARK (your current :root values) */
+  
+  /* LIGHT overrides */
+  :root[data-theme="light"]{
+    --bg:#f6f7fb;
+    --bg2:#eef2ff;
+  
+    --panel: rgba(255,255,255,.88);
+    --panel2: rgba(255,255,255,.82);
+  
+    --line: rgba(0,0,0,.10);
+    --ink:#0b1020;
+    --muted:#5b657a;
+  
+    --shadow: 0 18px 55px rgba(0,0,0,.14);
+  }
+  
+    /* Make form controls actually switch palettes */
+    html[data-theme="light"] select,
+    html[data-theme="light"] input{
+      color-scheme: light;
+      background: rgba(255,255,255,.78);
+      color: var(--ink);
+      border-color: rgba(0,0,0,.12);
+    }
+    html[data-theme="light"] select option{ background:#ffffff; color: var(--ink); }
+    
+    /* Topbar elements */
+    html[data-theme="light"] .search{
+      background: rgba(255,255,255,.70);
+      border-color: rgba(0,0,0,.12);
+    }
+    html[data-theme="light"] .search input::placeholder{ color: rgba(40,55,85,.45); }
+    
+    html[data-theme="light"] .icon-btn,
+    html[data-theme="light"] .userchip{
+      background: rgba(255,255,255,.70);
+      border-color: rgba(0,0,0,.12);
+      color: var(--ink);
+    }
+    
+    html[data-theme="light"] .logout{
+      background: rgba(255,255,255,.70);
+      border-color: rgba(0,0,0,.12);
+      color: rgba(11,16,32,.78);
+    }
+    
+    /* Pills / chips / fields / buttons */
+    html[data-theme="light"] .pill,
+    html[data-theme="light"] .chip{
+      background: rgba(255,255,255,.78);
+      border-color: rgba(0,0,0,.10);
+      color: rgba(11,16,32,.78);
+    }
+    html[data-theme="light"] .dot{ box-shadow: 0 0 0 3px rgba(0,0,0,.06); }
+    
+    html[data-theme="light"] .field{
+      background: rgba(255,255,255,.78);
+      border-color: rgba(0,0,0,.12);
+    }
+    html[data-theme="light"] .field label{ color: rgba(11,16,32,.80); }
+    
+    html[data-theme="light"] .btn{
+      background: rgba(255,255,255,.78);
+      border-color: rgba(0,0,0,.12);
+      color: rgba(11,16,32,.82);
+    }
+    html[data-theme="light"] .btn:hover{
+      background: rgba(255,255,255,.92);
+      border-color: rgba(77,211,255,.35);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12);
+    }
+    
+    /* Grid cards (THIS is the main readability fix) */
+    html[data-theme="light"] .item-card{
+      background: rgba(0,0,0,.035);
+      border-color: rgba(0,0,0,.10);
+    }
+    html[data-theme="light"] .item-card:hover{
+      background: rgba(0,0,0,.05);
+      border-color: rgba(255,189,89,.55);
+    }
+    html[data-theme="light"] .item-thumb{
+      background: rgba(0,0,0,.04);
+      border-color: rgba(0,0,0,.10);
+    }
+    html[data-theme="light"] .mode-badge{
+      background: rgba(255,255,255,.82);
+      border-color: rgba(0,0,0,.10);
+      color: rgba(11,16,32,.85);
+    }
+    html[data-theme="light"] .item-name{ color: rgba(11,16,32,.92); }
+    html[data-theme="light"] .item-desc{ color: rgba(11,16,32,.76); }
+    
+    /* Sidebar icon tiles */
+    html[data-theme="light"] .nav-ico{
+      background: rgba(0,0,0,.04);
+      border-color: rgba(0,0,0,.10);
+    }
+    
+    /* ===== Theme system ===== */
+:root{ color-scheme: dark; } /* default matches your current theme */
+
+html[data-theme="light"]{ color-scheme: light; }
+
+html[data-theme="light"]{
+  --bg:#f6f8ff;
+  --bg2:#eef2ff;
+
+  --panel: rgba(255,255,255,.72);
+  --panel2: rgba(255,255,255,.62);
+
+  --line: rgba(15,20,35,.12);
+  --ink:#0b1020;
+  --muted:#4a5570;
+
+  --shadow: 0 18px 60px rgba(0,0,0,.18);
+}
+
+/* Body background changes in light mode */
+html[data-theme="light"] body{
+  background:
+    radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.18), transparent 60%),
+    radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.18), transparent 60%),
+    radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.14), transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg2));
+}
+
+/* Decorative rings adapt */
+html[data-theme="light"] body::before{
+  border-color: rgba(77,211,255,.22);
+}
+html[data-theme="light"] body::after{
+  border-color: rgba(77,211,255,.18);
+}
+
+/* Inputs/selects adapt */
+select, input{
+  color-scheme: inherit;
+}
+html[data-theme="light"] select,
+html[data-theme="light"] input{
+  background: rgba(255,255,255,.55);
+}
+html[data-theme="light"] select option{
+  background: #ffffff;
+  color: var(--ink);
+}
+    
+    *{box-sizing:border-box}
+    html,body{min-height:100%}
+    body{
+      margin:0;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+    }
+    body.sb-lock{ overflow:hidden; }
+
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      filter: blur(.2px);
+      pointer-events:none;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    a{color:inherit}
+    select, input{
+      color-scheme: dark;
+      background: rgba(0,0,0,.28);
+      color: var(--ink);
+    }
+    select option{ background:#0b1020; color:var(--ink); }
+
+    /* Layout */
+    .app{
+      min-height: 100vh;
+      display:flex;
+      gap:18px;
+      padding:18px;
+      max-width: 1440px;
+      margin: 0 auto;
+      align-items:flex-start;
+    }
+
+    /* Mobile sidebar backdrop (drawer) */
+    .sb-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.60);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 80;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease;
+    }
+    .sb-backdrop.show{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    /* Sidebar */
+    .sidebar{
+      width: var(--sb-w);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position: sticky;
+      top: 18px;
+      height: calc(100vh - 36px);
+      transition: width .18s ease;
+      flex:0 0 auto;
+      z-index: 90;
+    }
+    .sidebar.collapsed{ width: var(--sb-w-collapsed); }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 16px 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.5px;
+      color:var(--brand);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size: 1.05rem;
+      letter-spacing:.6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+    .brand small{
+      display:block;
+      color: var(--muted);
+      font-size:.78rem;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+
+    .nav{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .nav::-webkit-scrollbar{width:10px}
+    .nav::-webkit-scrollbar-thumb{background: rgba(255,255,255,.08); border-radius:10px}
+    .nav::-webkit-scrollbar-track{background: transparent}
+
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--muted);
+      text-decoration:none;
+      transition: .2s ease;
+      cursor:pointer;
+      min-width:0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-item:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.08);
+      color: var(--ink);
+    }
+    .nav-item.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.14), rgba(77,211,255,.09));
+      border-color: rgba(255,189,89,.22);
+      color: var(--ink);
+    }
+    .nav-ico{
+      width:26px;height:26px;border-radius:10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      flex: 0 0 auto;
+    }
+    .nav-ico svg{width:14px;height:14px;opacity:.9}
+    .nav-label{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      min-width:0;
+    }
+
+    .sidebar.collapsed .brand h1,
+    .sidebar.collapsed .brand small,
+    .sidebar.collapsed .nav-label{display:none;}
+    .sidebar.collapsed .brand{justify-content:center;}
+    .sidebar.collapsed .brand-left{justify-content:center;}
+    .sidebar.collapsed .nav-item{
+      justify-content:center;
+      gap:0;
+      padding:10px 8px;
+    }
+
+    .sidebar-note{
+      font-size:.75rem;
+      color: var(--muted);
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    /* Main */
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width: 0;
+      gap: 14px;
+    }
+
+    /* Topbar */
+    .topbar{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      position: sticky;
+      top: 18px;
+      z-index: 60;
+    }
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      min-width: 0;
+    }
+    .search input{
+      width:100%;
+      background: transparent;
+      border:0;
+      outline:none;
+      color: var(--ink);
+      font-size: .95rem;
+      min-width: 0;
+    }
+    .search input::placeholder{color: rgba(170,177,197,.75)}
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+
+    .icon-btn{
+      width:42px;height:42px;border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition:.2s ease;
+      color: var(--ink);
+      flex:0 0 auto;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .icon-btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.08)}
+    .icon-btn svg{width:18px;height:18px;opacity:.92}
+
+    .userchip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      max-width: 260px;
+      min-width: 0;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(255,189,89,.30), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      flex:0 0 auto;
+    }
+    .usertext{min-width:0}
+    .usertext b{
+      display:block;
+      font-size:.92rem;
+      font-family: Orbitron, sans-serif;
+      color:var(--brand);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .usertext span{display:block; font-size:.78rem; color: var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+    .logout{
+      color: rgba(255,255,255,.70);
+      text-decoration:none;
+      font-size:.85rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      transition:.2s ease;
+      cursor:pointer;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logout:hover{
+      border-color: rgba(255,77,77,.35);
+      color: #ff8d8d;
+      box-shadow: 0 0 0 3px rgba(255,77,77,.10);
+    }
+
+    /* Card shell */
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card-inner{padding:14px}
+
+    .hero{
+      position:relative;
+      height: 150px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.10)),
+        url('https://i.imgur.com/qXFpizS.jpg') center/cover no-repeat;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(420px 220px at 55% 45%, rgba(255,189,89,.16), transparent 60%);
+      pointer-events:none;
+    }
+    .hero-content{
+      position:absolute;
+      left:16px; right:16px; bottom:14px;
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hero-title h2{
+      font-family: Orbitron, sans-serif;
+      font-size: 1.45rem;
+      color: var(--brand);
+      text-shadow: 0 0 18px rgba(255,189,89,.20);
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Controls */
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-bottom: 10px;
+    }
+    .controls-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      min-width:0;
+    }
+    .controls-right{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.86);
+      font-weight:900;
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:50%;
+      display:inline-block;
+      box-shadow: 0 0 0 3px rgba(255,255,255,.06);
+      background: var(--accent);
+    }
+
+    .field{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .field label{
+      font-size:.82rem;
+      font-weight:900;
+      color: rgba(244,246,255,.85);
+    }
+    .field select{
+      border:0;
+      outline:none;
+      padding: 6px 8px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+
+    .btn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.88);
+      cursor:pointer;
+      font-weight:900;
+      font-size:.82rem;
+      transition:.2s ease;
+      white-space:nowrap;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .btn:hover{
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+      border-color: rgba(77,211,255,.22);
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(255,189,89,.22), rgba(77,211,255,.10));
+      border-color: rgba(255,189,89,.22);
+    }
+
+    .section-title{
+      margin: 16px 0 10px 0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.4px;
+      font-size: 1.02rem;
+      color: rgba(244,246,255,.92);
+    }
+    .section-title .hint{
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color: var(--muted);
+      font-weight:700;
+      font-size: .82rem;
+      margin-left: 8px;
+      letter-spacing: 0;
+    }
+
+    /* Grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--item-min), 1fr));
+      gap: var(--item-gap);
+    }
+
+    .item-card{
+      position:relative;
+      padding: var(--item-pad);
+      border-radius: var(--item-radius);
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      cursor:pointer;
+      transition:.18s ease;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+      overflow:hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .item-card:hover{
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+      border-color: rgba(255,189,89,.18);
+    }
+
+    .item-thumb{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--thumb-radius);
+      background: rgba(0,0,0,.18);
+      border: 2px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      position:relative;
+    }
+    .item-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: center;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    .mode-badge{
+      position:absolute;
+      left:8px; top:8px;
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-size:.72rem;
+      font-weight:1000;
+      color: rgba(244,246,255,.92);
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.35);
+      box-shadow: 0 10px 25px rgba(0,0,0,.35);
+    }
+
+    .item-name{
+      font-size:.92rem;
+      font-weight:1100;
+      color: rgba(244,246,255,.95);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-align:center;
+      padding: 0 2px;
+    }
+
+    .item-chips{
+      display:flex;
+      justify-content:center;
+      gap:6px;
+      flex-wrap:wrap;
+      margin-top:-2px;
+    }
+    .chip{
+      font-size:.68rem;
+      font-weight:900;
+      color: rgba(244,246,255,.86);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 999px;
+      padding: 5px 7px;
+      white-space:nowrap;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* ✅ FULL description on cards (no clamp) */
+    .item-desc{
+      font-size: .78rem;
+      color: rgba(244,246,255,.78);
+      line-height: 1.1rem;
+    
+      /* remove clamp/cut */
+      max-height: none;
+      overflow: visible;
+      text-overflow: initial;
+      display: block;
+      -webkit-line-clamp: initial;
+      -webkit-box-orient: initial;
+    
+      /* keep formatting readable */
+      white-space: pre-line;          /* keeps \n\n line breaks */
+      word-break: break-word;
+      padding: 0 2px 2px 2px;
+    }
+    .empty-msg{
+      grid-column: 1 / -1;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      color: var(--muted);
+      font-weight: 800;
+      text-align: center;
+    }
+
+    /* Modal */
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modal.show{display:flex;}
+
+    .modal-card{
+      width: min(780px, 100%);
+      background: rgba(14, 18, 28, .92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: 0 26px 80px rgba(0,0,0,.65);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      max-height: min(760px, calc(100vh - 36px));
+    }
+
+    .modal-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal-top h3{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.6px;
+      color: var(--brand);
+      font-size: 1.15rem;
+      line-height: 1.25rem;
+    }
+    .modal-top p{
+      margin:6px 0 0 0;
+      color: var(--muted);
+      font-size:.82rem;
+      font-weight:700;
+      letter-spacing:.2px;
+      white-space:normal;
+    }
+
+    .modal-body{
+      padding: 12px 14px 14px 14px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      justify-content:flex-start;
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-row{
+      display:flex;
+      gap:12px;
+      align-items:stretch;
+      flex-wrap:wrap;
+    }
+    .modal-thumb{
+      width: 120px;
+      height: 120px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      flex: 0 0 auto;
+      display:grid;
+      place-items:center;
+    }
+    .modal-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position:center;
+      display:block;
+    }
+
+    .badge-row{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin: 0;
+      padding: 0;
+    }
+
+    .info-block{
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 10px 12px;
+    }
+    .info-block b{
+      display:block;
+      margin:0 0 6px 0;
+      color: rgba(244,246,255,.92);
+      font-size: .92rem;
+      font-weight:1000;
+    }
+    .info-block .txt{
+      margin:0;
+      color: rgba(244,246,255,.86);
+      font-size: .92rem;
+      line-height: 1.34rem;
+      white-space: pre-line; /* ✅ keep \n\n formatting */
+    }
+
+
+
+    /* Extra metadata: costs + Team Booster logos */
+    .cost-preview{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:-2px;
+    }
+    .mini-cost{
+      font-size:.68rem;
+      font-weight:1000;
+      color: rgba(255,189,89,.95);
+      border: 1px solid rgba(255,189,89,.18);
+      background: rgba(255,189,89,.08);
+      border-radius: 999px;
+      padding: 5px 7px;
+      white-space:nowrap;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .extra-wrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .meta-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap:8px;
+    }
+    .meta-card{
+      padding:9px 10px;
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      min-width:0;
+    }
+    .meta-card b{
+      margin:0 0 4px 0;
+      font-size:.82rem;
+      color: rgba(244,246,255,.94);
+      white-space:normal;
+      word-break:break-word;
+    }
+    .meta-card span,
+    .meta-card small{
+      display:block;
+      color: var(--muted);
+      font-size:.76rem;
+      line-height:1.1rem;
+      white-space:normal;
+      word-break:break-word;
+    }
+    .booster-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap:9px;
+    }
+    .booster-card{
+      display:grid;
+      grid-template-columns: 66px minmax(0, 1fr);
+      gap:10px;
+      align-items:start;
+      padding:10px;
+      border-radius:16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.09);
+      min-width:0;
+    }
+    .booster-logo{
+      width:66px;
+      height:58px;
+      border-radius:14px;
+      display:grid;
+      place-items:center;
+      color: var(--brand);
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 24px rgba(0,0,0,.25);
+      overflow:hidden;
+      padding:2px;
+    }
+    .booster-logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+    .booster-logo svg{width:26px;height:26px;display:block;}
+    .booster-mini-strip{
+      display:flex;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:5px;
+      margin:2px 0 0 0;
+    }
+    .booster-mini-icon{
+      width:38px;
+      height:42px;
+      border-radius:10px;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      padding:1px;
+      background: rgba(0,0,0,.24);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .booster-mini-icon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+    }
+    .booster-mini-icon svg{
+      width:19px;
+      height:19px;
+    }
+    .booster-copy{min-width:0;}
+    .booster-copy b{
+      margin:0 0 3px 0;
+      font-size:.84rem;
+      color: rgba(244,246,255,.96);
+      white-space:normal;
+      word-break:break-word;
+    }
+    .booster-copy .booster-effect{
+      color: rgba(244,246,255,.82);
+      font-size:.78rem;
+      line-height:1.14rem;
+      white-space:normal;
+      word-break:break-word;
+    }
+    .booster-copy .booster-cost{
+      display:inline-flex;
+      margin:2px 0 5px 0;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,189,89,.18);
+      background: rgba(255,189,89,.08);
+      color: rgba(255,189,89,.95);
+      font-size:.68rem;
+      font-weight:1000;
+    }
+    html[data-theme="light"] .mini-cost,
+    html[data-theme="light"] .booster-copy .booster-cost{
+      background: rgba(255,189,89,.18);
+      border-color: rgba(255,119,51,.20);
+      color: #8a3f00;
+    }
+    html[data-theme="light"] .meta-card,
+    html[data-theme="light"] .booster-card{
+      background: rgba(255,255,255,.62);
+      border-color: rgba(0,0,0,.10);
+    }
+    html[data-theme="light"] .booster-logo,
+    html[data-theme="light"] .booster-mini-icon{
+      background: rgba(255,255,255,.70);
+      border-color: rgba(0,0,0,.10);
+    }
+    html[data-theme="light"] .meta-card b,
+    html[data-theme="light"] .booster-copy b{ color: rgba(11,16,32,.92); }
+    html[data-theme="light"] .booster-copy .booster-effect{ color: rgba(11,16,32,.76); }
+
+    /* ============================================================
+       ✅ MOBILE OPTIMIZATION + DRAWER SIDEBAR
+       ============================================================ */
+    @media (max-width: 980px){
+      body::before, body::after{display:none;}
+
+      .app{
+        padding: 10px;
+        gap: 12px;
+        flex-direction: column;
+        max-width: 100%;
+        margin: 0;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+
+      /* drawer sidebar */
+      .sidebar{
+        position: fixed;
+        top: env(safe-area-inset-top);
+        left: 0;
+        height: calc(100dvh - env(safe-area-inset-top));
+        width: min(88vw, 340px);
+        transform: translateX(-110%);
+        transition: transform .18s ease;
+        border-radius: 0 22px 22px 0;
+        box-shadow: 0 30px 90px rgba(0,0,0,.70);
+        z-index: 90;
+      }
+      .sidebar.open{ transform: translateX(0); }
+
+      /* ignore collapsed layout on mobile (always show labels) */
+      .sidebar.collapsed{ width: min(88vw, 340px); }
+      .sidebar.collapsed .brand h1,
+      .sidebar.collapsed .brand small,
+      .sidebar.collapsed .nav-label{display:block;}
+      .sidebar.collapsed .brand{justify-content:flex-start;}
+      .sidebar.collapsed .brand-left{justify-content:flex-start;}
+      .sidebar.collapsed .nav-item{
+        justify-content:flex-start;
+        gap:10px;
+        padding:10px 10px;
+      }
+
+      .topbar{
+        top: env(safe-area-inset-top);
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        margin: -10px -10px 0 -10px; /* edge-to-edge */
+        padding: 10px 10px;
+        gap: 10px;
+      }
+
+      .usertext span{display:none;}
+      .usertext b{max-width: 45vw; font-size: .88rem;}
+
+      :root{ --item-min: 160px; }
+
+      .hero{height: 120px;}
+      .hero-content{left:12px; right:12px; bottom:12px;}
+      .hero-title h2{font-size: 1.18rem;}
+
+      /* modal becomes bottom sheet */
+      .modal{
+        align-items:flex-end;
+        padding: 10px;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      }
+      .modal-card{
+        width: 100%;
+        border-radius: 18px;
+        max-height: 92vh;
+      }
+      .modal-thumb{width:96px;height:96px;border-radius:16px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sb-backdrop" id="sbBackdrop" aria-hidden="true"></div>
+
+  <div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="logo">FF</div>
+          <div class="brand-text">
+            <h1>Free Fire</h1>
+            <small class="muted">Caster Dashboard</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a class="nav-item" href="home.html" data-page="home.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 13h7V4H4v9Zm9 7h7V4h-7v16ZM4 20h7v-5H4v5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M7 14c-1.7 0-3-1.3-3-3S5.3 8 7 8s3 1.3 3 3-1.3 3-3 3Zm10 0c-1.7 0-3-1.3-3-3s1.3-3 3-3 3 1.3 3 3-1.3 3-3 3ZM7 20c-2.8 0-5-1.8-5-4v-1h6v1c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2v-1h6v1c0 2.2-2.2 4-5 4H7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21l6-6m0 0 2 2 8-8-2-2-8 8Zm0 0-2-2 4-4 2 2-4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="loadout.html" data-page="loadout.html" title="Loadout">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M9 7V6a3 3 0 0 1 6 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M6 20V11a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 12h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 20v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            </span>
+          <span class="nav-label">Loadout</span>
+        </a>
+
+        <a class="nav-item" href="preset.html" data-page="preset.html" title="Preset Builder">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M14.5 4.5a5 5 0 0 0-6.7 6.7l-4.3 4.3a2 2 0 0 0 2.8 2.8l4.3-4.3A5 5 0 0 0 19.5 9.5l-3 3-2-2 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 4l1-1M20 6h1M18 5V4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Preset Builder</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M10 6 4 8v14l6-2 4 2 6-2V6l-6 2-4-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <!-- BR Data (analytics / chart) -->
+        <a class="nav-item" href="br-team.html" data-page="br-team.html" title="BR Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M4 19H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 17V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 17V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M16 17V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 11l4-3 4 5 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">BR Data</span>
+        </a>
+        
+        <!-- CS Draft (document + pencil) -->
+        <a class="nav-item" href="clash-draft-team.html" data-page="clash-draft-team.html" title="CS Draft">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 3h7l3 3v15a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 3v4a2 2 0 0 0 2 2h4"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 16l1-3 6-6 2 2-6 6-3 1Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Draft</span>
+        </a>
+
+        <!-- CS Data (crossed swords) -->
+        <a class="nav-item" href="clash-data.html" data-page="clash-data.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Data</span>
+        </a>
+
+         <!-- CS COMPARE (crossed swords) -->
+        <a class="nav-item" href="clash-compare.html" data-page="clash-compare.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <!-- subtle container -->
+              <path d="M7 4h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- crossed swords -->
+              <path d="M8 16l6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 16l-6-6"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- sword tips -->
+              <path d="M13.5 8.5l2-2 2 2-2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10.5 8.5l-2-2-2 2 2 2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- handles -->
+              <path d="M7.2 17.8l2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16.8 17.8l-2-2"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Compare</span>
+        </a>
+
+        <a class="nav-item" href="store.html" data-page="store.html" title="Stores">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 7h16M6 7l1 12h10l1-12M9 11h6M10 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Stores</span>
+        </a>
+        
+        <!-- Split View (two panes) -->
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Split View</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="sbToggle" aria-label="Sidebar" title="Sidebar">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path id="sbTogglePath" d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;opacity:.85">
+            <path d="M21 21l-4.3-4.3m1.3-5.2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Search loadouts (name / details)..." />
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path id="themeIconPath"
+                d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="userchip">
+            <div class="avatar"></div>
+            <div class="usertext">
+              <b id="gamertag">PlayerOne</b>
+              <span id="userEmail" class="muted">loading…</span>
+            </div>
+          </div>
+
+          <a class="logout" href="#" id="logoutBtn">Logout</a>
+        </div>
+      </header>
+
+      <section class="card">
+        <div class="hero">
+          <div class="hero-content">
+            <div class="hero-title">
+              <h2>Loadout Gallery</h2>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-inner">
+          <div class="controls">
+            <div class="controls-left">
+              <span class="pill"><span class="dot"></span><span id="modePill">Mode: BR</span></span>
+              <span class="pill"><span class="dot"></span><span id="langPill">Desc: EN</span></span>
+              <span class="pill" id="countPill" style="display:none;"></span>
+            </div>
+
+            <div class="controls-right">
+              <button class="btn primary" id="modeToggle" type="button" title="Toggle mode (BR/CS)" aria-pressed="false">Mode: BR</button>
+              <button class="btn" id="langToggle" type="button" title="Toggle language (EN/MS)" aria-pressed="false">Desc: EN</button>
+
+              <div class="field">
+                <label for="filterCategory">Category</label>
+                <select id="filterCategory" title="Filter category">
+                  <option value="">All</option>
+                  <option value="Loadout">Loadout</option>
+                </select>
+              </div>
+
+              <a class="btn" href="home.html">← Dashboard</a>
+            </div>
+          </div>
+
+          <div class="section-title">All Loadouts <span class="hint" id="hintText">(tap an item for BR/CS details)</span></div>
+          <div class="grid" id="loadoutGrid">
+            <div class="empty-msg">Loading…</div>
+          </div>
+
+          <div class="muted" style="font-size:.8rem; padding: 14px 2px 2px 2px;">
+            Free Fire Caster © 2025 — Misai Productions Sdn. Bhd.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal" id="infoModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Loadout Info">
+      <div class="modal-top">
+        <div style="min-width:0">
+          <h3 id="infoName">—</h3>
+          <p id="infoSub">—</p>
+        </div>
+        <button class="icon-btn" id="infoClose" aria-label="Close" title="Close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-row">
+          <div class="modal-thumb"><img id="infoImg" alt="" /></div>
+          <div style="min-width:0;flex:1">
+            <div class="badge-row" id="infoBadges"></div>
+            <div style="height:10px"></div>
+            <div class="badge-row">
+              <button class="btn" id="modalModeToggle" type="button" title="Toggle BR/CS in modal">Mode: BR</button>
+              <button class="btn" id="modalLangToggle" type="button" title="Toggle EN/MS in modal">Desc: EN</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <b id="infoTitle">Details</b>
+          <p class="txt" id="infoDesc">—</p>
+        </div>
+
+        <div class="extra-wrap" id="infoExtra" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * Supabase Auth
+     ***********************/
+    const client = supabase.createClient(
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+    );
+
+    async function ensureSession(){
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return null;
+      }
+      return session;
+    }
+
+    async function logout(){
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    }
+
+    /***********************
+     * Sidebar: desktop collapse + mobile drawer
+     ***********************/
+    const sidebar = document.getElementById('sidebar');
+    const sbBackdrop = document.getElementById('sbBackdrop');
+
+    const mqMobile = window.matchMedia('(max-width: 980px)');
+    const KEY_COLLAPSE = 'ff_sidebar_collapsed_v1';
+
+    const sbBtn = document.getElementById('sbToggle');
+    const sbPath = document.getElementById('sbTogglePath');
+
+    function isMobile(){ return mqMobile.matches; }
+
+    function setPath(d){
+      if (!sbPath) return;
+      sbPath.setAttribute('d', d);
+    }
+
+    function syncSidebarIcon(){
+      if (isMobile()){
+        setPath(sidebar.classList.contains('open')
+          ? 'M6 6l12 12M18 6L6 18'
+          : 'M4 7h16M4 12h16M4 17h16'
+        );
+      } else {
+        setPath(sidebar.classList.contains('collapsed')
+          ? 'M10 7l5 5-5 5'
+          : 'M14 7l-5 5 5 5'
+        );
+      }
+    }
+
+    function openMobileSidebar(){
+      sidebar.classList.add('open');
+      sbBackdrop.classList.add('show');
+      sbBackdrop.setAttribute('aria-hidden','false');
+      document.body.classList.add('sb-lock');
+      syncSidebarIcon();
+    }
+
+    function closeMobileSidebar(){
+      sidebar.classList.remove('open');
+      sbBackdrop.classList.remove('show');
+      sbBackdrop.setAttribute('aria-hidden','true');
+      document.body.classList.remove('sb-lock');
+      syncSidebarIcon();
+    }
+
+    (function initSidebar(){
+      const saved = localStorage.getItem(KEY_COLLAPSE);
+      if (saved === '1') sidebar.classList.add('collapsed');
+
+      syncSidebarIcon();
+
+      sbBtn?.addEventListener('click', () => {
+        if (isMobile()){
+          sidebar.classList.contains('open') ? closeMobileSidebar() : openMobileSidebar();
+          return;
+        }
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(KEY_COLLAPSE, sidebar.classList.contains('collapsed') ? '1' : '0');
+        syncSidebarIcon();
+      });
+
+      sbBackdrop?.addEventListener('click', closeMobileSidebar);
+
+      sidebar.querySelectorAll('.nav-item').forEach(a => {
+        a.addEventListener('click', () => { if (isMobile()) closeMobileSidebar(); });
+      });
+
+      mqMobile.addEventListener?.('change', () => {
+        closeMobileSidebar();
+        syncSidebarIcon();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('open')){
+          closeMobileSidebar();
+        }
+      });
+    })();
+
+    (function setActiveNav(){
+      const here = (location.pathname.split('/').pop() || 'loadout.html').toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(a => {
+        const page = (a.getAttribute('data-page') || '').toLowerCase();
+        a.classList.toggle('active', page === here);
+      });
+    })();
+
+    /***********************
+     * Data (fallback from your provided JSON)
+     ***********************/
+    const FALLBACK_LOADOUTS = [
+      {
+            "id": "enhance_hammer",
+            "name": "Enhance Hammer",
+            "category": "Loadout",
+            "image_url": "https://i.imgur.com/gClc4RN.png",
+            "loadout_id": "500000008",
+            "description": {
+                  "br": "Enhance your or your teammates' weapon on the panel.\n\n- Current BR enhancement cost: 400 FF Coins per enhancement.\n- Weapons can be enhanced through the panel for either your own or a teammate's weapon.\n- All attachments on an enhanced weapon are upgraded to the maximum level, with one attachment further boosted to the highest red-tier.\n- Enhanced attachments are permanently fixed to the weapon and cannot be removed.\n\nPatch note: OB51 launched this at 600 FF Coins, then OB52 reduced the enhancement cost from 600 to 400 FF Coins.",
+                  "cs": "Earn tokens via eliminations and enhance weapons / gloo walls during purchase phase.\n\n- A hammer token is granted for every two eliminations.\n- Tokens can be used during the purchase phase to enhance weapons in the CS Store, with the effect shared across the team.\n- Hammer tokens can also be spent to enhance Gloo Walls for your team to carry up to 6 Gloo Walls."
+            },
+            "description_ms": {
+                  "br": "Tingkatkan senjata anda atau rakan sepasukan melalui panel.\n\n- Kos peningkatan BR semasa: 400 Syiling FF untuk setiap peningkatan.\n- Senjata boleh ditingkatkan melalui panel untuk senjata anda sendiri atau rakan sepasukan.\n- Semua aksesori pada senjata yang ditingkatkan dinaik taraf ke tahap maksimum, dengan satu aksesori dipertingkatkan lagi ke tahap tertinggi (gred merah).\n- Aksesori yang telah ditingkatkan akan kekal pada senjata dan tidak boleh ditanggalkan.\n\nNota patch: OB51 bermula pada 600 Syiling FF, kemudian OB52 menurunkan kos peningkatan daripada 600 kepada 400 Syiling FF.",
+                  "cs": "Dapatkan token melalui eliminasi dan tingkatkan senjata / Gloo Wall semasa fasa pembelian.\n\n- Token tukul diberikan bagi setiap dua eliminasi.\n- Token boleh digunakan semasa fasa pembelian untuk meningkatkan senjata di Kedai CS, dan kesannya dikongsi bersama pasukan.\n- Token tukul juga boleh digunakan untuk meningkatkan Gloo Wall supaya pasukan anda boleh membawa sehingga 6 Gloo Wall."
+            },
+            "cost": {
+                  "br": {
+                        "currency": "FF Coins",
+                        "items": [
+                              {
+                                    "id": "weapon_enhancement",
+                                    "name": "Weapon Enhancement",
+                                    "cost": 400,
+                                    "previous_cost": 600,
+                                    "changed_in": "OB52",
+                                    "note": "Cost is per enhancement."
+                              }
+                        ]
+                  },
+                  "cs": {
+                        "currency": "Hammer Token",
+                        "items": [
+                              {
+                                    "id": "hammer_token",
+                                    "name": "Hammer Token",
+                                    "cost": 0,
+                                    "earn_rule": "1 token per 2 eliminations",
+                                    "note": "Used during purchase phase for team weapon or Gloo Wall enhancement."
+                              }
+                        ]
+                  }
+            },
+            "patch_history": [
+                  {
+                        "version": "OB51",
+                        "change": "Introduced as one of the four reworked loadouts; BR enhancement cost was 600 FF Coins."
+                  },
+                  {
+                        "version": "OB52",
+                        "change": "BR enhancement cost reduced from 600 to 400 FF Coins."
+                  }
+            ]
+      },
+      {
+            "id": "super_leg_pocket",
+            "name": "Super Leg Pocket",
+            "category": "Loadout",
+            "image_url": "https://i.imgur.com/hVW6fWi.png",
+            "loadout_id": "500000003",
+            "description": {
+                  "br": "Start with extra utility items and inventory advantages.\n\n- Receive bonfire, additional backpack space, extra armor, and other items at the start of the match.",
+                  "cs": "Start each match with key items and extra protection.\n\n- Receive bonfire, katana, extra armor, and other items at the start of the match."
+            },
+            "description_ms": {
+                  "br": "Mulakan dengan item utiliti tambahan dan kelebihan inventori.\n\n- Terima unggun api, ruang beg tambahan, perisai tambahan, dan item lain pada permulaan perlawanan.",
+                  "cs": "Mulakan setiap perlawanan dengan item penting dan perlindungan tambahan.\n\n- Terima unggun api, katana, perisai tambahan, dan item lain pada permulaan perlawanan."
+            },
+            "cost": {
+                  "br": {
+                        "currency": "FF Coins",
+                        "items": [],
+                        "note": "No direct purchase cost listed in official patch notes; this loadout grants starting utility."
+                  },
+                  "cs": {
+                        "currency": "CS Cash",
+                        "items": [],
+                        "note": "No direct purchase cost listed in official patch notes; this loadout grants starting utility."
+                  }
+            }
+      },
+      {
+            "id": "tactical_market",
+            "name": "Tactical Market",
+            "category": "Loadout",
+            "image_url": "https://i.imgur.com/OBnERWB.png",
+            "loadout_id": "500000004",
+            "description": {
+                  "br": "Access the tactical market anytime, anywhere.\n\n- Removed Hit List and Arsenal Key.\n- Monster Truck Drop can only be purchased within the first 600s of the match.\n- Binoculars price changed from 200 FF Coins to 100 FF Coins.\n- Launch Pads now have unlimited use; price increased to 1400 FF Coins.\n- Removed active skill cards.\n- UAV-Lite is now single-use and has purple rarity; purchase limit 2.\n- Added Heal UAV-Lite; purchase limit 2.",
+                  "cs": "Get a tactical panel each round and deploy a chosen gadget.\n\n- Open the panel and choose one gadget to deploy at a target location.\n- Super Bonfire: Heals teammates within 8m over time and provides combat boosts.\n- Smoke Vortex: Generates a swirling smoke field that blocks enemy vision.\n- Cyber Barricade: Deploys large barriers for cover.\n- These gadgets can also be purchased as throwable items from the CS Store."
+            },
+            "description_ms": {
+                  "br": "Akses pasaran bila-bila masa, di mana-mana sahaja (termasuk Bolt Maker).\n\n- Item yang boleh dibeli termasuk: Info Box, Arsenal Key, Hit List, Tactical Gadgets, Monster Truck, dan Bolt Maker baharu.\n- Bolt Maker: sehingga 5 kali setiap perlawanan, tersedia dalam 600 saat selepas perlawanan bermula.\n- Gunakan Bolt Maker untuk mencipta Lightning Zone yang bertahan selama 30 saat.\n- Kilat akan menyambar secara rawak dalam zon sekali setiap saat, memberikan 60 DMG kepada musuh.\n- Rakan sepasukan anda kebal terhadap kesan ini.",
+                  "cs": "Dapatkan panel taktikal setiap pusingan dan letakkan gajet pilihan.\n\n- Buka panel dan pilih satu gajet untuk diletakkan di lokasi sasaran.\n- Super Bonfire: Menyembuhkan rakan sepasukan dalam jarak 8m dari masa ke masa dan memberikan peningkatan pertempuran.\n- Smoke Vortex: Menghasilkan medan asap berpusing yang menghalang penglihatan musuh.\n- Cyber Barricade: Letakkan penghadang besar sebagai perlindungan.\n- Gajet ini juga boleh dibeli sebagai item balingan di Kedai CS."
+            },
+            "cost": {
+                  "br": {
+                        "currency": "FF Coins",
+                        "items": [
+                              {
+                                    "id": "binoculars",
+                                    "name": "Binoculars",
+                                    "cost": 100,
+                                    "previous_cost": 200,
+                                    "changed_in": "OB53"
+                              },
+                              {
+                                    "id": "launch_pad",
+                                    "name": "Launch Pad",
+                                    "cost": 1400,
+                                    "note": "Unlimited use; cooldown increased to 300s in OB53."
+                              },
+                              {
+                                    "id": "monster_truck_drop",
+                                    "name": "Monster Truck Drop",
+                                    "cost": null,
+                                    "availability": "Only purchasable within first 600s of match."
+                              },
+                              {
+                                    "id": "uav_lite",
+                                    "name": "UAV-Lite",
+                                    "cost": null,
+                                    "purchase_limit": 2,
+                                    "note": "Single-use; purple rarity."
+                              },
+                              {
+                                    "id": "heal_uav_lite",
+                                    "name": "Heal UAV-Lite",
+                                    "cost": null,
+                                    "purchase_limit": 2,
+                                    "note": "Added in OB53."
+                              }
+                        ]
+                  },
+                  "cs": {
+                        "currency": "CS Cash",
+                        "items": [
+                              {
+                                    "id": "super_bonfire",
+                                    "name": "Super Bonfire",
+                                    "cost": null,
+                                    "note": "Deployable from Tactical Market panel; also purchasable as throwable item from CS Store."
+                              },
+                              {
+                                    "id": "smoke_vortex",
+                                    "name": "Smoke Vortex",
+                                    "cost": null,
+                                    "note": "Deployable from Tactical Market panel; also purchasable as throwable item from CS Store."
+                              },
+                              {
+                                    "id": "cyber_barricade",
+                                    "name": "Cyber Barricade",
+                                    "cost": null,
+                                    "note": "Deployable from Tactical Market panel; also purchasable as throwable item from CS Store."
+                              }
+                        ]
+                  }
+            }
+      },
+      {
+            "id": "team_booster",
+            "name": "Team Booster",
+            "category": "Loadout",
+            "image_url": "https://i.imgur.com/RAG1acC.png",
+            "loadout_id": "500000005",
+            "description": {
+                  "br": "Equip up to 3 unique team boosts and swap anytime.\n\n- You'll have up to 3 boost slots to equip any 3 out of 6 available boosts.\n- Each boost can only be selected once per team and is applied to all teammates.\n- Current slot costs: Slot 1 is free at match start; Slot 2 costs 300 FF Coins; Slot 3 costs 600 FF Coins.\n- You can swap boosts at any time during the match, and unlocked slots remain active after you're revived.\n\nCurrent BR boost values after OB52:\n- HP/EP Recovery: Restore 2 EP and 1 HP every second.\n- Speed Up: Move 4% faster after not firing or not taking damage for 4s.\n- Extra Heal: Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.\n- Out-Zone Buff: When outside the Safe Zone, EP conversion rate +100% and move 12% faster.\n- Gloo Wall: Increase Gloo Wall's HP by 100.\n- Armor: Restore 3% armor durability every second.",
+                  "cs": "Helper Bot revives teammates remotely + Secret Bazaar team buffs in CS Store.\n\n- Get a Helper Bot per round.\n- When a teammate is knocked down within 16m, you can release the bot to help them up remotely.\n- The Helper Bot can be destroyed if shot.\n- The Helper Bot takes 7.5s to help up a teammate, reduced to 4s with Thiva's skill.\n- The Secret Bazaar section is available in the CS Store, offering team buffs for purchase."
+            },
+            "description_ms": {
+                  "br": "Lengkapkan sehingga 3 boost pasukan unik dan tukar bila-bila masa.\n\n- Anda mempunyai sehingga 3 slot boost untuk melengkapkan mana-mana 3 daripada 6 boost yang tersedia.\n- Setiap boost hanya boleh dipilih sekali setiap pasukan dan digunakan kepada semua rakan sepasukan.\n- Kos slot semasa: Slot 1 percuma pada permulaan perlawanan; Slot 2 berharga 300 Syiling FF; Slot 3 berharga 600 Syiling FF.\n- Anda boleh menukar boost pada bila-bila masa semasa perlawanan, dan slot yang dibuka kekal aktif selepas anda dihidupkan semula.\n\nNilai boost BR semasa selepas OB52:\n- HP/EP Recovery: Pulihkan 2 EP dan 1 HP setiap saat.\n- Speed Up: Bergerak 4% lebih laju selepas tidak menembak atau tidak menerima damage selama 4s.\n- Extra Heal: Terima 10% lebih banyak penyembuhan. Kesan hilang 2s selepas menerima damage di luar zon.\n- Out-Zone Buff: Semasa di luar Safe Zone, kadar penukaran EP +100% dan bergerak 12% lebih laju.\n- Gloo Wall: Tingkatkan HP Gloo Wall sebanyak 100.\n- Armor: Pulihkan 3% ketahanan armor setiap saat.",
+                  "cs": "Helper Bot menghidupkan rakan sepasukan dari jauh + Secret Bazaar buff pasukan di Kedai CS.\n\n- Dapatkan Helper Bot setiap pusingan.\n- Jika rakan sepasukan tumbang dalam jarak 16m, anda boleh lepaskan bot untuk membantu mereka bangun dari jauh.\n- Helper Bot boleh dimusnahkan jika ditembak.\n- Helper Bot mengambil masa 7.5s untuk membantu rakan sepasukan bangun, dikurangkan kepada 4s dengan skill Thiva.\n- Seksyen Secret Bazaar tersedia di Kedai CS untuk membeli buff pasukan."
+            },
+            "cost": {
+                  "br": {
+                        "currency": "FF Coins",
+                        "slot_unlocks": [
+                              {
+                                    "slot": 1,
+                                    "name": "Boost Slot 1",
+                                    "cost": 0,
+                                    "cost_text": "Free",
+                                    "unlock": "Automatically unlocked at match start."
+                              },
+                              {
+                                    "slot": 2,
+                                    "name": "Boost Slot 2",
+                                    "cost": 300,
+                                    "previous_cost": 400,
+                                    "changed_in": "OB52"
+                              },
+                              {
+                                    "slot": 3,
+                                    "name": "Boost Slot 3",
+                                    "cost": 600,
+                                    "previous_cost": 800,
+                                    "changed_in": "OB52"
+                              }
+                        ],
+                        "boost_selection_cost": 0,
+                        "note": "The cost is for unlocking extra boost slots. Selecting/swapping a boost has no separate official cost listed."
+                  },
+                  "cs": {
+                        "currency": "CS Cash",
+                        "items": [
+                              {
+                                    "id": "helper_bot",
+                                    "name": "Helper Bot",
+                                    "cost": 0,
+                                    "cost_text": "Granted per round",
+                                    "note": "Can revive a knocked teammate remotely if they are within 16m."
+                              },
+                              {
+                                    "id": "secret_bazaar",
+                                    "name": "Secret Bazaar Team Buffs",
+                                    "cost": null,
+                                    "cost_text": "Varies / not listed",
+                                    "note": "Official notes confirm the Secret Bazaar offers team buffs for purchase, but do not list every buff price."
+                              }
+                        ]
+                  }
+            },
+            "boosters": [
+                  {
+                        "id": "hp_ep_recovery",
+                        "name": "HP/EP Recovery",
+                        "short_name": "Recover",
+                        "mode": "br",
+                        "icon_key": "recover",
+                        "icon_label": "HP",
+                        "icon_emoji": "❤",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "Restore 2 EP and 1 HP every second.",
+                        "effect_ms": "Pulihkan 2 EP dan 1 HP setiap saat.",
+                        "effect_ob51": "Restore 2 EP and 1 HP every second.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "speed_up",
+                        "name": "Speed Up",
+                        "short_name": "Speed Up",
+                        "mode": "br",
+                        "icon_key": "speed",
+                        "icon_label": "SPD",
+                        "icon_emoji": "➤",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "Move 4% faster after not firing or not taking damage for 4s.",
+                        "effect_ms": "Bergerak 4% lebih laju selepas tidak menembak atau tidak menerima damage selama 4s.",
+                        "effect_ob51": "Move 7% faster after not firing or not taking damage for 4s.",
+                        "changed_in": "OB52",
+                        "change_note": "Out-of-combat sprint speed buff reduced from 7% to 4%.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "extra_heal",
+                        "name": "Extra Heal",
+                        "short_name": "Extra Heal",
+                        "mode": "br",
+                        "icon_key": "extra_heal",
+                        "icon_label": "+",
+                        "icon_emoji": "✚",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
+                        "effect_ms": "Terima 10% lebih banyak penyembuhan. Kesan hilang 2s selepas menerima damage di luar zon.",
+                        "effect_ob51": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "out_zone_buff",
+                        "name": "Out-Zone Buff",
+                        "short_name": "Out-Zone",
+                        "mode": "br",
+                        "icon_key": "out_zone",
+                        "icon_label": "ZONE",
+                        "icon_emoji": "◎",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "When outside the Safe Zone, EP conversion rate +100% and move 12% faster.",
+                        "effect_ms": "Semasa di luar Safe Zone, kadar penukaran EP +100% dan bergerak 12% lebih laju.",
+                        "effect_ob51": "When outside the Safe Zone, EP conversion rate +200% and move 7% faster.",
+                        "changed_in": "OB52",
+                        "change_note": "EP conversion changed from +200% to +100%; movement speed changed from +7% to +12%.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "gloo_wall",
+                        "name": "Gloo Wall",
+                        "short_name": "Gloo Wall",
+                        "mode": "br",
+                        "icon_key": "gloo_wall",
+                        "icon_label": "GW",
+                        "icon_emoji": "▰",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "Increase Gloo Wall's HP by 100.",
+                        "effect_ms": "Tingkatkan HP Gloo Wall sebanyak 100.",
+                        "effect_ob51": "Increase Gloo Wall's HP by 100.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "armor",
+                        "name": "Armor",
+                        "short_name": "Armor",
+                        "mode": "br",
+                        "icon_key": "armor",
+                        "icon_label": "ARM",
+                        "icon_emoji": "◆",
+                        "cost": 0,
+                        "currency": "FF Coins",
+                        "effect": "Restore 3% armor durability every second.",
+                        "effect_ms": "Pulihkan 3% ketahanan armor setiap saat.",
+                        "effect_ob51": "Restore 3% armor durability every second.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  },
+                  {
+                        "id": "helper_bot",
+                        "name": "Helper Bot",
+                        "short_name": "Helper Bot",
+                        "mode": "cs",
+                        "icon_key": "helper_bot",
+                        "icon_label": "BOT",
+                        "icon_emoji": "⚙",
+                        "cost": 0,
+                        "currency": "CS Cash",
+                        "cost_text": "Granted per round",
+                        "effect": "Remote revive bot for knocked teammates within 16m. Revive takes 7.5s, or 4s with Thiva's skill.",
+                        "effect_ms": "Bot bantuan untuk menghidupkan rakan sepasukan dari jauh dalam jarak 16m. Proses mengambil 7.5s, atau 4s dengan skill Thiva.",
+                        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+                  }
+            ],
+            "logo_sources": {
+                  "main_loadout_image": "https://i.imgur.com/RAG1acC.png",
+                  "official_patch_image_contains_loadout_logo": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg",
+                  "standalone_booster_icons_status": "Standalone official booster icon files were not publicly available in the checked sources; this JSON uses icon_key/icon_label fallbacks for UI rendering.",
+                  "official_loadout_system_image": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg"
+            },
+            "patch_history": [
+                  {
+                        "version": "OB51",
+                        "change": "Team Booster introduced. BR slot costs were Slot 1 free, Slot 2 400 FF Coins, Slot 3 800 FF Coins."
+                  },
+                  {
+                        "version": "OB52",
+                        "change": "Team Booster Slot 2 reduced to 300 FF Coins and Slot 3 reduced to 600 FF Coins. Speed Up reduced from 7% to 4%. Out-Zone changed from +200% EP conversion / +7% speed to +100% EP conversion / +12% speed."
+                  },
+                  {
+                        "version": "OB53",
+                        "change": "Quick Messages added prompts when selecting a team buff or deploying Helper Bot; Helper Bot display/progress was optimized."
+                  }
+            ]
+      }
+];
+
+    /***********************
+     * Mode + Language toggles
+     ***********************/
+    const KEY_LANG = 'ff_loadout_desc_lang_v1'; // 'en' / 'ms'
+    const KEY_MODE = 'ff_loadout_mode_v1';      // 'br' / 'cs'
+
+    let useMS = (localStorage.getItem(KEY_LANG) === 'ms');
+    let mode = (localStorage.getItem(KEY_MODE) === 'cs') ? 'cs' : 'br';
+
+    const langToggle = document.getElementById('langToggle');
+    const modeToggle = document.getElementById('modeToggle');
+    const modalLangToggle = document.getElementById('modalLangToggle');
+    const modalModeToggle = document.getElementById('modalModeToggle');
+
+    const langPill = document.getElementById('langPill');
+    const modePill = document.getElementById('modePill');
+
+    function safeText(v){ return (v ?? '').toString(); }
+    function stripZW(s){ return safeText(s).replace(/[\u200B-\u200D\uFEFF]/g, ''); }
+    function tidyOneLine(v){
+      return stripZW(v)
+        .replace(/\r\n/g, '\n')
+        .replace(/\s*\n+\s*/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+    function tidyKeepLines(v){
+      return stripZW(v)
+        .replace(/\r\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
+    function getDetails(item){
+      const dEN = item?.description?.[mode] ?? '';
+      const dMS = item?.description_ms?.[mode] ?? '';
+      if (useMS) return tidyKeepLines(dMS || dEN || '—');
+      return tidyKeepLines(dEN || dMS || '—');
+    }
+
+    function getPreview(item){
+      const raw = getDetails(item);
+      const firstLine = raw.split('\n').map(s => s.trim()).find(Boolean) || '—';
+      return tidyOneLine(firstLine);
+    }
+
+    function syncTogglesUI(){
+      const modeLabel = mode.toUpperCase();
+      const langLabel = useMS ? 'MS' : 'EN';
+
+      modeToggle.textContent = `Mode: ${modeLabel}`;
+      modeToggle.setAttribute('aria-pressed', mode === 'cs' ? 'true' : 'false');
+
+      langToggle.textContent = `Desc: ${langLabel}`;
+      langToggle.setAttribute('aria-pressed', useMS ? 'true' : 'false');
+
+      modePill.textContent = `Mode: ${modeLabel}`;
+      langPill.textContent = `Desc: ${langLabel}`;
+
+      modalModeToggle.textContent = `Mode: ${modeLabel}`;
+      modalLangToggle.textContent = `Desc: ${langLabel}`;
+    }
+
+    function toggleMode(){
+      mode = (mode === 'br') ? 'cs' : 'br';
+      localStorage.setItem(KEY_MODE, mode);
+      syncTogglesUI();
+      renderLoadouts(); // small dataset; simplest
+      if (infoModal.classList.contains('show') && lastOpenedItem) openInfo(lastOpenedItem, true);
+    }
+
+    function toggleLang(){
+      useMS = !useMS;
+      localStorage.setItem(KEY_LANG, useMS ? 'ms' : 'en');
+      syncTogglesUI();
+      renderLoadouts();
+      if (infoModal.classList.contains('show') && lastOpenedItem) openInfo(lastOpenedItem, true);
+    }
+
+    modeToggle?.addEventListener('click', toggleMode);
+    langToggle?.addEventListener('click', toggleLang);
+    modalModeToggle?.addEventListener('click', toggleMode);
+    modalLangToggle?.addEventListener('click', toggleLang);
+
+
+    /***********************
+ * Theme Toggle (dark/light)
+ ***********************/
+const KEY_THEME = 'ff_theme_v1'; // 'dark' | 'light'
+const themeBtn = document.getElementById('themeToggle');
+const themeIconPath = document.getElementById('themeIconPath');
+
+function getSystemTheme(){
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+    ? 'light' : 'dark';
+}
+
+function setTheme(theme){
+  const t = (theme === 'light') ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem(KEY_THEME, t);
+  syncThemeIcon();
+}
+
+function syncThemeIcon(){
+  const t = document.documentElement.getAttribute('data-theme') || 'dark';
+
+  // Moon icon for switching to dark, Sun icon for switching to light
+  const moonPath = "M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z";
+  const sunPath  = "M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0-16v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41";
+
+  // If current is light, show moon (switch to dark). If current is dark, show sun (switch to light).
+  if (themeIconPath){
+    themeIconPath.setAttribute('d', (t === 'light') ? moonPath : sunPath);
+  }
+
+  if (themeBtn){
+    themeBtn.title = (t === 'light') ? 'Switch to Dark' : 'Switch to Light';
+    themeBtn.setAttribute('aria-label', themeBtn.title);
+  }
+}
+
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(cur === 'light' ? 'dark' : 'light');
+}
+
+// init theme early
+(function initTheme(){
+  const saved = localStorage.getItem(KEY_THEME);
+  setTheme(saved || getSystemTheme());
+  themeBtn?.addEventListener('click', toggleTheme);
+
+  // If user never chose a theme, follow system changes live
+  if (!saved && window.matchMedia){
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    mq.addEventListener?.('change', () => setTheme(getSystemTheme()));
+  }
+})();
+    /***********************
+     * Data + Rendering
+     ***********************/
+    // ✅ If you host a real file, keep it beside this HTML: /loadout.json
+    const LOADOUT_URL = 'loadout.json';
+
+    let allItems = [];
+    let currentSearch = '';
+    let currentCategory = '';
+
+    const loadoutGrid = document.getElementById('loadoutGrid');
+    const countPill = document.getElementById('countPill');
+    const topSearch = document.getElementById('searchInput');
+    const filterCategory = document.getElementById('filterCategory');
+
+
+    const TEAM_BOOSTER_ICON_BASE = 'assets/team_boosters/';
+    const TEAM_BOOSTER_ICON_MAP = {
+      hp_ep_recovery: `${TEAM_BOOSTER_ICON_BASE}1_recover.png`,
+      recover: `${TEAM_BOOSTER_ICON_BASE}1_recover.png`,
+      speed_up: `${TEAM_BOOSTER_ICON_BASE}2_speed_up.png`,
+      speed: `${TEAM_BOOSTER_ICON_BASE}2_speed_up.png`,
+      extra_heal: `${TEAM_BOOSTER_ICON_BASE}3_extra_heal.png`,
+      out_zone_buff: `${TEAM_BOOSTER_ICON_BASE}4_buff.png`,
+      out_zone: `${TEAM_BOOSTER_ICON_BASE}4_buff.png`,
+      buff: `${TEAM_BOOSTER_ICON_BASE}4_buff.png`,
+      gloo_wall: `${TEAM_BOOSTER_ICON_BASE}5_gloo_wall.png`,
+      armor: `${TEAM_BOOSTER_ICON_BASE}6_armor.png`
+    };
+
+    function getBoosterIconUrl(boost){
+      if (!boost) return '';
+      return boost.icon_url
+        || TEAM_BOOSTER_ICON_MAP[boost.id]
+        || TEAM_BOOSTER_ICON_MAP[boost.icon_key]
+        || '';
+    }
+
+    function fillBoosterLogo(container, boost){
+      if (!container || !boost) return;
+      container.innerHTML = '';
+      const url = getBoosterIconUrl(boost);
+      if (url){
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = boost.name || boost.short_name || 'Team Booster';
+        img.loading = 'lazy';
+        img.onerror = () => {
+          container.innerHTML = boosterLogoSvg(boost.icon_key, boost.icon_label || boost.short_name || boost.name);
+        };
+        container.appendChild(img);
+        return;
+      }
+      container.innerHTML = boosterLogoSvg(boost.icon_key, boost.icon_label || boost.short_name || boost.name);
+    }
+
+    function makeBoosterMiniIcon(boost){
+      const box = document.createElement('span');
+      box.className = 'booster-mini-icon';
+      box.title = boost.name || boost.short_name || 'Team Booster';
+      fillBoosterLogo(box, boost);
+      return box;
+    }
+
+    function getModeCostMeta(item){
+      return item?.cost?.[mode] || null;
+    }
+
+    function formatCost(value, currency, fallback=''){
+      if (value === 0) return 'Free';
+      if (value === null || value === undefined || value === '') return fallback || 'Not listed';
+      return `${value} ${currency || ''}`.trim();
+    }
+
+    function getCostSummary(item){
+      const meta = getModeCostMeta(item);
+      if (!meta) return '';
+      const currency = meta.currency || '';
+
+      if (Array.isArray(meta.slot_unlocks) && meta.slot_unlocks.length){
+        const parts = meta.slot_unlocks.map(s => s.cost_text || formatCost(s.cost, currency));
+        return `Slots: ${parts.join(' / ')}`;
+      }
+
+      if (Array.isArray(meta.items) && meta.items.length){
+        const priced = meta.items.find(x => typeof x.cost === 'number' && x.cost > 0);
+        if (priced) return `${priced.name}: ${formatCost(priced.cost, currency)}`;
+        const free = meta.items.find(x => x.cost === 0 || x.cost_text);
+        if (free) return `${free.name}: ${free.cost_text || formatCost(free.cost, currency)}`;
+        return 'Costs: varies / not listed';
+      }
+
+      if (meta.note) return 'Cost: not listed';
+      return '';
+    }
+
+    function getActiveBoosters(item){
+      const list = Array.isArray(item?.boosters) ? item.boosters : [];
+      return list.filter(b => !b.mode || b.mode === mode);
+    }
+
+    function getBoosterEffect(boost){
+      if (!boost) return '';
+      if (useMS) return tidyKeepLines(boost.effect_ms || boost.effect || '');
+      return tidyKeepLines(boost.effect || boost.effect_ms || '');
+    }
+
+    function getBoosterCostText(boost){
+      if (!boost) return '';
+      if (boost.cost_text) return boost.cost_text;
+      return formatCost(boost.cost, boost.currency || getModeCostMeta(lastOpenedItem)?.currency || '');
+    }
+
+    function boosterLogoSvg(key, label=''){
+      const common = 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+      const map = {
+        recover: `<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M20.8 5.8a5 5 0 0 0-7.1 0L12 7.5l-1.7-1.7a5 5 0 1 0-7.1 7.1L12 21l8.8-8.1a5 5 0 0 0 0-7.1Z"/><path ${common} d="M6 12h3l1-2 2 5 1.5-3H18"/></svg>`,
+        speed: `<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M4 17h8M4 12h12M4 7h8"/><path ${common} d="M15 5l5 7-5 7"/></svg>`,
+        extra_heal: `<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M12 3v18M3 12h18"/><path ${common} d="M7 7h10v10H7z"/></svg>`,
+        out_zone: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle ${common} cx="12" cy="12" r="8"/><path ${common} d="M12 4v3M12 17v3M4 12h3M17 12h3"/><path ${common} d="M9 12l2 2 4-5"/></svg>`,
+        gloo_wall: `<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M5 20V9l7-5 7 5v11"/><path ${common} d="M5 13h14M9 20v-7M15 20v-7"/></svg>`,
+        armor: `<svg viewBox="0 0 24 24" aria-hidden="true"><path ${common} d="M12 3l8 3v6c0 5-3.4 8.2-8 9-4.6-.8-8-4-8-9V6l8-3Z"/><path ${common} d="M9 12l2 2 4-5"/></svg>`,
+        helper_bot: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect ${common} x="5" y="7" width="14" height="11" rx="3"/><path ${common} d="M12 7V4M9 12h.01M15 12h.01M9 16h6"/></svg>`
+      };
+      if (map[key]) return map[key];
+      return `<span style="font-size:.72rem;font-weight:1000;">${tidyOneLine(label).slice(0,4)}</span>`;
+    }
+
+    function appendTextBlock(parent, title, text){
+      if (!text) return;
+      const block = document.createElement('div');
+      block.className = 'info-block';
+      const b = document.createElement('b');
+      b.textContent = title;
+      const p = document.createElement('p');
+      p.className = 'txt';
+      p.textContent = text;
+      block.appendChild(b);
+      block.appendChild(p);
+      parent.appendChild(block);
+    }
+
+    function renderExtraInfo(item){
+      const wrap = document.getElementById('infoExtra');
+      if (!wrap) return;
+      wrap.innerHTML = '';
+
+      const meta = getModeCostMeta(item);
+      if (meta){
+        const block = document.createElement('div');
+        block.className = 'info-block';
+        const title = document.createElement('b');
+        title.textContent = `Cost / Unlocks (${mode.toUpperCase()})`;
+        block.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'meta-grid';
+        const currency = meta.currency || '';
+
+        const entries = Array.isArray(meta.slot_unlocks) && meta.slot_unlocks.length
+          ? meta.slot_unlocks
+          : (Array.isArray(meta.items) ? meta.items : []);
+
+        entries.forEach(entry => {
+          const card = document.createElement('div');
+          card.className = 'meta-card';
+          const name = document.createElement('b');
+          name.textContent = entry.name || entry.id || 'Cost';
+          const cost = document.createElement('span');
+          cost.textContent = entry.cost_text || formatCost(entry.cost, currency);
+          card.appendChild(name);
+          card.appendChild(cost);
+          const noteText = entry.unlock || entry.earn_rule || entry.availability || entry.note || '';
+          if (noteText){
+            const note = document.createElement('small');
+            note.textContent = noteText;
+            card.appendChild(note);
+          }
+          if (entry.previous_cost !== undefined){
+            const prev = document.createElement('small');
+            prev.textContent = `Previous: ${formatCost(entry.previous_cost, currency)}${entry.changed_in ? ' • ' + entry.changed_in : ''}`;
+            card.appendChild(prev);
+          }
+          grid.appendChild(card);
+        });
+
+        if (entries.length) block.appendChild(grid);
+        if (meta.note){
+          const note = document.createElement('p');
+          note.className = 'txt';
+          note.style.marginTop = entries.length ? '10px' : '0';
+          note.textContent = meta.note;
+          block.appendChild(note);
+        }
+        wrap.appendChild(block);
+      }
+
+      const boosters = getActiveBoosters(item);
+      if (boosters.length){
+        const block = document.createElement('div');
+        block.className = 'info-block';
+        const title = document.createElement('b');
+        title.textContent = `${item.name} Logos & Effects (${mode.toUpperCase()})`;
+        block.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'booster-grid';
+
+        boosters.forEach(boost => {
+          const card = document.createElement('div');
+          card.className = 'booster-card';
+
+          const logo = document.createElement('div');
+          logo.className = 'booster-logo';
+          fillBoosterLogo(logo, boost);
+
+          const copy = document.createElement('div');
+          copy.className = 'booster-copy';
+
+          const name = document.createElement('b');
+          name.textContent = boost.name || 'Boost';
+
+          const cost = document.createElement('span');
+          cost.className = 'booster-cost';
+          cost.textContent = getBoosterCostText(boost);
+
+          const effect = document.createElement('div');
+          effect.className = 'booster-effect';
+          effect.textContent = getBoosterEffect(boost);
+
+          copy.appendChild(name);
+          if (cost.textContent) copy.appendChild(cost);
+          copy.appendChild(effect);
+
+          card.appendChild(logo);
+          card.appendChild(copy);
+          grid.appendChild(card);
+        });
+
+        block.appendChild(grid);
+        wrap.appendChild(block);
+      }
+
+      if (Array.isArray(item?.patch_history) && item.patch_history.length){
+        const lines = item.patch_history.map(x => `- ${x.version}: ${x.change}`).join('\n');
+        appendTextBlock(wrap, 'Patch History', lines);
+      }
+    }
+
+
+    function makeSearchBlob(item){
+      const boosterBits = (Array.isArray(item?.boosters) ? item.boosters : []).flatMap(b => [
+        b.name, b.short_name, b.effect, b.effect_ms, b.change_note, b.icon_key
+      ]);
+      const costBits = [getCostSummary(item)];
+      const bits = [
+        tidyOneLine(item?.name),
+        tidyOneLine(item?.category),
+        tidyOneLine(item?.description?.br),
+        tidyOneLine(item?.description?.cs),
+        tidyOneLine(item?.description_ms?.br),
+        tidyOneLine(item?.description_ms?.cs),
+        ...boosterBits.map(tidyOneLine),
+        ...costBits.map(tidyOneLine)
+      ].filter(Boolean).join(' ');
+      return bits.toLowerCase();
+    }
+
+    function makeCard(item){
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.tabIndex = 0;
+
+      const name = tidyOneLine(item?.name) || 'Unknown';
+      const category = tidyOneLine(item?.category) || 'N/A';
+
+      card.dataset.search = makeSearchBlob(item);
+      card.dataset.category = category.toLowerCase();
+
+      const thumb = document.createElement('div');
+      thumb.className = 'item-thumb';
+
+      const img = document.createElement('img');
+      img.src = item?.image_url || '';
+      img.alt = name;
+      img.loading = 'lazy';
+      img.referrerPolicy = 'no-referrer';
+
+      const badge = document.createElement('div');
+      badge.className = 'mode-badge';
+      badge.textContent = mode.toUpperCase();
+
+      thumb.appendChild(img);
+      thumb.appendChild(badge);
+
+      const nm = document.createElement('div');
+      nm.className = 'item-name';
+      nm.textContent = name;
+
+      const chips = document.createElement('div');
+      chips.className = 'item-chips';
+
+      const chipCat = document.createElement('span');
+      chipCat.className = 'chip';
+      chipCat.textContent = category;
+      chips.appendChild(chipCat);
+
+      const chipLang = document.createElement('span');
+      chipLang.className = 'chip';
+      chipLang.textContent = useMS ? 'MS' : 'EN';
+      chips.appendChild(chipLang);
+
+      const costText = getCostSummary(item);
+      if (costText){
+        const chipCost = document.createElement('span');
+        chipCost.className = 'mini-cost';
+        chipCost.textContent = costText;
+        chips.appendChild(chipCost);
+      }
+
+      const boosters = getActiveBoosters(item);
+      if (boosters.length){
+        const chipBoosts = document.createElement('span');
+        chipBoosts.className = 'chip';
+        chipBoosts.textContent = `${boosters.length} ${mode === 'br' ? 'boosts' : 'tool'}`;
+        chips.appendChild(chipBoosts);
+      }
+
+      const boosterStrip = document.createElement('div');
+      boosterStrip.className = 'booster-mini-strip';
+      if (boosters.length){
+        boosters.forEach(boost => boosterStrip.appendChild(makeBoosterMiniIcon(boost)));
+      }
+
+      const desc = document.createElement('div');
+      desc.className = 'item-desc';
+      desc.textContent = getDetails(item); // ✅ full description on card
+
+      card.appendChild(thumb);
+      card.appendChild(nm);
+      card.appendChild(chips);
+      if (boosterStrip.childElementCount) card.appendChild(boosterStrip);
+      card.appendChild(desc);
+
+      card.addEventListener('click', () => openInfo(item));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openInfo(item); }
+      });
+
+      return card;
+    }
+
+    function ensureEmptyMsg(){
+      let msg = loadoutGrid.querySelector('.empty-msg');
+      if (!msg){
+        msg = document.createElement('div');
+        msg.className = 'empty-msg';
+        msg.textContent = 'No loadouts match your filters.';
+        loadoutGrid.appendChild(msg);
+      }
+      return msg;
+    }
+
+    function applyFilters(){
+      const q = (currentSearch || '').toLowerCase().trim();
+      const cat = (currentCategory || '').toLowerCase().trim();
+
+      const cards = [...loadoutGrid.querySelectorAll('.item-card')];
+      let visible = 0;
+
+      cards.forEach(el => {
+        const blob = el.dataset.search || '';
+        const c = el.dataset.category || '';
+        const hit = (!q || blob.includes(q)) && (!cat || c === cat);
+        el.style.display = hit ? '' : 'none';
+        if (hit) visible++;
+      });
+
+      const empty = ensureEmptyMsg();
+      empty.style.display = visible ? 'none' : '';
+
+      if (countPill){
+        countPill.style.display = '';
+        countPill.textContent = `Showing: ${visible} item${visible===1?'':'s'}`;
+      }
+    }
+
+    function renderLoadouts(){
+      loadoutGrid.innerHTML = '';
+
+      const items = Array.isArray(allItems) ? allItems.slice() : [];
+      items.sort((a,b) => tidyOneLine(a?.name).localeCompare(tidyOneLine(b?.name)));
+
+      if (!items.length){
+        loadoutGrid.innerHTML = '<div class="empty-msg">No loadouts found.</div>';
+        if (countPill) countPill.style.display = 'none';
+        return;
+      }
+
+      items.forEach(it => loadoutGrid.appendChild(makeCard(it)));
+      applyFilters();
+    }
+
+    async function loadLoadouts(){
+      loadoutGrid.innerHTML = '<div class="empty-msg">Loading…</div>';
+
+      // Try fetch real file first; fallback to provided JSON if not found (e.g., local dev)
+      try{
+        const url = `${LOADOUT_URL}?ts=${Date.now()}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        allItems = Array.isArray(data) ? data : FALLBACK_LOADOUTS;
+      }catch(_){
+        allItems = FALLBACK_LOADOUTS;
+      }
+
+      renderLoadouts();
+    }
+
+    /***********************
+     * Modal
+     ***********************/
+    const infoModal = document.getElementById('infoModal');
+    const infoClose = document.getElementById('infoClose');
+    const infoName = document.getElementById('infoName');
+    const infoSub = document.getElementById('infoSub');
+    const infoBadges = document.getElementById('infoBadges');
+    const infoTitle = document.getElementById('infoTitle');
+    const infoDesc = document.getElementById('infoDesc');
+    const infoImg = document.getElementById('infoImg');
+    const infoExtra = document.getElementById('infoExtra');
+
+    let lastOpenedItem = null;
+
+    function pill(text){
+      const el = document.createElement('span');
+      el.className = 'pill';
+      const d = document.createElement('span');
+      d.className = 'dot';
+      el.appendChild(d);
+      el.appendChild(document.createTextNode(text));
+      return el;
+    }
+
+    function openInfo(item, keepOpen=false){
+      lastOpenedItem = item;
+
+      const name = tidyOneLine(item?.name) || '—';
+      const category = tidyOneLine(item?.category) || 'N/A';
+
+      infoName.textContent = name;
+      infoSub.textContent = `${category} • ${mode.toUpperCase()} • ${useMS ? 'MS' : 'EN'}`;
+
+      infoBadges.innerHTML = '';
+      infoBadges.appendChild(pill(`Category: ${category}`));
+      infoBadges.appendChild(pill(`Mode: ${mode.toUpperCase()}`));
+      infoBadges.appendChild(pill(`Desc: ${useMS ? 'MS' : 'EN'}`));
+
+      infoTitle.textContent = `Details (${mode.toUpperCase()})`;
+      infoDesc.textContent = getDetails(item);
+      renderExtraInfo(item);
+
+      infoImg.src = item?.image_url || '';
+      infoImg.alt = name;
+      infoImg.referrerPolicy = 'no-referrer';
+
+      syncTogglesUI();
+
+      if (!keepOpen){
+        infoModal.classList.add('show');
+        infoModal.setAttribute('aria-hidden','false');
+      }
+    }
+
+    function closeInfo(){
+      infoModal.classList.remove('show');
+      infoModal.setAttribute('aria-hidden','true');
+    }
+
+    infoClose?.addEventListener('click', closeInfo);
+    infoModal?.addEventListener('click', (e) => { if (e.target === infoModal) closeInfo(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && infoModal.classList.contains('show')) closeInfo(); });
+
+    /***********************
+     * Events
+     ***********************/
+    topSearch?.addEventListener('input', (e) => {
+      currentSearch = e.target.value || '';
+      applyFilters();
+    });
+
+    filterCategory?.addEventListener('change', (e) => {
+      currentCategory = e.target.value || '';
+      applyFilters();
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
+
+    /***********************
+     * Init
+     ***********************/
+    window.addEventListener('DOMContentLoaded', async () => {
+      syncTogglesUI();
+
+      const session = await ensureSession();
+      if (!session) return;
+
+      const email = session.user?.email || '';
+      document.getElementById('userEmail').textContent = email || 'signed in';
+      const username = email ? email.split('@')[0] : 'PlayerOne';
+      document.getElementById('gamertag').textContent = username;
+
+      try{
+        await loadLoadouts();
+      }catch(err){
+        console.error('Error loading loadout data:', err);
+        loadoutGrid.innerHTML = '<div class="empty-msg">Error loading loadout data.</div>';
+        if (countPill) countPill.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>

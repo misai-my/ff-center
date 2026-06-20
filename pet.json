@@ -1,0 +1,232 @@
+[
+  {
+    "name": "Arvon",
+    "image_url": "https://i.imgur.com/FISOMJy.png",
+    "skill": "DINOCULARS",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "INFO",
+    "description": "Detect the number of enemies in a 50m radius no matter what position they are in. Lasts for 6s. Info is shared with team. Max use x3 per match",
+    "description_ms": "Mengesan bilangan musuh dalam radius 50m tidak kira kedudukan mereka. Bertahan selama 6 saat. Maklumat dikongsi dengan pasukan. Penggunaan maksimum x3 setiap perlawanan"
+  },
+  {
+    "name": "Agent Hop",
+    "image_url": "https://i.imgur.com/rvCcY1n.png",
+    "skill": "BOUNCING BONUS",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Gain EP everytime the Safe Zone shrinks.",
+    "description_ms": "Dapatkan EP setiap kali Zon Selamat mengecut."
+  },
+  {
+    "name": "Beaston",
+    "image_url": "https://i.imgur.com/OBhKB23.png",
+    "skill": "HELPING HAND",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "ATTACK",
+    "description": "Throwing distances of grenade, gloowall, flashbang & smoke increases by 30%",
+    "description_ms": "Jarak lontaran bom tangan, gloowall, flashbang & smoke meningkat sebanyak 30%"
+  },
+  {
+    "name": "Detective Panda",
+    "image_url": "https://i.imgur.com/1VpKm0M.png",
+    "skill": "PANDA'S BLESSING",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Restore 10HP upon eliminating an opponent.",
+    "description_ms": "Pulihkan 10HP setelah menyingkirkan lawan."
+  },
+  {
+    "name": "Dreki",
+    "image_url": "https://i.imgur.com/fpcIgCd.png",
+    "skill": "DRAGON GLARE",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "INFO",
+    "description": "Owner is able to spot 4 opponents who are using med kits within a 30m range. Marking lasts 5s",
+    "description_ms": "Pemilik dapat melihat 4 lawan yang menggunakan kit perubatan dalam jarak 30m. Penandaan berlangsung selama 5 saat"
+  },
+  {
+    "name": "Dr. Beanie",
+    "image_url": "https://i.imgur.com/tVR1NjI.png",
+    "skill": "DASHY DUCKWALK",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "MOVEMENT",
+    "description": "When in crouch position, movement speed increases by 60%.",
+    "description_ms": "Apabila dalam posisi mencangkung, kelajuan pergerakan meningkat sebanyak 60%."
+  },
+  {
+    "name": "Falco",
+    "image_url": "https://i.imgur.com/jJQ4XJ8.png",
+    "skill": "SKYLINE SPREE",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Disables enemy auto-aim while the owner is parachuting.",
+    "description_ms": "Melumpuhkan sasaran automatik musuh semasa pemiliknya sedang terjun payung."
+  },
+  {
+    "name": "Fang",
+    "image_url": "https://i.imgur.com/LDma2s6.png",
+    "skill": "WOLF PACK",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Receive EP/HP whenever a teammate is knocked down by the enemy.",
+    "description_ms": "Terima EP/HP setiap kali rakan sepasukan dijatuhkan oleh musuh."
+  },
+  {
+    "name": "Finn",
+    "image_url": "https://i.imgur.com/fMEt9HF.png",
+    "skill": "DASH SPLASH",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "MOVEMENT",
+    "description": "When a nearby player is knocked down or eliminated, owner and teammates will receive a movement boost.",
+    "description_ms": "Apabila pemain berdekatan dijatuhkan atau disingkirkan, pemilik dan rakan sepasukan akan menerima rangsangan pergerakan."
+  },
+  {
+    "name": "Flash",
+    "image_url": "https://i.imgur.com/VUq5fqP.png",
+    "skill": "STEEL SHELL",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Reduce damage from knife and bullets from behind",
+    "description_ms": "Kurangkan damage akibat pisau dan peluru dari belakang"
+  },
+  {
+    "name": "Hoot",
+    "image_url": "https://i.imgur.com/dKNbKTC.png",
+    "skill": "FAR-SIGHTED",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "INFO",
+    "description": "Increases the range and duration for scanning items and skills. No cooldown.",
+    "description_ms": "Meningkatkan julat dan tempoh untuk mengimbas item dan kemahiran. Tiada masa penyejukan."
+  },
+  {
+    "name": "Kaktus",
+    "image_url": "https://i.imgur.com/K7WLWW9.png",
+    "skill": "SELF-SUFFICIENT",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "When owner stays still for 6s, they will restore 10 EP up to 100EP or upon moving",
+    "description_ms": "Apabila pemilik tidak bergerak selama 6 saat, mereka akan memulihkan 10 EP sehingga 100EP atau semasa bergerak."
+  },
+  {
+    "name": "Moony",
+    "image_url": "https://i.imgur.com/N8USbxf.png",
+    "skill": "PARANORMAL PROTECTION",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "35% damage reduction when owner is in interaction countdown (e.g. using Med Kit, eating mushroom, etc.)",
+    "description_ms": "Damage berkurang sebanyak 35% apabila pemilik berada dalam kiraan detik interaksi / interaction countdown (cth. menggunakan Med Kit, makan cendawan, dsb.)"
+  },
+  {
+    "name": "Mr. Waggor",
+    "image_url": "https://i.imgur.com/aECLdnx.png",
+    "skill": "SMOOTH GLOO",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "INVENTORY",
+    "description": "When owner has less then 2 Gloo Walls, Mr. Waggor gives 1 Gloo Wall every 100s. He also gives 200 Gloo Maker EXP in the first 200s of the match.",
+    "description_ms": "Apabila pemilik mempunyai kurang daripada 2 Gloo Walls, Encik Waggor akan memberikan 1 Gloo Wall setiap 100s. Dia juga memberikan 200 Gloo Maker EXP dalam 200s pertama perlawanan."
+  },
+  {
+    "name": "Night Panther",
+    "image_url": "https://i.imgur.com/YD3kw1m.png",
+    "skill": "WEIGHT TRAINING",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "INVENTORY",
+    "description": "Increase 45 inventory space.",
+    "description_ms": "Meningkatkan 45 ruang inventori."
+  },
+  {
+    "name": "Ottero",
+    "image_url": "https://i.imgur.com/rg7GPSp.png",
+    "skill": "DOUBLE BUBBLE",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "When using Heal Pistol or Med Kit, the receiver will also recover some EP. Amount of EP recovered is 65% of HP recovered.",
+    "description_ms": "Apabila menggunakan Heal Pistol atau Med Kit, penerima juga akan mendapatkan semula sebahagian EP. Jumlah EP yang diperoleh semula ialah 65% daripada HP yang diperoleh semula."
+  },
+  {
+    "name": "Robo",
+    "image_url": "https://i.imgur.com/2k7pgD0.png",
+    "skill": "WALL REINFORCEMENT",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Adds a sheild to the gloowall providing an additional 100HP",
+    "description_ms": "Menambah perisai pada Gloo Wall yang memberikan tambahan 100HP"
+  },
+  {
+    "name": "Rockie",
+    "image_url": "https://i.imgur.com/6Xyo5f2.png",
+    "skill": "STAY CHILL",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "ATTACK",
+    "description": "Reduce cooltime for active skill for it's owner",
+    "description_ms": "Kurangkan tempoh menunggu / cooltime kemahiran aktif"
+  },
+  {
+    "name": "Sensei Tig",
+    "image_url": "https://i.imgur.com/Xi2bOc5.png",
+    "skill": "NIMBLE NINJA",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Reduces the duration of enemies 'man-marking skills.'",
+    "description_ms": "Mengurangkan tempoh 'kemahiran menanda' / man marking skills lawan."
+  },
+  {
+    "name": "Shiba",
+    "image_url": "https://i.imgur.com/LfyWPMu.png",
+    "skill": "MUSHROOM SENSE",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Mark 1 of the surrounding mushrooms on the map every 120s. The mark lasts foir 30s.",
+    "description_ms": "Tandakan 1 cendawan berdekatan pada peta setiap 120 saat. Tanda ini bertahan 30 saat."
+  },
+  {
+    "name": "Spirit Fox",
+    "image_url": "https://i.imgur.com/0f2SFWb.png",
+    "skill": "WELL FED",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Restores extra 10 HP when using a Med Kit.",
+    "description_ms": "Memulihkan 10 HP tambahan apabila menggunakan Kit Med."
+  },
+  {
+    "name": "Yeti",
+    "image_url": "https://i.imgur.com/qcOCUux.png",
+    "skill": "FROST FOREST",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Reduces 30% damage taken from explosives every 90s",
+    "description_ms": "Mengurangkan 30% damage daripada bahan letupan setiap 90 saat"
+  },
+  {
+    "name": "Zasil",
+    "image_url": "https://i.imgur.com/yHtTSRa.png",
+    "skill": "EXTRA LUCK",
+    "status": "",
+    "skill_type": "Pet",
+    "role": "SURVIVAL",
+    "description": "Every time owner consumes an Inhaler/Med Kit/Repair Kit, there's a possibility of getting an additional one.",
+    "description_ms": "Setiap kali pemilik menggunakan Inhaler/Kit Perubatan/Kit Pembaikan, ada kemungkinan untuk mendapatkan satu lagi."
+  }
+]

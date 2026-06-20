@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Free Fire — OB Updates</title>
+  <link rel="preconnect" href="https://dl.dir.freefiremobile.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --line2: rgba(255,255,255,.12);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+      --good:#8be3a3;
+      --danger:#ff8d8d;
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --sb-w: 260px;
+      --sb-w-collapsed: 82px;
+    }
+
+    *{box-sizing:border-box}
+    html{
+      min-height:100%;
+      scroll-behavior:smooth;
+      background:linear-gradient(180deg,var(--bg),var(--bg2));
+      color-scheme:dark;
+    }
+    body{
+      min-height:100%;
+      margin:0;
+      font-family:Roboto,system-ui,-apple-system,Segoe UI,Inter,Ubuntu,Arial,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
+      overflow-x:hidden;
+    }
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px;height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform:translate(-45%,-35%);
+      filter:blur(.2px);
+      pointer-events:none;
+      z-index:-1;
+    }
+    body::after{
+      inset:-120px 0 auto auto;
+      width:420px;height:420px;
+      border-color:rgba(77,211,255,.10);
+      transform:translate(38%,0%);
+    }
+    a{color:inherit}
+    img{max-width:100%}
+
+    .app{
+      min-height:100vh;
+      display:flex;
+      gap:18px;
+      padding:18px;
+      max-width:1440px;
+      margin:0 auto;
+    }
+
+    .sidebar{
+      width:var(--sb-w);
+      background:var(--panel2);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position:sticky;
+      top:18px;
+      height:calc(100vh - 36px);
+      transition:width .18s ease;
+      flex:0 0 auto;
+    }
+    .sidebar.collapsed{width:var(--sb-w-collapsed)}
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 16px 10px;
+      border-bottom:1px solid var(--line);
+    }
+    .brand-left{display:flex;align-items:center;gap:10px;min-width:0}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      font-family:Orbitron,sans-serif;
+      letter-spacing:.5px;
+      color:var(--brand);
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-family:Orbitron,sans-serif;
+      font-size:1.05rem;
+      letter-spacing:.6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:150px;
+    }
+    .brand small{
+      display:block;
+      color:var(--muted);
+      font-size:.78rem;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:150px;
+    }
+
+    .nav{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+    }
+    .nav::-webkit-scrollbar{width:10px}
+    .nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
+    .nav::-webkit-scrollbar-track{background:transparent}
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-radius:12px;
+      border:1px solid transparent;
+      color:var(--muted);
+      text-decoration:none;
+      transition:.2s ease;
+      cursor:pointer;
+      min-width:0;
+    }
+    .nav-item:hover{
+      background:rgba(255,255,255,.05);
+      border-color:rgba(255,255,255,.08);
+      color:var(--ink);
+    }
+    .nav-item.active{
+      background:linear-gradient(135deg, rgba(255,189,89,.14), rgba(77,211,255,.09));
+      border-color:rgba(255,189,89,.22);
+      color:var(--ink);
+    }
+    .nav-ico{
+      width:26px;height:26px;border-radius:10px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .nav-ico svg{width:14px;height:14px;opacity:.9}
+    .nav-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .sidebar.collapsed .brand h1,
+    .sidebar.collapsed .brand small,
+    .sidebar.collapsed .nav-label{display:none}
+    .sidebar.collapsed .brand{justify-content:center}
+    .sidebar.collapsed .brand-left{justify-content:center}
+    .sidebar.collapsed .nav-item{justify-content:center;gap:0;padding:10px 8px}
+
+    .main{
+      flex:1;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .topbar{
+      position:sticky;
+      top:18px;
+      z-index:20;
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:nowrap;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none;
+    }
+    .topbar::-webkit-scrollbar{display:none}
+    .icon-btn{
+      width:42px;height:42px;border-radius:14px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition:.2s ease;
+      color:var(--ink);
+      flex:0 0 auto;
+    }
+    .icon-btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.08)}
+    .icon-btn svg{width:18px;height:18px;opacity:.92}
+    .search{
+      flex:1 1 220px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      min-width:170px;
+      max-width:360px;
+    }
+    .search input{
+      width:100%;
+      background:transparent;
+      border:0;
+      outline:none;
+      color:var(--ink);
+      font-size:.95rem;
+    }
+    .search input::placeholder{color:rgba(170,177,197,.75)}
+    .page-title{
+      min-width:190px;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      margin-right:auto;
+    }
+    .page-title strong{
+      display:block;
+      font-family:Orbitron,sans-serif;
+      letter-spacing:.6px;
+      color:var(--brand);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .page-title span{
+      display:block;
+      color:var(--muted);
+      font-size:.78rem;
+      white-space:nowrap;
+    }
+    .top-links{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .top-link{
+      color:rgba(244,246,255,.86);
+      text-decoration:none;
+      font-size:.85rem;
+      font-weight:800;
+      white-space:nowrap;
+      padding:9px 11px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.05);
+      transition:.2s ease;
+    }
+    .top-link:hover{
+      border-color:rgba(77,211,255,.22);
+      box-shadow:0 0 0 3px rgba(77,211,255,.10);
+      background:rgba(255,255,255,.08);
+    }
+    .top-link.brand-link{
+      color:var(--brand);
+      border-color:rgba(255,189,89,.18);
+      background:rgba(255,189,89,.08);
+    }
+
+    .content{
+      min-height:0;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .shell{
+      width:100%;
+      max-width:1160px;
+      margin:0 auto;
+      padding:0;
+    }
+    .section{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      padding:14px;
+      margin-bottom:14px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(14px);
+      -webkit-backdrop-filter:blur(14px);
+      overflow:hidden;
+      scroll-margin-top:104px;
+    }
+    .section h2{
+      margin:0 0 12px;
+      color:var(--brand);
+      font-family:Orbitron,sans-serif;
+      letter-spacing:.45px;
+      font-size:1.15rem;
+    }
+    .grid2{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:12px}
+    .grid3{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px}
+    .card{
+      background:rgba(14,18,28,.70);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px;
+      min-width:0;
+      box-shadow:0 14px 36px rgba(0,0,0,.22);
+    }
+    .card h3{
+      margin:0 0 8px;
+      color:var(--brand2);
+      font-size:1rem;
+      letter-spacing:.2px;
+    }
+    .card p{line-height:1.45;margin:0 0 10px}
+    .card p:last-child{margin-bottom:0}
+    .card ul{margin:8px 0 0 18px;padding:0;color:rgba(244,246,255,.88);line-height:1.46}
+    .card li{margin:4px 0}
+    .muted{color:var(--muted)}
+    .hero{
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.20);
+      box-shadow:0 18px 42px rgba(0,0,0,.28);
+    }
+    .hero img{
+      width:100%;
+      display:block;
+    }
+    .kpis{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin:10px 0 0;
+    }
+    .kpi{
+      background:rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      padding:7px 11px;
+      font-size:.88rem;
+      color:rgba(244,246,255,.88);
+    }
+    .pillnav{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:12px 0 0;
+    }
+    .pillnav a{
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      color:rgba(244,246,255,.88);
+      text-decoration:none;
+      font-size:.86rem;
+      font-weight:800;
+      transition:.18s ease;
+    }
+    .pillnav a:hover{
+      border-color:rgba(77,211,255,.22);
+      box-shadow:0 0 0 3px rgba(77,211,255,.10);
+      background:rgba(255,255,255,.06);
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:.92rem;
+      overflow:hidden;
+      border-radius:16px;
+    }
+    th,td{
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:9px 10px;
+      vertical-align:top;
+      text-align:left;
+      word-break:break-word;
+    }
+    thead th{
+      background:rgba(0,0,0,.22);
+      color:var(--brand);
+      font-weight:900;
+      position:sticky;
+      top:0;
+    }
+    tbody tr:hover td{background:rgba(255,255,255,.025)}
+    .img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      display:block;
+      background:rgba(0,0,0,.18);
+    }
+    .note{
+      font-size:.88rem;
+      color:var(--muted);
+      line-height:1.4;
+    }
+    .divider{
+      height:1px;
+      background:rgba(255,255,255,.08);
+      margin:12px 0;
+    }
+    .hero-text{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      min-height:220px;
+      padding:24px;
+      border-radius:18px;
+      background:
+        radial-gradient(circle at top right, rgba(77,211,255,.18), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(255,119,51,.16), transparent 30%),
+        linear-gradient(135deg,rgba(20,26,38,.86) 0%,rgba(14,18,28,.78) 55%,rgba(20,26,38,.86) 100%);
+    }
+    .hero-copy h2{margin:0 0 10px;color:var(--brand);font-size:1.7rem;line-height:1.1;font-family:Orbitron,sans-serif}
+    .hero-copy p{margin:0 0 10px;color:rgba(244,246,255,.92);max-width:760px;line-height:1.45}
+    .hero-badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .hero-badge{
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      padding:7px 12px;
+      font-size:.9rem;
+      color:rgba(244,246,255,.90);
+    }
+
+    body.sb-lock{overflow:hidden}
+    .sb-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.58);
+      backdrop-filter:blur(3px);
+      -webkit-backdrop-filter:blur(3px);
+      display:none;
+      z-index:998;
+    }
+    .sb-backdrop.show{display:block}
+
+    :root[data-theme="light"]{
+      color-scheme:light;
+      --bg:#f6f8ff;
+      --bg2:#e9eefc;
+      --panel:rgba(255,255,255,.78);
+      --panel2:rgba(255,255,255,.72);
+      --line:rgba(10,20,40,.10);
+      --line2:rgba(10,20,40,.14);
+      --ink:#0d1220;
+      --muted:#4a5871;
+      --shadow:0 22px 70px rgba(16,24,40,.12);
+    }
+    :root[data-theme="light"] body{
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.22), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.20), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.16), transparent 60%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
+    }
+    :root[data-theme="light"] .card,
+    :root[data-theme="light"] .kpi,
+    :root[data-theme="light"] .pillnav a,
+    :root[data-theme="light"] .search,
+    :root[data-theme="light"] .icon-btn,
+    :root[data-theme="light"] .top-link,
+    :root[data-theme="light"] .hero-badge{
+      background:rgba(255,255,255,.58);
+      border-color:rgba(10,20,40,.12);
+      color:var(--ink);
+    }
+    :root[data-theme="light"] .nav-ico{background:rgba(10,20,40,.05);border-color:rgba(10,20,40,.10)}
+    :root[data-theme="light"] .search input{color:var(--ink)}
+    :root[data-theme="light"] .top-link.brand-link{background:rgba(255,189,89,.18)}
+    :root[data-theme="light"] table th{background:rgba(10,20,40,.05)}
+    :root[data-theme="light"] th,
+    :root[data-theme="light"] td{border-bottom-color:rgba(10,20,40,.10)}
+
+    @media (max-width:1200px){
+      .grid3{grid-template-columns:repeat(2,minmax(220px,1fr))}
+      .page-title{min-width:160px}
+    }
+    @media (max-width:980px){
+      .app{display:block;padding:12px;gap:0}
+      .sidebar{
+        position:fixed;
+        top:12px;
+        bottom:12px;
+        left:12px;
+        height:auto;
+        width:min(320px,86vw);
+        z-index:999;
+        transform:translateX(calc(-100% - 18px));
+        transition:transform .22s ease;
+      }
+      .sidebar.open{transform:translateX(0)}
+      .sidebar.collapsed{width:min(320px,86vw)}
+      .sidebar.collapsed .brand h1,
+      .sidebar.collapsed .brand small,
+      .sidebar.collapsed .nav-label{display:initial}
+      .sidebar.collapsed .brand{justify-content:flex-start}
+      .sidebar.collapsed .brand-left{justify-content:flex-start}
+      .sidebar.collapsed .nav-item{justify-content:flex-start;gap:10px;padding:10px}
+      .main{width:100%}
+      .topbar{top:12px;gap:10px}
+      .search{flex:1 1 170px;min-width:150px;max-width:none}
+      .page-title{display:none}
+    }
+    @media (max-width:860px){
+      .grid2,.grid3{grid-template-columns:1fr}
+      .section{padding:12px;border-radius:18px}
+    }
+    @media (max-width:620px){
+      .topbar{padding:10px;border-radius:18px}
+      .top-links{gap:6px}
+      .top-link{padding:8px 9px;font-size:.8rem}
+      .search{min-width:132px;padding:9px 10px}
+      .section{scroll-margin-top:90px}
+      .card{padding:12px;border-radius:16px}
+      .kpi{border-radius:14px}
+      .pillnav a{font-size:.8rem;padding:7px 9px}
+      table{font-size:.84rem}
+      th,td{padding:8px}
+    }
+
+  </style>
+  <script>
+    (function(){
+      const key = 'ff_theme_v1';
+      const saved = localStorage.getItem(key);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+    })();
+
+  </script>
+</head>
+<body>
+  <div class="app">
+<aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="logo">FF</div>
+          <div class="brand-text">
+            <h1>Free Fire</h1>
+            <small class="muted">Caster Dashboard</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a class="nav-item" href="home.html" data-page="home.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 4h7v7H4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 4h7v4h-7V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 10h7v10h-7V10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M4 13h7v7H4v-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M17 5l1.5-2M19 8h2M17 11l1.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 10a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M20 10a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 7a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M18 7a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 18c0-2.2 2.2-4 5-4s5 1.8 5 4c0 1.4-1 2.5-2.4 2.5-.9 0-1.6-.5-2.6-.5s-1.7.5-2.6.5C8 20.5 7 19.4 7 18Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 14h8l2-3h8v4h-5l-2 3H8l-2 3H3v-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M14 11V8h5l2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 14v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="loadout.html" data-page="loadout.html" title="Loadout">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 7V6a4 4 0 0 1 8 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 8h12l1 12H5L6 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Loadout</span>
+        </a>
+
+        <a class="nav-item" href="preset.html" data-page="preset.html" title="Preset Builder">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M16 5v4M4 17h2M10 17h10M8 15v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15 11l1.2 2.4L19 14l-2.1 1.9.5 2.8L15 17.3l-2.4 1.4.5-2.8L11 14l2.8-.6L15 11Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Preset Builder</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18l-5 2V6l5-2 6 2 5-2v14l-5 2-6-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <a class="nav-item" href="br-team.html" data-page="br-team.html" title="BR Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 16v-5M12 16V8M16 16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 10l4-3 4 5 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">BR Data</span>
+        </a>
+
+        <a class="nav-item" href="clash-draft-team.html" data-page="clash-draft-team.html" title="CS Draft">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 4V2h6v2M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15 18l1-3 4-4 2 2-4 4-3 1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Draft</span>
+        </a>
+
+        <a class="nav-item" href="clash-data.html" data-page="clash-data.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 6c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="2"/>
+              <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Data</span>
+        </a>
+
+        <a class="nav-item" href="clash-compare.html" data-page="clash-compare.html" title="CS Compare">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 5h6v14H5V5ZM13 5h6v14h-6V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M7 9h2M15 9h2M7 14h2M15 14h2M11 12h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Compare</span>
+        </a>
+
+        <a class="nav-item" href="store.html" data-page="store.html" title="Stores">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 10h16l-1-5H5l-1 5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M5 10v10h14V10M9 20v-6h6v6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M8 10v2a2 2 0 0 1-4 0v-2M14 10v2a2 2 0 0 1-4 0v-2M20 10v2a2 2 0 0 1-4 0v-2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Stores</span>
+        </a>
+
+        <a class="nav-item" href="clash-combo.html" data-page="clash-combo.html" title="Clash Squad Combo">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 8h4v4H8V8ZM12 12h4v4h-4v-4ZM4 16h4v4H4v-4ZM16 4h4v4h-4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M10 12l2 2M14 12l2-4M8 18l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Combo</span>
+        </a>
+
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M11 5v14M7 9h1M16 9h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Split View</span>
+        </a>
+
+        <a class="nav-item" href="ff-update.html" data-page="ff-update.html" title="OB Updates">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M11 5v14M7 9h1M16 9h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">OB Updates</span>
+        </a>
+      </nav>
+    </aside>
+
+    <div class="sb-backdrop" id="sbBackdrop" aria-hidden="true"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path id="sbTogglePath" d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="page-title">
+          <strong>Free Fire — OB Updates</strong>
+          <span>Patch reference • OB51 to OB53</span>
+        </div>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;opacity:.85">
+            <path d="M21 21l-4.3-4.3m1.3-5.2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Search pages." />
+        </div>
+
+        <nav class="top-links" aria-label="Patch quick links">
+          <a class="top-link brand-link" href="home.html">Dashboard</a>
+          <a class="top-link" href="#ob53">OB53</a>
+          <a class="top-link" href="#ob52">OB52</a>
+          <a class="top-link" href="#ob51">OB51</a>
+        </nav>
+
+        <button class="icon-btn" id="themeToggle" aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3v2M12 19v2M5.6 5.6 7 7M17 17l1.4 1.4M3 12h2M19 12h2M5.6 18.4 7 17M17 7l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </button>
+      </header>
+
+      <section class="content">
+        <div class="shell">
+<!-- ========================= -->
+  <!-- OB53 — HERO / SUMMARY     -->
+  <!-- ========================= -->
+  <div class="section" id="ob53">
+    <div class="hero">
+      <img src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/c57c0a509dd55e527fd73a89d3aae479.jpeg" alt="Free Fire OB53 Undersea Mystery banner">
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>OB53 — Undersea Mystery</h3>
+      <p>The newest patch brings an ocean-themed event layer, a new rush-down character named <b>Ray</b>, big BR and CS utility updates, esports-ready <b>Ban &amp; Pick</b> in CS custom rooms, and a broad weapon rebalance.</p>
+      <div class="hero-badges">
+        <span class="hero-badge"><strong>Patch notes posted:</strong> Apr 2, 2026</span>
+        <span class="hero-badge"><strong>Headline:</strong> Undersea Mystery • Ray • CS Random Events • Ban &amp; Pick</span>
+        <span class="hero-badge"><strong>Modes touched:</strong> BR • Clash Squad • Custom Rooms • System • Craftland</span>
+      </div>
+    </div>
+    <div class="kpis" style="margin-top:10px">
+      <div class="kpi"><strong>Version:</strong> OB53</div>
+      <div class="kpi"><strong>New character:</strong> <em>Ray</em></div>
+      <div class="kpi"><strong>BR focus:</strong> Undersea Realm, Fishing Ponds, Bubble Airdrops, Hydro Blaster</div>
+      <div class="kpi"><strong>CS focus:</strong> Random Events, Tactical Market changes, Undersea Realm rotation</div>
+      <div class="kpi"><strong>Esports tool:</strong> Ban &amp; Pick for CS Custom Room</div>
+    </div>
+    <div class="pillnav">
+      <a href="#ob53-highlights">Highlights</a>
+      <a href="#ob53-battle-royale">Battle Royale</a>
+      <a href="#ob53-clashsquad">Clash Squad</a>
+      <a href="#ob53-characters">Characters</a>
+      <a href="#ob53-weapons">Weapons &amp; Balancing</a>
+      <a href="#ob53-system">System &amp; Custom Rooms</a>
+      <a href="#ob53-links">Links</a>
+      <a href="#ob52">Jump to OB52 ↓</a>
+    </div>
+  </div>
+
+  <!-- OB53 — HIGHLIGHTS -->
+  <div class="section" id="ob53-highlights">
+    <h2>OB53 Highlights</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3>Undersea Mystery</h3>
+        <p>OB53 adds a full water-themed event layer to BR with the <b>Undersea Realm</b>, <b>Fishing Ponds</b>, <b>Bubble Airdrops</b>, and the new <b>Hydro Blaster</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Ray — New Character</h3>
+        <p>Ray’s <b>Bond of Eclipse</b> tags an enemy in a forward fan, can instantly knock them down once they hit low HP, then resets on a tagged takedown and restores HP.</p>
+      </div>
+      <div class="card">
+        <h3>Preset Flexibility</h3>
+        <p>Players can now switch <b>Presets</b> and <b>Loadouts</b> during the prep phase, then choose from Preset 1–5 once the match starts.</p>
+      </div>
+      <div class="card">
+        <h3>CS Random Events</h3>
+        <p>Clash Squad gets rotating special rules like melee starts, auto Gloo Walls every 5 seconds, or carrying over a previous round weapon for eliminated players.</p>
+      </div>
+      <div class="card">
+        <h3>Weapon Meta Shake-Up</h3>
+        <p>AC80 is nerfed, SKS is buffed, M24 becomes upgradeable, sniper armor penetration rises, and limb-damage scaling is removed for more predictable fights.</p>
+      </div>
+      <div class="card">
+        <h3>Esports Custom Rooms</h3>
+        <p>CS custom rooms now support an <b>Esports preset</b> with <b>11 rounds</b>, Cyber Airdrops, and a dedicated <b>Skill Ban &amp; Pick</b> phase.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — BATTLE ROYALE -->
+  <div class="section" id="ob53-battle-royale">
+    <h2>Battle Royale</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Undersea Mystery Event</h3>
+        <ul>
+          <li><b>Whale Plane</b> replaces the normal starting plane with a themed whale model.</li>
+          <li><b>Undersea Realm</b> appears through an entrance at <b>Nurek Dam</b> on Bermuda, with rich loot and a sword statue that gives high-tier rewards.</li>
+          <li><b>Hydro Zone</b> replaces the High-tier Loot Zone during the event and lets players and bullets pass through the water wall.</li>
+          <li><b>Fishing Ponds</b> offer loot and buff-granting fish that follow the player.</li>
+          <li><b>Bubble Airdrops</b> can be captured faster by popping and charging nearby bubbles with teammates.</li>
+          <li><b>Hydro Blaster</b> sprays water beams and can fast reload through a QTE.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Preset / Communication Updates</h3>
+        <ul>
+          <li>Players can switch <b>Presets</b> and <b>Loadouts</b> in the preparation phase.</li>
+          <li>After the match starts, players can choose among <b>Preset 1–5</b> but cannot swap specific active or passive skills.</li>
+          <li>Quick Messages add <b>Group Up</b>, better enemy/location marking, and smart prompts for Arsenal, Airdrop, Revival Point, and landing weapon checks.</li>
+        </ul>
+
+        <h3>Other BR Adjustments</h3>
+        <ul class="muted">
+          <li>Most devices are now single-use, except Launch Pads, Portals, and Mini Turrets.</li>
+          <li><b>Mini Turret</b> gets faster fire rate, longer duration, and longer range.</li>
+          <li><b>Tactical Market</b> removes Hit List, Arsenal Key, and active skill cards, while adding <b>Heal UAV-Lite</b>.</li>
+          <li>Arsenal upgrade cost is reduced in solo and duo.</li>
+          <li>Out-of-zone and plane-cabin audio are optimized.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — CLASH SQUAD -->
+  <div class="section" id="ob53-clashsquad">
+    <h2>Clash Squad</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Undersea Realm in CS</h3>
+        <ul>
+          <li>The <b>Undersea Realm</b> joins the Bermuda map pool.</li>
+          <li><b>Hydro Blasters</b> are added to the CS Store.</li>
+        </ul>
+
+        <h3>Random Events</h3>
+        <ul>
+          <li>Start each match with <b>1000 CS Cash</b>.</li>
+          <li>Receive <b>Super Meds</b> or <b>Super Energizers</b> at round start in some event variants.</li>
+          <li>Get a <b>Gloo Wall every 5s</b>.</li>
+          <li>Start with a <b>Lv. 2 Helmet</b> and <b>Lv. 2 Vest</b>.</li>
+          <li>Receive a <b>random melee weapon</b> at round start.</li>
+          <li>Eliminated players can respawn with the weapon they held at the end of the previous prep phase.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img class="img" alt="OB53 Clash Squad gameplay updates" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/0b4a1faa98d337705d45733891ba1d24.jpeg"/>
+        <p class="note">Official OB53 Clash Squad gameplay update art.</p>
+
+        <div class="divider"></div>
+
+        <h3>Tactical Market &amp; Minimap Optimization</h3>
+        <ul>
+          <li>An in-match <b>Tactical Market</b> button lets players deploy default or last-used gadgets during battle.</li>
+          <li>Tactical Market can now be used <b>while moving</b>.</li>
+          <li>Gadget durations now start <b>after</b> the prep phase.</li>
+          <li>The <b>Bermuda minimap</b> is optimized for clearer visuals and better loadout deployment reads.</li>
+          <li><b>UAV-Lites</b> are removed from the Tactical Market in CS and <b>Jammer</b> devices are added as anti-scan utility.</li>
+        </ul>
+
+        <p class="note">This is one of the most esports-relevant parts of the patch because it reduces free intel and adds stronger anti-scan counterplay.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — CHARACTERS -->
+  <div class="section" id="ob53-characters">
+    <h2>Characters</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Ray — The Watchman</h3>
+        <p><b>Bond of Eclipse</b> sends sunpower in a <b>30m fan-shaped range</b> to tag the first undowned enemy hit for <b>10s</b>. If Ray reduces the tagged enemy to <b>40 HP or below</b>, they are instantly knocked down. If the tagged target is knocked down or eliminated while tagged, the skill resets and Ray restores <b>10 HP/s for 3s</b>.</p>
+        <ul>
+          <li><b>Cooldown:</b> 45s</li>
+          <li><b>Tag visibility:</b> link is visible within 40m to Ray and the tagged enemy</li>
+          <li><b>Best fit:</b> rush-heavy streak comps</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <h3>Skill Balance Notes</h3>
+        <ul class="muted">
+          <li><b>Buffed:</b> Dasha, Shani, Jota</li>
+          <li><b>Nerfed intel:</b> Koda, Moco, Otho, Shirou</li>
+          <li><b>Nerfed control/damage:</b> Nero</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img class="img" alt="OB53 character updates featuring Ray" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/4c0562d6e793ca5fd2f0852ff4ce9c31.jpeg"/>
+        <p class="note">Official OB53 character update art.</p>
+
+        <div class="divider"></div>
+
+        <h3>Balance Details</h3>
+        <ul>
+          <li><b>Dasha</b>: Highlight mode duration increased from <b>6s → 10s</b>.</li>
+          <li><b>Shani</b>: Shield Point duration increased from <b>5s → 10s</b>.</li>
+          <li><b>Jota</b>: Any knockdown now triggers the 20% HP recovery, not just gun knockdowns.</li>
+          <li><b>Koda</b>: Aurora Vision duration reduced from <b>10s → 8s</b>.</li>
+          <li><b>Moco</b>: mark duration reduced from <b>4s → 3s</b>, moving mark extension from <b>5.5s → 4s</b>.</li>
+          <li><b>Otho</b>: teammate mark/slow duration reduced from <b>4s → 3s</b>.</li>
+          <li><b>Shirou</b>: attacker mark duration reduced from <b>10s → 8s</b>.</li>
+          <li><b>Nero</b>: dreamy-space damage reduced from <b>16 → 14 HP/s</b> with faster post-space Gloo recovery for opponents.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — WEAPONS -->
+  <div class="section" id="ob53-weapons">
+    <h2>Weapons &amp; Balancing</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Core Meta Changes</h3>
+        <ul>
+          <li><b>Limb damage multiplier removed</b>; limb hits now deal body-shot damage and armor protects limbs.</li>
+          <li><b>M590</b> gains a muzzle slot; <b>PLASMA</b> and <b>Kord</b> gain foregrip and stock slots.</li>
+          <li><b>AC80</b> nerf: damage <b>-6%</b>, extra Shield Point damage <b>20% → 0%</b>.</li>
+          <li><b>SKS</b> buff: rate of fire <b>+6%</b>, range <b>+15%</b>, reload speed <b>+10%</b>, mag <b>16 → 10</b>.</li>
+          <li><b>Shield Gun</b> and <b>Charge Buster</b> receive major adjustments to improve viability.</li>
+        </ul>
+
+        <h3>Sniper Changes</h3>
+        <ul>
+          <li><b>M24</b> becomes upgradeable.</li>
+          <li><b>M24</b> base weapon: damage <b>+60%</b>, mag <b>15 → 5</b>, headshot rate <b>5.5 → 2.5</b>, no longer penetrates Gloo Walls.</li>
+          <li><b>AWM / AWM-Y / M82B / VSK94 / Kar98k</b>: armor penetration <b>+20%</b>.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img class="img" alt="OB53 weapon update art" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/3ba0d1d6346380db26057a67d4460df8.jpeg"/>
+        <p class="note">Official OB53 weapon update art.</p>
+
+        <div class="divider"></div>
+
+        <h3>Close-Range / Economy Adjustments</h3>
+        <ul>
+          <li><b>MAG-7</b>: switch speed <b>+15%</b>, rate of fire <b>+5%</b>, movement speed <b>+5%</b>.</li>
+          <li><b>UMP</b>: range <b>+5%</b> and gains a muzzle slot.</li>
+          <li><b>FAMAS</b> in CS: <b>1800 → 1600</b> CS Cash.</li>
+          <li><b>M1014-III</b> and <b>Winchester-III</b> added to Cyber Items for <b>1900</b> CS Cash.</li>
+          <li><b>M24-II</b> and <b>M1014-II</b> added to BR vending at <b>600 FF Coins</b>; <b>VSS</b> costs <b>100 FF Coins</b> with no limit.</li>
+          <li><b>Shield Gun</b> becomes ground loot in <b>Solara</b>.</li>
+        </ul>
+
+        <p class="note">For FF analysis, the standout swing is the AC80 nerf plus a broader sniper package that raises armor penetration and makes the M24 a real progression weapon.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — SYSTEM -->
+  <div class="section" id="ob53-system">
+    <h2>System &amp; Custom Rooms</h2>
+    <div class="grid3">
+      <div class="card">
+        <img class="img" alt="OB53 Pyro login streak update" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/9b2bbcac1e66e364bc88e4fa95753b58.jpeg"/>
+        <p class="note">Official OB53 Pyro login streak art.</p>
+      </div>
+      <div class="card">
+        <h3>Pyro Login Streak</h3>
+        <p>A new daily login system adds <b>Pyro</b>, a profile/lobby companion that evolves through three stages and unlocks cosmetics through Pyro’s Vault.</p>
+      </div>
+      <div class="card">
+        <h3>HUD Sharing &amp; Smart Adjust</h3>
+        <p>Players can now share HUD layouts through social, friends, links, and QR codes. A new <b>Smart Adjust</b> feature suggests layout changes from usage data.</p>
+      </div>
+      <div class="card">
+        <h3>Ban &amp; Pick in CS Custom Room</h3>
+        <p>The new <b>Esports preset</b> enables 11 rounds, Cyber Airdrops, esports-aligned economy, and a dedicated <b>Skill Ban &amp; Pick</b> phase with unique active skill picks.</p>
+      </div>
+      <div class="card">
+        <h3>Performance &amp; Visuals</h3>
+        <p>The patch adds another <b>Experimental Frame Rate Boost</b> option and new camera filters: <b>Cyberpunk</b> and <b>Golden Era</b>.</p>
+      </div>
+      <div class="card">
+        <h3>Social / Teaming</h3>
+        <p>Booking is reworked so accepted booking requests immediately reserve a friend for the next lobby. Quick Messages also now support pre-match recent-highlight display and in-match speech-to-text for eligible players.</p>
+      </div>
+      <div class="card">
+        <h3>Speed Limit Adjustments</h3>
+        <p>Stacked speed effects are toned down in CS, including smaller boosts from <b>Team Booster</b> and <b>Super Bonfire</b>, plus restrictions on overlapping <b>Alok</b> auras.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB53 — LINKS -->
+  <div class="section" id="ob53-links">
+    <h2>OB53 Official Links</h2>
+    <table>
+      <thead><tr><th>Item</th><th>URL</th></tr></thead>
+      <tbody>
+        <tr><td>OB53 Patch Notes (Garena)</td><td><a href="https://ff.garena.com/en/article/1640/" target="_blank" rel="noopener">ff.garena.com/en/article/1640/</a></td></tr>
+        <tr><td>OB53 Character Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/4c0562d6e793ca5fd2f0852ff4ce9c31.jpeg" target="_blank" rel="noopener">Character Updates</a></td></tr>
+        <tr><td>OB53 Clash Squad Gameplay Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/0b4a1faa98d337705d45733891ba1d24.jpeg" target="_blank" rel="noopener">CS Gameplay Updates</a></td></tr>
+        <tr><td>OB53 Undersea Mystery Banner</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/c57c0a509dd55e527fd73a89d3aae479.jpeg" target="_blank" rel="noopener">Undersea Mystery Banner</a></td></tr>
+        <tr><td>OB53 Weapon Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/3ba0d1d6346380db26057a67d4460df8.jpeg" target="_blank" rel="noopener">Weapon Updates</a></td></tr>
+        <tr><td>OB53 Pyro Login Streak Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/9b2bbcac1e66e364bc88e4fa95753b58.jpeg" target="_blank" rel="noopener">Pyro Login Streak</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">OB53 content on this page is summarized from the official Garena patch notes.</p>
+  </div>
+
+
+  <!-- ========================= -->
+  <!-- OB52 — HERO / SUMMARY     -->
+  <!-- ========================= -->
+  <div class="section" id="ob52">
+    <div class="hero">
+      <img src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/dfd2ae1057a50161559dbc2770053c53.png" alt="Free Fire OB52 banner (Jujutsu Awakening)">
+    </div>
+    <div class="kpis" style="margin-top:10px">
+      <div class="kpi"><strong>Version:</strong> OB52 (Jujutsu Awakening)</div>
+      <div class="kpi"><strong>Release:</strong> Jan 14 (per official promo)</div>
+      <div class="kpi"><strong>Modes touched:</strong> BR • Clash Squad • Training Grounds • Social Island</div>
+      <div class="kpi"><strong>Headline:</strong> Jujutsu Kaisen collab, new BR location <em>Neon City</em>, new character <em>Morse</em>, BR/CS mechanics + weapon & system updates</div>
+    </div>
+    <div class="pillnav">
+      <a href="#ob52-highlights">Highlights</a>
+      <a href="#ob52-jujutsu">Jujutsu Awakening</a>
+      <a href="#ob52-characters">Characters</a>
+      <a href="#ob52-weapons">Weapons & Balancing</a>
+      <a href="#ob52-clashsquad">Clash Squad</a>
+      <a href="#ob52-battle-royale">Battle Royale</a>
+      <a href="#ob52-map">Map</a>
+      <a href="#ob52-system">System & Social</a>
+      <a href="#ob52-links">Links</a>
+      <a href="#ob51">Jump to OB51 ↓</a>
+    </div>
+  </div>
+
+  <!-- OB52 — HIGHLIGHTS -->
+  <div class="section" id="ob52-highlights">
+    <h2>OB52 Highlights</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3>Jujutsu Kaisen Collaboration</h3>
+        <p>Collect <b>Cursed Energy</b> in BR to unlock iconic techniques and tools, plus themed areas and special interactions across modes.</p>
+        <p class="muted note">Includes unlockable Jujutsu like Divergent Fist, Hollow Purple, Domain Expansions, and more (event rules apply).</p>
+      </div>
+      <div class="card">
+        <h3>New BR Location: Neon City</h3>
+        <p>Enter via <b>Rift Portals</b>, explore a nighttime metropolis, then fast travel back out to different areas of the map.</p>
+      </div>
+      <div class="card">
+        <h3>New Character: Morse</h3>
+        <p><b>Stealth Bytes</b> enables stealth flanks and safer utility actions (revive, vending, vehicle moves) without being easily spotted.</p>
+      </div>
+      <div class="card">
+        <h3>BR: Breakable Arsenal + Ultra Airdrop</h3>
+        <p>Smash into arsenals for high-value loot (but it triggers a reveal), and fight for a <b>capture-based Ultra Airdrop</b> in late game.</p>
+      </div>
+      <div class="card">
+        <h3>CS: Cyber Airdrop Optimization</h3>
+        <p>Cyber Airdrops now reward contested captures with staged progress and a damage reduction buff to improve counterplay.</p>
+      </div>
+      <div class="card">
+        <h3>System: Camera + Highlight Photos + FPS</h3>
+        <p>New camera tools, auto-captured highlight moments, and experimental frame rate boosts for smoother play.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — JUJUTSU -->
+  <div class="section" id="ob52-jujutsu">
+    <h2>Jujutsu Awakening (Event Summary)</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Battle Royale</h3>
+        <ul>
+          <li><b>Cursed Energy</b> piles across maps; collect by proximity, eliminations, or vending.</li>
+          <li>Spend energy to unlock Jujutsu and a Cursed Tool via a dedicated panel.</li>
+          <li>Key unlocks include <b>Divergent Fist</b>, <b>Hollow Purple</b>, <b>Ember Insects</b>, and Domain Expansions like <b>Unlimited Void</b> / <b>Malevolent Shrine</b>.</li>
+          <li><b>Revival Points</b> are imbued with Cursed Energy for faster return-to-fight pace.</li>
+        </ul>
+        <p class="note">Treat this as a “hot drop” meta patch: expect volatile late-game swings when Jujutsu unlocks come online.</p>
+      </div>
+      <div class="card">
+        <img class="img" alt="Jujutsu Awakening overview" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/cb4a96ec59033237d8ccf382e3d573fc.png"/>
+        <p class="note">Official collaboration art.</p>
+      </div>
+      <div class="card">
+        <h3>Clash Squad</h3>
+        <ul>
+          <li>Jujutsu techniques (incl. Hollow Purple, Divergent Fist, Ember Insects, and Domain Expansions) appear in <b>CS Store</b> and <b>Cyber Airdrops</b>.</li>
+          <li>Jujutsu-themed Cyber Airdrops + spawn points; themed Peak area also appears in CS.</li>
+          <li>Training Grounds allows trying Jujutsu (except Unlimited Void) and Cursed Tools.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Bermuda High School (Peak)</h3>
+        <p>Bermuda’s <b>Peak</b> is renovated into a themed “High School” area for the event — expect rerouted fights and new cover lines.</p>
+        <p class="muted note">Good for content: wide angles + recognizable POI shots.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — CHARACTERS -->
+  <div class="section" id="ob52-characters">
+    <h2>Characters</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Morse — New Character</h3>
+        <p><b>Stealth Bytes (Active)</b> puts you into Stealth Mode for smart flanks and safer utility actions.</p>
+        <ul>
+          <li>Hard to see beyond <b>16m</b>, cannot be detected/scanned, and gains <b>20% movement speed</b>.</li>
+          <li>Aim assist triggers if enemies are within <b>4m</b>.</li>
+          <li>Duration up to <b>15s</b>; cannot fire while stealthed; <b>1s exit delay</b>.</li>
+          <li><b>Cooldown:</b> 45s.</li>
+        </ul>
+        <p class="note">Caster angle: “Morse enables stealth timings—watch for late-round backstabs and stealth resets into revive/vending plays.”</p>
+
+        <div class="divider"></div>
+
+        <h3>Skill Balance (Quick Notes)</h3>
+        <ul class="muted">
+          <li><b>Tatsuya</b>: cooldown reduced; reset now only if knockdown happens within 10s after activation.</li>
+          <li><b>Wukong</b>: similar reset rule adjustment + cooldown reduction.</li>
+          <li><b>Xayne</b>: stronger shields + longer duration for aggressive pushes.</li>
+          <li><b>Nero</b>: “better control” (casting/handling optimization noted in official summary art).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <img class="img" alt="OB52 Character Updates" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/c3c76edee3a3d6fe0e9f38c0ac968f27.jpg"/>
+        <p class="note">Official character update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — WEAPONS -->
+  <div class="section" id="ob52-weapons">
+    <h2>Weapons & Balancing</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Core Changes</h3>
+        <ul>
+          <li><b>Weapon rarity colors</b> added for quick tier readability.</li>
+          <li><b>Explosive weapons</b> capacity reduced (FGL-24 / RGS-50: 3 → 2).</li>
+          <li><b>Upgradeable weapons</b>: Kar98k and FAMAS upgrade mechanism removed (now match their “III” attributes in practice).</li>
+        </ul>
+
+        <h3>Airdrop Buffs</h3>
+        <ul>
+          <li><b>Groza</b>: damage +3%, armor pen +10%, range +8%.</li>
+          <li><b>SVD</b>: accuracy +20%.</li>
+          <li><b>M249</b>: rate of fire +5%, armor pen +5%.</li>
+          <li><b>Thompson</b>: rate of fire +5%.</li>
+        </ul>
+
+        <h3>Other Notables</h3>
+        <ul>
+          <li><b>MAC10 family</b>: damage +8%, accuracy +15%.</li>
+          <li><b>VSS</b>: armor pen +10%, accuracy +5%.</li>
+          <li><b>Heal Pistol</b>: auto-target teammates; ROF +30% with adjusted heal economy (incl. Heal Pistol-Y hitting 2 allies).</li>
+        </ul>
+
+        <p class="note">Meta read: expect more airdrop priority again, plus stronger “support heal” consistency with auto-targeting.</p>
+      </div>
+      <div class="card">
+        <img class="img" alt="OB52 Weapon Updates" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/cc9e2c5a8fb8246fa1457d033ed39de8.jpg"/>
+        <p class="note">Official weapon update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — CLASH SQUAD -->
+  <div class="section" id="ob52-clashsquad">
+    <h2>Clash Squad</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Cyber Airdrop Optimization</h3>
+        <ul>
+          <li>Two-stage Cyber Airdrop with <b>shared capture progress</b>.</li>
+          <li>At first-stage completion, players within the capture area receive rewards.</li>
+          <li>Damage reduction buff inside the zone; second-stage unlocker keeps the buff for the rest of the round.</li>
+        </ul>
+
+        <h3>Discounted Weapons</h3>
+        <ul>
+          <li>CS store can randomly offer weapons at a discounted price.</li>
+        </ul>
+
+        <h3>Other Adjustments</h3>
+        <ul class="muted">
+          <li>Special revive HP-bar effects added (items/skills).</li>
+          <li>Dropping USP at round start stops auto-issue in later rounds.</li>
+          <li>Smoke Vortex duration (Tactical Market loadout) reduced to 40s.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <img class="img" alt="OB52 BR Mechanism image (also impacts flow)" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/9b0b8d57881cdd21274c27f7d8467e5b.jpg"/>
+        <p class="note">Official OB52 “new mechanism” art (captures the patch’s pacing focus).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — BATTLE ROYALE -->
+  <div class="section" id="ob52-battle-royale">
+    <h2>Battle Royale</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3>Breakable Arsenal</h3>
+        <ul>
+          <li>Arsenal glass can be cracked/shattered to force entry.</li>
+          <li>Breaking in triggers an <b>Arsenal UAV</b> that reveals your position.</li>
+          <li>Updated arsenal weapon sets + added Lv.3 backpacks; reduced upgrade/unlock cost (1500 → 1200 FF coins).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Ultra Airdrop</h3>
+        <ul>
+          <li>Late-game <b>capture-based</b> device.</li>
+          <li>Rewards high-end buffs for teams willing to contest.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Revival + Rating</h3>
+        <ul>
+          <li>New/updated <b>revival mechanism</b> (mode-dependent) and revive quick messages.</li>
+          <li><b>Rating medals</b> during BR; strong team actions raise rating and grant bonus rank points.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Loot / QoL</h3>
+        <ul class="muted">
+          <li>Start with Lv.2 backpack.</li>
+          <li>Request-to-be-jumpmaster + improved drop prompts.</li>
+          <li>High-value item markers color-coded by tier.</li>
+          <li>Weapon rack pool updated; vest distribution adjusted (more Lv.2, less Lv.1, added Lv.3 helms/vests).</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Vehicles</h3>
+        <ul class="muted">
+          <li>Brief <b>speed boost</b> feature.</li>
+          <li>Explosion behavior + wreck cover optimizations.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <img class="img" alt="OB52 BR New Battlefield Updates" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/74a29105b7c68b7ae56279de4eab35da.jpg"/>
+        <p class="note">Official BR battlefield update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — MAP -->
+  <div class="section" id="ob52-map">
+    <h2>Map</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Neon City</h3>
+        <ul>
+          <li>Enter via any of <b>4 Rift Portals</b> on the map.</li>
+          <li>Inside the city, use portals to <b>fast travel</b> to other areas of the map.</li>
+          <li>No fighting inside Neon City; max stay <b>30s</b> before returning.</li>
+        </ul>
+
+        <h3>Other Map Adjustments</h3>
+        <ul class="muted">
+          <li>Kalahari windows smoother vaulting; damage registration bug fixed in some spots.</li>
+          <li>Kalahari CS balance tweaks in multiple areas.</li>
+          <li>Bermuda: added themed hair salon.</li>
+          <li>Solara: improved slide interactions and speed.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <img class="img" alt="Neon City map update" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/89eeb8cbca946e8b5da730694374d7b4.jpg"/>
+        <p class="note">Official Neon City art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — SYSTEM -->
+  <div class="section" id="ob52-system">
+    <h2>System & Social</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Camera System (Big Update)</h3>
+        <ul>
+          <li><b>Character Lock</b> + <b>Camera Lock</b> for flexible angles.</li>
+          <li>New <b>filters</b>, multi-camera templates, and improved interaction templates.</li>
+          <li>Option to display enemies in Camera System (Casual Custom Room).</li>
+        </ul>
+
+        <h3>Highlight Photos</h3>
+        <ul class="muted">
+          <li>Auto screenshots for key moments (ACE, streaks, headshots).</li>
+          <li>View on results page + Profile Album tab (storage limited).</li>
+        </ul>
+
+        <h3>Frame Rate Enhancement</h3>
+        <ul class="muted">
+          <li>Experimental frame rate boost option under High FPS Mode.</li>
+        </ul>
+
+        <p class="note">Broadcast tip: highlight photos are easy “instant replay” references for social posts.</p>
+      </div>
+      <div class="card">
+        <img class="img" alt="OB52 Social & System Updates" src="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/317a5f632cdd938671a26b45a549514b.jpg"/>
+        <p class="note">Official system update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB52 — LINKS -->
+  <div class="section" id="ob52-links">
+    <h2>OB52 Official Links</h2>
+    <table>
+      <thead><tr><th>Item</th><th>URL</th></tr></thead>
+      <tbody>
+        <tr><td>OB52 Patch Notes (Garena)</td><td><a href="https://ff.garena.com/en/article/1595/" target="_blank" rel="noopener">ff.garena.com/en/article/1595/</a></td></tr>
+        <tr><td>OB52 Promo Banner</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/dfd2ae1057a50161559dbc2770053c53.png" target="_blank" rel="noopener">Promo Banner</a></td></tr>
+        <tr><td>Jujutsu Awakening Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/cb4a96ec59033237d8ccf382e3d573fc.png" target="_blank" rel="noopener">Jujutsu Awakening</a></td></tr>
+        <tr><td>BR Battlefield Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/74a29105b7c68b7ae56279de4eab35da.jpg" target="_blank" rel="noopener">BR Battlefield</a></td></tr>
+        <tr><td>BR Mechanism Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/9b0b8d57881cdd21274c27f7d8467e5b.jpg" target="_blank" rel="noopener">BR Mechanism</a></td></tr>
+        <tr><td>Neon City Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/89eeb8cbca946e8b5da730694374d7b4.jpg" target="_blank" rel="noopener">Neon City</a></td></tr>
+        <tr><td>Character Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/c3c76edee3a3d6fe0e9f38c0ac968f27.jpg" target="_blank" rel="noopener">Character Updates</a></td></tr>
+        <tr><td>Weapon Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/cc9e2c5a8fb8246fa1457d033ed39de8.jpg" target="_blank" rel="noopener">Weapon Updates</a></td></tr>
+        <tr><td>Social/System Updates Art</td><td><a href="https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20261/317a5f632cdd938671a26b45a549514b.jpg" target="_blank" rel="noopener">Social & System</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">All art and logos © Garena. This fan page summarizes key changes and links to official notes.</p>
+  </div>
+
+  <!-- ========================= -->
+  <!-- OB51 — ORIGINAL PAGE      -->
+  <!-- ========================= -->
+  <div class="section" id="ob51">
+    <div class="hero">
+      <img src="https://i.imgur.com/eXJVFwf.jpeg" alt="Free Fire OB51 banner">
+    </div>
+    <div class="kpis" style="margin-top:10px">
+      <div class="kpi"><strong>Version:</strong> OB51 (Flame Arena)</div>
+      <div class="kpi"><strong>Modes touched:</strong> BR • Clash Squad • Training Grounds</div>
+      <div class="kpi"><strong>Headline:</strong> New character <em>Nero</em>, new weapons <em>Winchester</em> & <em>Thompson-X</em>, loadout rework, BR/CS balance + QoL</div>
+    </div>
+    <div class="pillnav">
+      <a href="#ob51-highlights">Highlights</a>
+      <a href="#ob51-characters">Characters</a>
+      <a href="#ob51-weapons">Weapons & Balancing</a>
+      <a href="#ob51-clashsquad">Clash Squad</a>
+      <a href="#ob51-battle-royale">Battle Royale</a>
+      <a href="#ob51-system">System & QoL</a>
+      <a href="#ob51-links">Links</a>
+      <a href="#ob52">Back to OB52 ↑</a>
+    </div>
+  </div>
+
+  <!-- OB51 — HIGHLIGHTS -->
+  <div class="section" id="ob51-highlights">
+    <h2>OB51 Highlights</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3>New Character: Nero</h3>
+        <p>Nero brings a tactical buff that helps squads push or hold by converting Gloo usage into temporary combat advantages. Great for coordinated rushes and late-circle skirmishes.</p>
+      </div>
+      <div class="card">
+        <h3>New Guns: Winchester & Thompson-X</h3>
+        <p>Classic <b>Winchester</b> returns reworked for mid-range precision. <b>Thompson-X</b> is a controllable SMG built for aggressive entry fragging.</p>
+      </div>
+      <div class="card">
+        <h3>Loadout Rework</h3>
+        <p>Team utilities like <em>Team Booster</em>, <em>Enhance Hammer</em>, <em>Tactical Market</em>, and <em>Super Leg Pockets</em> streamline BR setup with clearer choices and stronger identities.</p>
+      </div>
+      <div class="card">
+        <h3>BR Quality-of-Life</h3>
+        <p>Waypoint pings, improved Weapon Rack info, and new utility items such as <em>Gloo Mushroom</em> and <em>Gloo UAV-Lite</em> make rotations and scouting more readable.</p>
+      </div>
+      <div class="card">
+        <h3>Clash Squad Tuning</h3>
+        <p>Purchase flow refinements, Gloo and grenade adjustments, and pacing tweaks to reduce early snowball and encourage counterplay.</p>
+      </div>
+      <div class="card">
+        <h3>Solara Map Balance</h3>
+        <p>Cover, loot, and landing adjustments across key POIs to increase fair fights and diversify rotations.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — CHARACTERS -->
+  <div class="section" id="ob51-characters">
+    <h2>OB51 Characters</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Nero — Featured Character</h3>
+        <p>Nero’s skill rewards smart utility usage and team play. It triggers a short-window buff around Gloo interactions so your squad can breach, trade, and reset more safely. Best paired with entry SMGs/shotguns and a support running extra Gloo.</p>
+        <ul class="muted">
+          <li>Pairs well with aggressive brawlers and revive-centric comps.</li>
+          <li>Synergizes with utility-heavy rotations and late-circle holds.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <img class="img" alt="Characters Update" src="https://i.imgur.com/N7tOu9N.jpeg"/>
+        <p class="note">Official character update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — WEAPONS & BALANCING -->
+  <div class="section" id="ob51-weapons">
+    <h2>OB51 Weapons & Balancing</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>New</h3>
+        <ul>
+          <li><b>Winchester</b> — precision rifle tuned for reliable mid-range picks with a rewarding headshot profile.</li>
+          <li><b>Thompson-X</b> — stable SMG variant with strong time-to-damage in close quarters.</li>
+        </ul>
+        <h3>Adjustments</h3>
+        <ul>
+          <li><b>M1917</b> & <b>AC80</b> rebalanced to tighten dueling fairness.</li>
+          <li>SMG class pass for handling and consistency improvements.</li>
+          <li>Attachment and upgrade curves reviewed to match weapon roles.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <img class="img" alt="Weapon Update" src="https://i.imgur.com/WNaTkc8.jpeg"/>
+        <p class="note">Official weapon update art.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — CLASH SQUAD -->
+  <div class="section" id="ob51-clashsquad">
+    <h2>OB51 Clash Squad</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Economy & Buy-Phase</h3>
+        <ul>
+          <li>Purchase interface streamlined for faster, clearer rounds.</li>
+          <li>Gloo Wall and Fire Grenade quantities adjusted per round to reduce spam and open counterplay windows.</li>
+        </ul>
+        <h3>Combat Feel</h3>
+        <ul>
+          <li>Weapon upgrade pacing tuned; round-over flow tightened.</li>
+          <li>Quality-of-life fixes across HUD hints and item feedback.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <p class="muted">Tip: Nero’s utility buff can set up entry paths—chain with smoke denial and quick trades.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — BATTLE ROYALE -->
+  <div class="section" id="ob51-battle-royale">
+    <h2>OB51 Battle Royale</h2>
+    <div class="grid3">
+      <div class="card">
+        <h3>Loadout Rework</h3>
+        <ul>
+          <li><b>Team Booster</b>: squad-wide early advantage for momentum starts.</li>
+          <li><b>Enhance Hammer</b>: accelerates weapon upgrade timings.</li>
+          <li><b>Tactical Market</b>: smarter access to key utilities mid-match.</li>
+          <li><b>Super Leg Pockets</b>: expanded carry to support utility play.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Loot & Revives</h3>
+        <ul>
+          <li><b>Advanced Revival Point</b> UI and rhythm made clearer.</li>
+          <li>Loot table clarity improved across rarities and drops.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>New Utilities</h3>
+        <ul>
+          <li><b>Gloo Mushroom</b>: mushroom pickup that contributes to Gloo availability.</li>
+          <li><b>Gloo UAV-Lite</b>: intel ping that highlights nearby enemy Gloo placements.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Navigation & Info</h3>
+        <ul>
+          <li><b>Waypoint</b> pings for clearer squad pathing.</li>
+          <li><b>Weapon Rack</b> now shows exact available guns for faster decisions.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Solara Adjustments</h3>
+        <p>POI tuning for cover, loot density, and travel lanes; encourages wider rotations and fair engagements.</p>
+      </div>
+      <div class="card">
+        <p class="muted">Also includes miscellaneous balance and polish passes to reduce frustration moments and reward smart rotations.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — SYSTEM / QOL -->
+  <div class="section" id="ob51-system">
+    <h2>OB51 System & QoL</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Controls & Sensitivity</h3>
+        <p>Global sensitivity logic refined; long-requested feel improvements for aim consistency and micro adjustments.</p>
+      </div>
+      <div class="card">
+        <h3>Training Grounds Revamp</h3>
+        <p>Layout and interactions refreshed so you can test the OB51 weapon balance faster and with more realistic scenarios.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OB51 — LINKS -->
+  <div class="section" id="ob51-links">
+    <h2>OB51 Official Links</h2>
+    <table>
+      <thead><tr><th>Item</th><th>URL</th></tr></thead>
+      <tbody>
+        <tr><td>OB51 Patch Notes (Garena)</td><td><a href="https://ff.garena.com/news/en/patch-notes-ob51/" target="_blank" rel="noopener">ff.garena.com/news/en/patch-notes-ob51/</a></td></tr>
+        <tr><td>Characters Update image</td><td><a href="https://ff.garena.com/images/news/2025/10/30/0056004900338/Characters%20Update.jpeg" target="_blank" rel="noopener">Characters Update (Garena)</a></td></tr>
+        <tr><td>Weapons Update image</td><td><a href="https://ff.garena.com/images/news/2025/10/30/0056004900338/Weapon%20Update.jpg" target="_blank" rel="noopener">Weapons Update (Garena)</a></td></tr>
+      </tbody>
+    </table>
+    <p class="note">All art and logos © Garena. This fan page summarizes the key changes with links to the official notes.</p>
+  </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+const sidebar = document.getElementById('sidebar');
+    const sbBackdrop = document.getElementById('sbBackdrop');
+
+    (function initSidebarCollapse(){
+      const key = 'ff_sidebar_collapsed_v1';
+      const btn = document.getElementById('sbToggle');
+      const path = document.getElementById('sbTogglePath');
+
+      const isMobile = () => window.matchMedia('(max-width: 980px)').matches;
+
+      function setBackdrop(on){
+        if (!sbBackdrop) return;
+        sbBackdrop.classList.toggle('show', !!on);
+        sbBackdrop.setAttribute('aria-hidden', on ? 'false' : 'true');
+        document.body.classList.toggle('sb-lock', !!on);
+      }
+
+      function applyDesktopCollapsedFromStorage(){
+        const saved = localStorage.getItem(key) === '1';
+        sidebar.classList.toggle('collapsed', saved);
+      }
+
+      function syncIcon(){
+        if (!path) return;
+
+        if (isMobile()){
+          const open = sidebar.classList.contains('open');
+          path.setAttribute('d', open
+            ? 'M6 6l12 12M18 6L6 18'
+            : 'M4 7h16M4 12h16M4 17h16'
+          );
+          btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+          return;
+        }
+
+        const collapsed = sidebar.classList.contains('collapsed');
+        path.setAttribute('d', collapsed
+          ? 'M10 7l5 5-5 5'
+          : 'M14 7l-5 5 5 5'
+        );
+        btn?.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+
+      function closeMobileDrawer(){
+        sidebar.classList.remove('open');
+        setBackdrop(false);
+        syncIcon();
+      }
+
+      if (isMobile()){
+        sidebar.classList.remove('collapsed');
+      } else {
+        applyDesktopCollapsedFromStorage();
+      }
+      syncIcon();
+
+      btn?.addEventListener('click', () => {
+        if (isMobile()){
+          const willOpen = !sidebar.classList.contains('open');
+          sidebar.classList.toggle('open', willOpen);
+          setBackdrop(willOpen);
+          syncIcon();
+          return;
+        }
+
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
+        syncIcon();
+      });
+
+      sbBackdrop?.addEventListener('click', closeMobileDrawer);
+
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        a.addEventListener('click', () => {
+          if (isMobile()) closeMobileDrawer();
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        if (isMobile()){
+          sidebar.classList.remove('collapsed');
+          setBackdrop(sidebar.classList.contains('open'));
+        } else {
+          sidebar.classList.remove('open');
+          setBackdrop(false);
+          applyDesktopCollapsedFromStorage();
+        }
+        syncIcon();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('open')){
+          closeMobileDrawer();
+        }
+      });
+    })();
+
+    (function setActiveNav(){
+      const rawHere = (location.pathname.split('/').pop() || 'home.html').toLowerCase();
+      const here = rawHere.includes('update') || rawHere.includes('ob') ? 'ff-update.html' : rawHere;
+      document.querySelectorAll('.nav-item').forEach(a => {
+        const page = (a.getAttribute('data-page') || '').toLowerCase();
+        a.classList.toggle('active', page === here);
+      });
+    })();
+
+    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+      const q = (e.target.value || '').toLowerCase().trim();
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        const txt = a.textContent.toLowerCase();
+        a.style.display = (!q || txt.includes(q)) ? '' : 'none';
+      });
+    });
+
+
+    (function initThemeToggle(){
+      const key = 'ff_theme_v1';
+      const btn = document.getElementById('themeToggle');
+      btn?.addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+        const next = current === 'light' ? 'dark' : 'light';
+        document.documentElement.dataset.theme = next;
+        localStorage.setItem(key, next);
+      });
+    })();
+
+  </script>
+</body>
+</html>

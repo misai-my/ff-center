@@ -1,0 +1,4564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clash Squad JSON Viewer</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#060b18;
+      --panel:#081226;
+      --line:rgba(124,172,255,.14);
+      --line-2:rgba(124,172,255,.08);
+      --ink:#eef4ff;
+      --muted:#9fb0d1;
+      --orange:#ff7f32;
+      --cyan:#2dafff;
+      --good:#7cff9e;
+      --bad:#ff8f8f;
+      --shadow:0 24px 60px rgba(0,0,0,.45);
+      --radius:24px;
+
+      --page-min:1120px;
+      --gap-main:clamp(8px, .9vw, 16px);
+      --gap-card:clamp(6px, .65vw, 10px);
+      --pad-main:clamp(10px, 1vw, 18px);
+      --pad-panel:clamp(10px, .9vw, 16px);
+
+      --title-size:clamp(22px, 1.55vw, 28px);
+      --team-name-size:clamp(17px, 1.25vw, 24px);
+      --round-size:clamp(12px, .95vw, 16px);
+      --label-size:clamp(10px, .7vw, 12px);
+
+      --hero-h:clamp(88px, 8vw, 120px);
+      --hero-pad:clamp(6px, .7vw, 10px);
+      --chip-w:clamp(50px, 3.8vw, 64px);
+      --chip-icon:clamp(32px, 2.45vw, 42px);
+      --card-thumb:clamp(26px, 2vw, 30px);
+      --score-pill-h:clamp(26px, 2.2vw, 30px);
+      --score-pill-min:clamp(38px, 3vw, 44px);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html,body{
+      margin:0;
+      min-width:0;
+      overflow-x:auto;
+      scroll-behavior:smooth;
+    }
+
+    body{
+      font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 0% 10%, rgba(0,180,255,.12), transparent 20%),
+        radial-gradient(circle at 100% 10%, rgba(255,90,0,.10), transparent 20%),
+        linear-gradient(180deg,#030814 0%,#071122 100%);
+      color:var(--ink);
+    }
+
+    .app{
+      max-width:none;
+      width:max(100%, var(--page-min));
+      min-width:var(--page-min);
+      margin:0 auto;
+      padding:var(--pad-main);
+    }
+
+    .title{
+      margin:0 0 6px;
+      font-size:var(--title-size);
+      font-weight:900;
+      letter-spacing:.02em;
+      line-height:1.15;
+    }
+
+    .sub{
+      margin:0 0 14px;
+      color:var(--muted);
+      font-size:clamp(12px, .9vw, 14px);
+      line-height:1.45;
+    }
+
+    .panel{
+      background:linear-gradient(180deg, rgba(10,20,42,.94), rgba(7,14,30,.96));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      min-width:0;
+    }
+
+    .input-panel{
+      padding:var(--pad-panel);
+      margin-bottom:var(--gap-main);
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+
+    .field label{
+      font-size:var(--label-size);
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:var(--muted);
+    }
+
+    textarea{
+      width:100%;
+      min-height:220px;
+      resize:vertical;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:#08111f;
+      color:var(--ink);
+      padding:12px;
+      outline:none;
+      font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    }
+
+    textarea:focus{
+      border-color:rgba(45,175,255,.45);
+      box-shadow:0 0 0 3px rgba(45,175,255,.10);
+    }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      align-items:center;
+    }
+
+    button{
+      border:0;
+      border-radius:12px;
+      padding:10px 16px;
+      font-weight:800;
+      cursor:pointer;
+      background:linear-gradient(90deg, var(--cyan), #68ffd7);
+      color:#08101d;
+      font-size:12px;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    button.ghost{
+      background:transparent;
+      color:var(--ink);
+      border:1px solid var(--line);
+    }
+
+    button:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+
+    .mode-btn{
+      padding:8px 12px;
+      font-size:12px;
+      border-radius:10px;
+    }
+
+    .mode-btn.active{
+      background:linear-gradient(90deg, var(--cyan), #68ffd7);
+      color:#08101d;
+      border-color:transparent;
+    }
+
+    .mode-btn{
+      border:1px solid rgba(255,255,255,.10);
+      transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+    }
+
+    #progressionViewBtn,
+    #stackedProgressBtn,
+    #compareViewBtn{
+      background:rgba(45,175,255,.08);
+      border:1px solid rgba(45,175,255,.28);
+      color:#9fe3ff;
+    }
+    #progressionViewBtn:hover,
+    #stackedProgressBtn:hover,
+    #compareViewBtn:hover{
+      background:rgba(45,175,255,.14);
+      border-color:rgba(45,175,255,.44);
+      box-shadow:0 0 0 3px rgba(45,175,255,.10);
+    }
+    #progressionViewBtn.active,
+    #stackedProgressBtn.active,
+    #compareViewBtn.active{
+      background:linear-gradient(90deg, #2dafff, #68d9ff);
+      border-color:rgba(45,175,255,.70);
+      color:#06101c;
+      box-shadow:0 8px 20px rgba(45,175,255,.22);
+    }
+
+    #aggregatePlayersBtn,
+    #aggregateTeamsBtn{
+      background:rgba(255,127,50,.08);
+      border:1px solid rgba(255,127,50,.28);
+      color:#ffc59f;
+    }
+    #aggregatePlayersBtn:hover,
+    #aggregateTeamsBtn:hover{
+      background:rgba(255,127,50,.14);
+      border-color:rgba(255,127,50,.44);
+      box-shadow:0 0 0 3px rgba(255,127,50,.10);
+    }
+    #aggregatePlayersBtn.active,
+    #aggregateTeamsBtn.active{
+      background:linear-gradient(90deg, #ff7f32, #ffb15c);
+      border-color:rgba(255,127,50,.72);
+      color:#1a0c05;
+      box-shadow:0 8px 20px rgba(255,127,50,.22);
+    }
+
+    #compactMetricsBtn,
+    #fullMetricsBtn{
+      background:rgba(184,119,255,.08);
+      border:1px solid rgba(184,119,255,.28);
+      color:#dfc2ff;
+    }
+    #compactMetricsBtn:hover,
+    #fullMetricsBtn:hover{
+      background:rgba(184,119,255,.14);
+      border-color:rgba(184,119,255,.44);
+      box-shadow:0 0 0 3px rgba(184,119,255,.10);
+    }
+    #compactMetricsBtn.active,
+    #fullMetricsBtn.active{
+      background:linear-gradient(90deg, #b877ff, #e087ff);
+      border-color:rgba(184,119,255,.72);
+      color:#17081e;
+      box-shadow:0 8px 20px rgba(184,119,255,.22);
+    }
+
+    #latestModeBtn,
+    #allRoundsModeBtn{
+      background:rgba(124,255,158,.08);
+      border:1px solid rgba(124,255,158,.26);
+      color:#baffcd;
+    }
+    #latestModeBtn:hover,
+    #allRoundsModeBtn:hover{
+      background:rgba(124,255,158,.14);
+      border-color:rgba(124,255,158,.42);
+      box-shadow:0 0 0 3px rgba(124,255,158,.10);
+    }
+    #latestModeBtn.active,
+    #allRoundsModeBtn.active{
+      background:linear-gradient(90deg, #7cff9e, #68ffd7);
+      border-color:rgba(124,255,158,.70);
+      color:#07150d;
+      box-shadow:0 8px 20px rgba(124,255,158,.22);
+    }
+
+    .mode-btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      box-shadow:none !important;
+      filter:saturate(.75);
+    }
+
+    .status{
+      margin-top:12px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      white-space:pre-wrap;
+    }
+
+    .status.error{
+      color:#ffd7d7;
+      border-color:rgba(255,123,123,.35);
+      background:rgba(255,123,123,.08);
+    }
+
+    .match-head{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+      gap:var(--gap-main);
+      align-items:center;
+      padding:12px 16px;
+      margin-bottom:var(--gap-main);
+      border-radius:20px;
+      min-width:0;
+    }
+
+    .match-team-name{
+      min-width:0;
+      font-size:var(--team-name-size);
+      font-weight:900;
+      color:var(--orange);
+      text-transform:uppercase;
+      line-height:1;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .match-team-name.right{
+      text-align:right;
+    }
+
+    .team-name-wrap{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      width:100%;
+      min-width:0;
+    }
+
+    .team-name-text{
+      min-width:0;
+      flex:1 1 auto;
+      white-space:normal;
+      word-break:break-word;
+      line-height:1;
+    }
+
+    .team-name-text.right{
+      text-align:right;
+    }
+
+    .team-score-pill{
+      flex:0 0 auto;
+      min-width:var(--score-pill-min);
+      height:var(--score-pill-h);
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,172,255,.18);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      font-size:clamp(14px, 1vw, 16px);
+      font-weight:900;
+      line-height:1;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+
+    .match-round{
+      padding:8px 12px;
+      border-radius:14px;
+      border:1px solid rgba(124,172,255,.18);
+      background:rgba(3,12,28,.72);
+      font-size:var(--round-size);
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#fff;
+      white-space:nowrap;
+      line-height:1;
+    }
+
+    .arena-wrap{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:var(--gap-main);
+      align-items:start;
+      min-width:0;
+      position:relative;
+      overflow:visible;
+    }
+
+    .team-panel{
+      position:relative;
+      min-width:0;
+      overflow:visible;
+      border-radius:24px;
+      padding:clamp(10px, .9vw, 14px);
+      border:1px solid rgba(124,172,255,.12);
+      background:
+        linear-gradient(180deg, rgba(7,18,38,.95), rgba(5,14,30,.96)),
+        linear-gradient(90deg, rgba(45,175,255,.04), rgba(255,127,50,.03));
+      box-shadow:var(--shadow);
+      z-index:1;
+    }
+
+    .team-panel:hover,
+    .team-panel:focus-within{
+      z-index:6;
+    }
+
+    .team-panel::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:24px;
+      pointer-events:none;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+    }
+
+    .team-glow{
+      position:absolute;
+      width:180px;
+      height:180px;
+      filter:blur(70px);
+      opacity:.22;
+      pointer-events:none;
+    }
+
+    .team-glow-left{
+      top:-40px;
+      left:-60px;
+      background:#12b7ff;
+    }
+
+    .team-glow-right{
+      top:-40px;
+      right:-60px;
+      background:#ff5a2d;
+    }
+
+    .team-inner{
+      position:relative;
+      z-index:1;
+      display:grid;
+      gap:12px;
+      min-width:0;
+      overflow:visible;
+    }
+
+    .player-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:var(--gap-card);
+      align-items:start;
+      align-content:start;
+      min-width:0;
+      overflow:visible;
+    }
+
+    .player-card{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:8px;
+      border-radius:16px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.02);
+      overflow:visible;
+      position:relative;
+      z-index:1;
+    }
+
+    .hero-card{
+      position:relative;
+      border-radius:18px;
+      padding:4px;
+      background:linear-gradient(180deg, rgba(55,133,255,.25), rgba(255,127,50,.10));
+      border:1px solid rgba(124,172,255,.14);
+      overflow:visible;
+    }
+
+    .hero-card-inner{
+      position:relative;
+      height:var(--hero-h);
+      border-radius:15px;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 10%, rgba(255,255,255,.08), transparent 35%),
+        linear-gradient(180deg, rgba(7,14,27,.75), rgba(2,8,18,.92));
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+
+    .hero-card-inner img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      padding:var(--hero-pad);
+    }
+
+    .hero-fallback{
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:10px;
+      text-align:center;
+      padding:8px;
+      line-height:1.2;
+    }
+
+    .char-name{
+      text-align:center;
+      font-size:clamp(11px, .78vw, 13px);
+      font-weight:800;
+      color:#dfe9ff;
+      line-height:1.2;
+      white-space:normal;
+      word-break:break-word;
+      min-height:28px;
+    }
+
+    .player-tag{
+      border:1px solid rgba(124,172,255,.14);
+      background:rgba(255,255,255,.03);
+      border-radius:999px;
+      min-height:30px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 8px;
+      text-align:center;
+      font-size:clamp(10px, .72vw, 12px);
+      font-weight:800;
+      color:#f2f6ff;
+      line-height:1.2;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .skill-chip-row{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:6px;
+      min-height:36px;
+      overflow:visible;
+      position:relative;
+      z-index:1;
+    }
+
+    .skill-chip{
+      position:relative;
+      width:var(--chip-w);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:4px;
+      min-width:0;
+      overflow:visible;
+    }
+
+    .skill-chip-icon{
+      width:var(--chip-icon);
+      height:var(--chip-icon);
+      border-radius:10px;
+      border:1px solid rgba(124,172,255,.18);
+      background:rgba(255,255,255,.04);
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex:0 0 auto;
+    }
+
+    .skill-chip-icon img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      padding:4px;
+    }
+
+    .skill-chip-label{
+      width:100%;
+      font-size:9px;
+      line-height:1.15;
+      text-align:center;
+      font-weight:800;
+      color:#dfe9ff;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .icon-fallback{
+      font-size:10px;
+      color:var(--muted);
+      padding:4px;
+      text-align:center;
+      line-height:1.2;
+    }
+
+    .hover-wrap{
+      position:relative;
+      outline:none;
+      z-index:1;
+      overflow:visible;
+    }
+
+    .hover-wrap:hover,
+    .hover-wrap:focus-within{
+      z-index:9999;
+    }
+
+    .hover-popup{
+      position:absolute;
+      left:50%;
+      bottom:calc(100% + 10px);
+      transform:translateX(-50%) translateY(6px);
+      width:min(320px, calc(100vw - 32px));
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(124,172,255,.18);
+      background:rgba(5,12,24,.98);
+      box-shadow:0 18px 36px rgba(0,0,0,.45);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .16s ease, transform .16s ease;
+      z-index:10000;
+      text-align:left;
+    }
+
+    .hover-popup::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      bottom:-7px;
+      width:12px;
+      height:12px;
+      transform:translateX(-50%) rotate(45deg);
+      background:rgba(5,12,24,.98);
+      border-right:1px solid rgba(124,172,255,.18);
+      border-bottom:1px solid rgba(124,172,255,.18);
+    }
+
+    .hover-wrap:hover .hover-popup,
+    .hover-wrap:focus-within .hover-popup{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    .hover-title{
+      font-size:12px;
+      font-weight:900;
+      color:#fff;
+      margin-bottom:4px;
+      line-height:1.3;
+    }
+
+    .hover-meta{
+      font-size:11px;
+      color:#7fe0ff;
+      font-weight:800;
+      margin-bottom:6px;
+      line-height:1.3;
+    }
+
+    .hover-body{
+      font-size:11px;
+      color:#d3dffc;
+      line-height:1.45;
+      white-space:normal;
+    }
+
+    .section-box{
+      border-radius:16px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.025);
+      padding:8px;
+      display:grid;
+      gap:8px;
+      min-width:0;
+      overflow:visible;
+    }
+
+    .section-title{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      font-weight:900;
+      line-height:1.25;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .single-card{
+      min-height:42px;
+      border-radius:12px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.03);
+      display:flex;
+      align-items:flex-start;
+      gap:6px;
+      padding:6px;
+      min-width:0;
+    }
+
+    .single-card.primary{
+      border-color:rgba(255,173,58,.55);
+      box-shadow:inset 0 0 0 1px rgba(255,173,58,.18);
+    }
+
+    .card-thumb{
+      width:var(--card-thumb);
+      height:var(--card-thumb);
+      border-radius:8px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(124,172,255,.14);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+
+    .card-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      padding:3px;
+    }
+
+    .card-copy{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+      width:100%;
+    }
+
+    .card-title{
+      font-size:clamp(10px, .72vw, 11px);
+      font-weight:800;
+      color:#eef4ff;
+      line-height:1.15;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .passive-summary-panel{
+      margin-top:var(--gap-main);
+      padding:14px;
+    }
+
+    .passive-summary-grid{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:12px;
+      min-width:0;
+    }
+
+    .passive-team-box{
+      border-radius:16px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.025);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      min-width:0;
+    }
+
+    .passive-list{
+      display:grid;
+      gap:8px;
+    }
+
+    .passive-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px;
+      border-radius:12px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.03);
+      min-width:0;
+    }
+
+    .passive-row .card-thumb{
+      width:36px;
+      height:36px;
+      border-radius:10px;
+    }
+
+    .passive-copy{
+      min-width:0;
+      flex:1 1 auto;
+      display:grid;
+      gap:2px;
+    }
+
+    .passive-name{
+      font-size:11px;
+      font-weight:800;
+      color:#eef4ff;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .passive-meta{
+      font-size:10px;
+      color:var(--muted);
+      line-height:1.2;
+    }
+
+    .passive-count{
+      flex:0 0 auto;
+      min-width:34px;
+      height:28px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,172,255,.18);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      font-size:11px;
+      font-weight:900;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .details-panel{
+      margin-top:var(--gap-main);
+      padding:14px;
+      position:relative;
+    }
+
+    .details-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .details-panel-title{
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#eef4ff;
+      margin:0;
+    }
+
+    .details-subline{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+
+    .details-filters{
+      display:grid;
+      grid-template-columns:minmax(180px,1fr) minmax(380px,1.5fr) minmax(220px,1fr) minmax(220px,1fr);
+      gap:10px;
+      margin-bottom:10px;
+      align-items:end;
+    }
+
+    .select-ui{
+      width:100%;
+      min-height:40px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#08111f;
+      color:var(--ink);
+      padding:10px 12px;
+      outline:none;
+      font:600 12px/1.2 Inter,Segoe UI,Roboto,Arial,sans-serif;
+    }
+
+    .select-ui:focus{
+      border-color:rgba(45,175,255,.45);
+      box-shadow:0 0 0 3px rgba(45,175,255,.10);
+    }
+
+    .details-inline-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      min-height:40px;
+    }
+
+    .details-summary-meta{
+      min-height:40px;
+      border-radius:12px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.03);
+      padding:10px 12px;
+      font-size:12px;
+      color:#d6e2ff;
+      display:flex;
+      align-items:center;
+      line-height:1.35;
+    }
+
+    .player-pills{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .player-pill{
+      border:1px solid rgba(124,172,255,.14);
+      background:rgba(255,255,255,.03);
+      color:#d9e6ff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:11px;
+      font-weight:800;
+      cursor:pointer;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .player-pill:hover{
+      border-color:rgba(124,172,255,.32);
+      background:rgba(255,255,255,.05);
+    }
+
+    .player-pill.active.team-a{
+      background:linear-gradient(90deg, rgba(45,175,255,.28), rgba(45,175,255,.12));
+      border-color:rgba(45,175,255,.55);
+      color:#fff;
+    }
+
+    .player-pill.active.team-b{
+      background:linear-gradient(90deg, rgba(255,127,50,.28), rgba(255,127,50,.12));
+      border-color:rgba(255,127,50,.55);
+      color:#fff;
+    }
+
+    .jump-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      min-height:40px;
+    }
+
+    .empty-lite{
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.3;
+      white-space:normal;
+      word-break:break-word;
+    }
+
+    .progression-stack{
+      display:grid;
+      gap:12px;
+      min-width:0;
+    }
+
+    .progression-card{
+      border-radius:18px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.02);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      min-width:0;
+      scroll-margin-top:16px;
+    }
+
+    .progression-card.team-a{
+      box-shadow:inset 0 0 0 1px rgba(45,175,255,.12);
+    }
+
+    .progression-card.team-b{
+      box-shadow:inset 0 0 0 1px rgba(255,127,50,.12);
+    }
+
+    .progression-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      min-width:0;
+    }
+
+    .progression-head-left{
+      min-width:0;
+    }
+
+    .progression-player-name{
+      font-size:14px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.15;
+      word-break:break-word;
+    }
+
+    .progression-player-meta{
+      margin-top:4px;
+      font-size:11px;
+      color:#c9d8fb;
+      line-height:1.4;
+      word-break:break-word;
+    }
+
+    .progression-head-right{
+      flex:0 0 auto;
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .mini-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid rgba(124,172,255,.14);
+      background:rgba(255,255,255,.04);
+      color:#eef4ff;
+      font-size:10px;
+      font-weight:900;
+      line-height:1;
+      white-space:nowrap;
+    }
+
+    .matrix-wrap{
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid rgba(124,172,255,.08);
+      background:rgba(255,255,255,.02);
+    }
+
+    .matrix-table{
+      width:max-content;
+      min-width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:11px;
+    }
+
+    .matrix-table th,
+    .matrix-table td{
+      padding:8px 10px;
+      border-right:1px solid rgba(124,172,255,.06);
+      border-bottom:1px solid rgba(124,172,255,.06);
+      vertical-align:middle;
+      text-align:center;
+      min-width:74px;
+    }
+
+    .matrix-table thead th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      background:#0a1527;
+      color:#eef4ff;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      font-size:10px;
+    }
+
+    .matrix-table .metric-col{
+      position:sticky;
+      left:0;
+      z-index:1;
+      background:#0a1322;
+      text-align:left;
+      min-width:180px;
+      max-width:180px;
+      color:#d9e5ff;
+      font-weight:800;
+    }
+
+    .matrix-table thead .metric-col{
+      z-index:3;
+      background:#0c1629;
+    }
+
+    .matrix-category-row td{
+      position:sticky;
+      left:0;
+      z-index:1;
+      background:rgba(45,175,255,.08);
+      color:#9be8ff;
+      text-align:left;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-size:10px;
+    }
+
+    .matrix-cell{
+      color:#eef4ff;
+      font-weight:700;
+      transition:background-color .18s ease, box-shadow .18s ease;
+    }
+
+    .matrix-cell.muted{
+      color:var(--muted);
+      font-weight:600;
+    }
+
+    .matrix-cell.good{
+      color:#8dffb6;
+    }
+
+    .matrix-cell.bad{
+      color:#ff9d9d;
+    }
+
+    .matrix-cell.tag{
+      font-weight:900;
+      letter-spacing:.04em;
+    }
+
+    .tag-fb{
+      color:var(--good);
+      font-weight:900;
+      letter-spacing:.03em;
+    }
+
+    .tag-fd{
+      color:var(--bad);
+      font-weight:900;
+      letter-spacing:.03em;
+    }
+
+    .tag-sep{
+      color:#c8d6f3;
+      font-weight:800;
+      opacity:.82;
+    }
+
+    .round-trail{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+      gap:8px;
+      min-width:0;
+    }
+
+    .trail-card{
+      border-radius:14px;
+      border:1px solid rgba(124,172,255,.08);
+      background:rgba(255,255,255,.02);
+      padding:9px;
+      display:grid;
+      gap:8px;
+      align-content:start;
+      min-width:0;
+    }
+
+    .trail-title{
+      font-size:11px;
+      font-weight:900;
+      color:#fff;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+
+    .trail-block{
+      display:grid;
+      gap:3px;
+    }
+
+    .trail-label{
+      font-size:10px;
+      font-weight:900;
+      color:#8fe6ff;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .trail-body{
+      font-size:11px;
+      color:#d8e4ff;
+      line-height:1.35;
+      word-break:break-word;
+      white-space:normal;
+    }
+
+    .stacked-stack{
+      display:grid;
+      gap:12px;
+      min-width:0;
+    }
+
+    .stacked-card{
+      border-radius:18px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.02);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      min-width:0;
+      scroll-margin-top:16px;
+    }
+
+    .stacked-card-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .stacked-card-kicker{
+      font-size:10px;
+      font-weight:900;
+      color:#8fe6ff;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      line-height:1.1;
+    }
+
+    .stacked-card-title{
+      font-size:14px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.15;
+      margin-top:2px;
+    }
+
+    .stacked-card-copy{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.3;
+      text-align:right;
+    }
+
+    .player-cell{
+      position:sticky;
+      left:0;
+      z-index:1;
+      background:#0a1322;
+      text-align:left !important;
+      min-width:164px;
+      max-width:164px;
+      width:164px;
+      color:#d9e5ff;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .matrix-table thead .player-cell{
+      z-index:3;
+      background:#0c1629;
+      color:#eef4ff;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+      font-size:10px;
+    }
+
+    .wrap-metric-list{
+      display:grid;
+      gap:10px;
+    }
+
+    .wrap-player-card{
+      border-radius:14px;
+      border:1px solid var(--line-2);
+      background:rgba(255,255,255,.02);
+      padding:10px;
+      display:grid;
+      gap:10px;
+    }
+
+    .wrap-player-title{
+      font-size:12px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .wrap-round-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+      gap:8px;
+    }
+
+    .wrap-round-card{
+      border-radius:12px;
+      border:1px solid rgba(124,172,255,.08);
+      background:rgba(255,255,255,.025);
+      padding:8px;
+      display:grid;
+      gap:5px;
+      min-height:74px;
+      align-content:start;
+    }
+
+    .wrap-round-label{
+      font-size:10px;
+      font-weight:900;
+      color:#8fe6ff;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      line-height:1;
+    }
+
+    .wrap-round-body{
+      font-size:11px;
+      color:#d8e4ff;
+      line-height:1.35;
+      word-break:break-word;
+      white-space:normal;
+    }
+
+    .round-stack{
+      display:grid;
+      gap:12px;
+      min-width:0;
+    }
+
+    .round-section{
+      border-radius:18px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.02);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      min-width:0;
+      scroll-margin-top:16px;
+    }
+
+    .round-section-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:2px 2px 0;
+    }
+
+    .round-section-kicker{
+      font-size:10px;
+      font-weight:900;
+      color:#8fe6ff;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      line-height:1.1;
+    }
+
+    .round-section-title{
+      font-size:14px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.15;
+      margin-top:2px;
+    }
+
+    .round-section-copy{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.3;
+      text-align:right;
+    }
+
+    .round-player-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+      min-width:0;
+    }
+
+    .detail-player-card{
+      min-width:0;
+      border-radius:16px;
+      border:1px solid rgba(124,172,255,.10);
+      background:rgba(255,255,255,.025);
+      padding:10px;
+      display:grid;
+      gap:10px;
+      align-self:start;
+    }
+
+    .detail-player-card.team-a{
+      box-shadow:inset 0 0 0 1px rgba(45,175,255,.12);
+    }
+
+    .detail-player-card.team-b{
+      box-shadow:inset 0 0 0 1px rgba(255,127,50,.12);
+    }
+
+    .detail-player-card-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+
+    .detail-player-name{
+      font-size:13px;
+      font-weight:900;
+      color:#fff;
+      line-height:1.15;
+      word-break:break-word;
+    }
+
+    .detail-player-meta{
+      margin-top:4px;
+      font-size:11px;
+      color:#c9d8fb;
+      line-height:1.35;
+      word-break:break-word;
+    }
+
+    .detail-player-badge{
+      min-width:28px;
+      height:28px;
+      padding:0 9px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:#fff;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      flex:0 0 auto;
+    }
+
+    .detail-block-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:8px;
+      min-width:0;
+    }
+
+    .stats-category{
+      border-radius:12px;
+      border:1px solid rgba(124,172,255,.08);
+      background:rgba(255,255,255,.02);
+      overflow:hidden;
+      min-width:0;
+      align-self:start;
+    }
+
+    .stats-category-title{
+      padding:6px 8px;
+      font-size:10px;
+      font-weight:900;
+      color:#cfe0ff;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      background:rgba(255,255,255,.03);
+      border-bottom:1px solid rgba(124,172,255,.08);
+      white-space:normal;
+      line-height:1.2;
+      word-break:break-word;
+    }
+
+    .stats-table{
+      display:grid;
+      min-width:0;
+      align-content:start;
+    }
+
+    .stats-row{
+      display:grid;
+      grid-template-columns:minmax(66px,.88fr) minmax(0,1.12fr);
+      gap:6px;
+      padding:6px 8px;
+      border-top:1px solid rgba(124,172,255,.06);
+      align-items:start;
+      min-width:0;
+    }
+
+    .stats-row:first-child{
+      border-top:0;
+    }
+
+    .stats-key{
+      font-size:10px;
+      font-weight:800;
+      color:var(--muted);
+      white-space:normal;
+      line-height:1.2;
+      word-break:break-word;
+      align-self:start;
+    }
+
+    .stats-val{
+      font-size:10px;
+      font-weight:700;
+      color:#eef4ff;
+      white-space:normal;
+      line-height:1.25;
+      word-break:break-word;
+      min-width:0;
+      align-self:start;
+    }
+
+    .prompt-panel{
+      margin-top:var(--gap-main);
+      padding:14px;
+    }
+
+    .prompt-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .prompt-title{
+      font-size:14px;
+      font-weight:900;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#eef4ff;
+    }
+
+    #aiPromptOutput{
+      min-height:340px;
+      background:#07101f;
+    }
+
+    .copy-note{
+      margin-top:10px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .jump-top-btn{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:99999;
+      display:none;
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
+    }
+
+    .jump-top-btn.show{
+      display:inline-flex;
+    }
+
+    @media (max-width: 1280px){
+      :root{
+        --page-min:1020px;
+        --hero-h:92px;
+        --chip-w:52px;
+        --chip-icon:34px;
+      }
+
+      .details-filters{
+        grid-template-columns:1fr;
+      }
+
+      .round-player-grid,
+      .detail-block-grid,
+      .passive-summary-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media (max-width: 1120px){
+      :root{
+        --page-min:980px;
+        --hero-h:88px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="pageTopAnchor">
+    <h1 class="title">Clash Squad JSON → Team Viewer</h1>
+    <p class="sub">Paste your match JSON, then render.</p>
+
+    <div class="panel input-panel">
+      <div class="field">
+        <label for="jsonInput">Paste Match JSON</label>
+        <textarea
+          id="jsonInput"
+          name="match_json_payload"
+          placeholder="Paste the full JSON here..."
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          inputmode="text"
+          data-lpignore="true"
+          data-1p-ignore="true"
+          aria-label="Gameplay match JSON input"
+        ></textarea>
+        <div class="sub" style="margin:2px 0 0;">
+          Paste gameplay match JSON only. This field is for game telemetry, not payment data.
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="renderBtn">Render</button>
+        <button id="uploadReportBtn" class="ghost" type="button">Upload Report Data</button>
+        <button id="reloadLookupBtn" class="ghost" type="button">Reload Lookup + Images</button>
+        <button id="clearBtn" class="ghost" type="button">Clear</button>
+      </div>
+
+      <div id="status" class="status">Loading lookup and image catalogs…</div>
+    </div>
+
+    <div class="panel match-head">
+      <div id="teamAName" class="match-team-name">—</div>
+      <div id="matchRound" class="match-round">Round —</div>
+      <div id="teamBName" class="match-team-name right">—</div>
+    </div>
+
+    <div class="arena-wrap">
+      <section class="team-panel">
+        <div class="team-glow team-glow-left"></div>
+        <div id="teamAContent" class="team-inner"></div>
+      </section>
+
+      <section class="team-panel">
+        <div class="team-glow team-glow-right"></div>
+        <div id="teamBContent" class="team-inner"></div>
+      </section>
+    </div>
+
+    <div class="panel passive-summary-panel">
+      <div class="details-head" style="margin-bottom:12px;">
+        <div>
+          <div class="details-panel-title">Passive Skill Counts</div>
+          <div class="details-subline">
+            Counts all passive skills currently used by each team based on the loaded match JSON.
+          </div>
+        </div>
+      </div>
+
+      <div class="passive-summary-grid">
+        <section class="passive-team-box">
+          <div class="section-title">Team A Passives</div>
+          <div id="teamAPassiveSummary"></div>
+        </section>
+
+        <section class="passive-team-box">
+          <div class="section-title">Team B Passives</div>
+          <div id="teamBPassiveSummary"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="panel details-panel" id="detailsPanelAnchor">
+      <div class="details-head">
+        <div>
+          <div class="details-panel-title">Player Stat Details</div>
+          <div class="details-subline">
+            Progression View tracks one player or one team across rounds, Stacked Progress compares rows on one metric across rounds, and Compare View shows round snapshots. Compact Metrics gives a tighter analyst layout.
+          </div>
+        </div>
+
+        <div class="actions" style="margin-top:0;">
+          <button id="progressionViewBtn" class="ghost mode-btn" type="button">Progression View</button>
+          <button id="stackedProgressBtn" class="ghost mode-btn active" type="button">Stacked Progress</button>
+          <button id="compareViewBtn" class="ghost mode-btn" type="button">Compare View</button>
+
+          <button id="aggregatePlayersBtn" class="ghost mode-btn active" type="button">By Player</button>
+          <button id="aggregateTeamsBtn" class="ghost mode-btn" type="button">By Team</button>
+
+          <button id="compactMetricsBtn" class="ghost mode-btn" type="button">Compact Metrics</button>
+          <button id="fullMetricsBtn" class="ghost mode-btn active" type="button">Full Metrics</button>
+          <button id="latestModeBtn" class="ghost mode-btn active" type="button">Latest Round</button>
+          <button id="allRoundsModeBtn" class="ghost mode-btn" type="button">All Rounds</button>
+        </div>
+      </div>
+
+      <div class="details-filters">
+        <div class="field">
+          <label for="detailsTeamFilter">Team Scope</label>
+          <select id="detailsTeamFilter" class="select-ui">
+            <option value="">Both Teams</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Player Scope</label>
+          <div class="details-inline-actions">
+            <button id="toggleSpecificPlayersBtn" class="ghost mode-btn" type="button">Specific Players: Off</button>
+            <button id="selectAllVisiblePlayersBtn" class="ghost mode-btn" type="button">All Visible</button>
+            <button id="resetPlayerFilterBtn" class="ghost mode-btn" type="button">Reset</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Current View</label>
+          <div id="detailsSummaryMeta" class="details-summary-meta">No data rendered yet.</div>
+        </div>
+
+        <div class="field">
+          <label for="jumpToMetricSelect">Jump To</label>
+          <div class="jump-actions">
+            <select id="jumpToMetricSelect" class="select-ui">
+              <option value="">Select section…</option>
+            </select>
+            <button id="jumpToMetricBtn" class="ghost mode-btn" type="button">Go</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="detailsPlayerPills" class="player-pills"></div>
+      <div id="globalPlayerDetails"></div>
+    </div>
+
+    <div class="panel prompt-panel">
+      <div class="prompt-head">
+        <div class="prompt-title">AI Analysis Prompt</div>
+        <button id="copyPromptBtn" class="ghost" type="button">Copy Prompt</button>
+      </div>
+      <textarea id="aiPromptOutput" readonly placeholder="Render match JSON first to generate a copy-ready prompt for AI analysis..."></textarea>
+      <div id="copyPromptStatus" class="copy-note">
+        The generated prompt is built for an esports commentator / analyst / coach perspective.
+      </div>
+    </div>
+  </div>
+
+  <button id="jumpTopBtn" class="jump-top-btn">Top</button>
+
+  <script>
+    const client = supabase.createClient(
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+    );
+
+    const CHARACTER_JSON_URL = 'https://misai-my.github.io/freefire-esports/character.json';
+    const PET_JSON_URL = 'https://misai-my.github.io/freefire-esports/pet.json';
+    const LOADOUT_JSON_URL = 'https://misai-my.github.io/freefire-esports/loadout.json';
+
+    const SHARED_ROOM = 'global';
+    const LOCAL_INPUT_KEY = 'cs_clash_local_json';
+    const MAX_DISPLAY_ROUNDS = 11;
+
+    const REPORT_MATCHES_TABLE = 'cs_report_matches';
+    const REPORT_ROUNDS_TABLE = 'cs_report_player_rounds';
+
+    const $ = (id) => document.getElementById(id);
+
+    let matchApiLoaded = false;
+    let assetsLoaded = false;
+    let detailsMode = "latest";
+    let detailsViewMode = "stacked";
+    let detailsMetricDensity = "full";
+    let detailsAggregateMode = "player";
+    let detailsTeamFilter = "both";
+    let detailsUseSpecificPlayers = false;
+    let detailsSelectedPlayerKeys = new Set();
+
+    let CURRENT_TEAMS = null;
+    let CURRENT_PAYLOAD = null;
+    let CURRENT_SHARED_JSON_TEXT = "";
+    let sharedChannel = null;
+    let applyingRemoteState = false;
+
+    const LOOKUPS = {
+      storeItems: new Map(),
+      items: new Map(),
+      skills: new Map(),
+      pets: new Map()
+    };
+
+    const ASSETS = {
+      charactersById: new Map(),
+      charactersByName: new Map(),
+      petsByName: new Map(),
+      loadoutsById: new Map()
+    };
+
+    const LOADOUT_FALLBACKS = [
+      { loadout_id: 500000003, name: 'Super Leg Pocket', image_url: 'https://i.imgur.com/hVW6fWi.png', cs_description: 'Start each match with key items and extra protection.' },
+      { loadout_id: 500000004, name: 'Tactical Market', image_url: 'https://i.imgur.com/OBnERWB.png', cs_description: 'Get a tactical panel each round and deploy a chosen gadget.' },
+      { loadout_id: 500000005, name: 'Team Booster', image_url: 'https://i.imgur.com/RAG1acC.png', cs_description: 'Helper Bot revives teammates remotely and Secret Bazaar team buffs are available in the CS Store.' },
+      { loadout_id: 500000008, name: 'Enhance Hammer', image_url: 'https://i.imgur.com/gClc4RN.png', cs_description: 'Earn tokens via eliminations and enhance weapons / gloo walls during purchase phase.' }
+    ];
+
+    function setStatus(message, isError = false) {
+      const el = $("status");
+      if (!el) return;
+      el.textContent = message;
+      el.className = isError ? "status error" : "status";
+    }
+
+    function setCopyPromptStatus(message) {
+      const el = $("copyPromptStatus");
+      if (el) el.textContent = message;
+    }
+
+    function getLocalInput() {
+      try { return localStorage.getItem(LOCAL_INPUT_KEY) || ""; }
+      catch { return ""; }
+    }
+
+    function setLocalInput(value) {
+      try { localStorage.setItem(LOCAL_INPUT_KEY, String(value || "")); }
+      catch {}
+    }
+
+    function clearLocalInput() {
+      try { localStorage.removeItem(LOCAL_INPUT_KEY); }
+      catch {}
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeHtmlWithBreaks(value) {
+      return escapeHtml(value ?? "").replace(/\n/g, "<br>");
+    }
+
+    function normalizeKey(value) {
+      return String(value ?? "").trim().toUpperCase().replace(/[^A-Z0-9]+/g, "");
+    }
+
+    function firstWord(value) {
+      return String(value ?? "").trim().split(/\s+/)[0] || "";
+    }
+
+    function slugify(value) {
+      return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "section";
+    }
+
+    function toNum(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function toFiniteNumberOrNull(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function humanizeKey(key) {
+      return String(key || "")
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+
+    function formatGenericValue(value) {
+      if (value === null || value === undefined) return "—";
+      if (typeof value === "boolean") return value ? "Yes" : "No";
+
+      if (Array.isArray(value)) {
+        if (!value.length) return "0";
+        const allPrimitive = value.every(v => v === null || ["string","number","boolean"].includes(typeof v));
+        return allPrimitive ? value.map(formatGenericValue).join(", ") : `${value.length} entries`;
+      }
+
+      if (typeof value === "object") {
+        try { return JSON.stringify(value); }
+        catch { return "[object]"; }
+      }
+
+      return String(value);
+    }
+
+    function formatCompactNumber(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return String(value ?? "—");
+
+      const abs = Math.abs(n);
+      const sign = n < 0 ? "-" : "";
+
+      if (abs >= 1e12) return `${sign}${(abs / 1e12).toFixed(abs >= 1e13 ? 0 : 1).replace(/\.0$/, "")}T`;
+      if (abs >= 1e9)  return `${sign}${(abs / 1e9).toFixed(abs >= 1e10 ? 0 : 1).replace(/\.0$/, "")}B`;
+      if (abs >= 1e6)  return `${sign}${(abs / 1e6).toFixed(abs >= 1e7 ? 0 : 1).replace(/\.0$/, "")}M`;
+      if (abs >= 1e3)  return `${sign}${(abs / 1e3).toFixed(abs >= 1e4 ? 0 : 1).replace(/\.0$/, "")}K`;
+
+      return String(n);
+    }
+
+    function formatDisplayValue(value) {
+      if (value === null || value === undefined) return "—";
+      if (typeof value === "boolean") return value ? "Yes" : "No";
+
+      if (typeof value === "number") {
+        return formatCompactNumber(value);
+      }
+
+      if (Array.isArray(value)) {
+        if (!value.length) return "0";
+        const allPrimitive = value.every(v => v === null || ["string", "number", "boolean"].includes(typeof v));
+        return allPrimitive ? value.map(formatDisplayValue).join(", ") : `${value.length} entries`;
+      }
+
+      if (typeof value === "object") {
+        try { return JSON.stringify(value); }
+        catch { return "[object]"; }
+      }
+
+      return String(value);
+    }
+
+    function getFixedRoundIndices() {
+      return Array.from({ length: MAX_DISPLAY_ROUNDS }, (_, i) => i);
+    }
+
+    function scoreLookupName(name) {
+      const s = String(name || "").trim();
+      if (!s) return -999;
+
+      let score = 0;
+      if (!/500000\d+/.test(s)) score += 100;
+
+      const wordCount = s.split(/\s+/).filter(Boolean).length;
+      if (wordCount <= 4) score += 40;
+      else if (wordCount <= 7) score += 15;
+      else score -= 20;
+
+      if (/[.!?]/.test(s)) score -= 25;
+      if (/(will|obtain|marked on the map|once you open|head there)/i.test(s)) score -= 40;
+
+      score -= Math.min(s.length, 120) * 0.15;
+      return score;
+    }
+
+    function setBestLookupEntry(map, id, name) {
+      const cleanName = String(name || "").trim();
+      if (!cleanName) return;
+
+      const current = map.get(id);
+      if (!current) {
+        map.set(id, cleanName);
+        return;
+      }
+      if (scoreLookupName(cleanName) > scoreLookupName(current)) map.set(id, cleanName);
+    }
+
+    function sanitizeResolvedItemName(name) {
+      let s = String(name || "").replace(/\s+/g, " ").trim();
+      if (!s) return null;
+      s = s.replace(/\s*500000\d+[\s\S]*$/i, "").trim();
+      const words = s.split(/\s+/).filter(Boolean);
+      if (words.length > 5) s = words.slice(0, 3).join(" ");
+      return s || null;
+    }
+
+    async function fetchJson(url) {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to fetch ${url} (${res.status})`);
+      return res.json();
+    }
+
+    function resolveItemName(id, preferStore = false) {
+      const numId = Number(id);
+      if (!Number.isFinite(numId)) return null;
+
+      const firstRaw = preferStore ? (LOOKUPS.storeItems.get(numId) || null) : (LOOKUPS.items.get(numId) || null);
+      const secondRaw = preferStore ? (LOOKUPS.items.get(numId) || null) : (LOOKUPS.storeItems.get(numId) || null);
+
+      const firstClean = sanitizeResolvedItemName(firstRaw);
+      const secondClean = sanitizeResolvedItemName(secondRaw);
+      return firstClean || secondClean || null;
+    }
+
+    function getLookupName(type, id) {
+      const numId = Number(id);
+      if (!Number.isFinite(numId)) return null;
+      if (type === 0) return LOOKUPS.storeItems.get(numId) || null;
+      if (type === 1) return LOOKUPS.items.get(numId) || null;
+      if (type === 2) return LOOKUPS.skills.get(numId) || null;
+      if (type === 3) return LOOKUPS.pets.get(numId) || null;
+      return null;
+    }
+
+    async function loadMatchApiLookups() {
+      const { data, error } = await client
+        .from("match_api")
+        .select("id, type, name")
+        .in("type", [0, 1, 2, 3]);
+
+      if (error) throw error;
+
+      LOOKUPS.storeItems.clear();
+      LOOKUPS.items.clear();
+      LOOKUPS.skills.clear();
+      LOOKUPS.pets.clear();
+
+      for (const row of (data || [])) {
+        const id = Number(row.id);
+        const type = Number(row.type);
+        const name = String(row.name || "").trim();
+        if (!Number.isFinite(id) || !name) continue;
+
+        if (type === 0) setBestLookupEntry(LOOKUPS.storeItems, id, name);
+        if (type === 1) setBestLookupEntry(LOOKUPS.items, id, name);
+        if (type === 2) setBestLookupEntry(LOOKUPS.skills, id, name);
+        if (type === 3) setBestLookupEntry(LOOKUPS.pets, id, name);
+      }
+
+      matchApiLoaded = true;
+      return {
+        storeItems: LOOKUPS.storeItems.size,
+        items: LOOKUPS.items.size,
+        skills: LOOKUPS.skills.size,
+        pets: LOOKUPS.pets.size
+      };
+    }
+
+    function seedFallbackLoadouts() {
+      ASSETS.loadoutsById.clear();
+      for (const row of LOADOUT_FALLBACKS) {
+        ASSETS.loadoutsById.set(Number(row.loadout_id), {
+          loadout_id: Number(row.loadout_id),
+          name: row.name,
+          image_url: row.image_url,
+          cs_description: row.cs_description
+        });
+      }
+    }
+
+    function extractLoadoutRows(raw) {
+      const rows = Array.isArray(raw) ? raw : [];
+      for (const row of rows) {
+        const loadoutId = Number(row?.loadout_id);
+        if (!Number.isFinite(loadoutId)) continue;
+
+        ASSETS.loadoutsById.set(loadoutId, {
+          loadout_id: loadoutId,
+          name: String(row?.name || "").trim(),
+          image_url: String(row?.image_url || "").trim(),
+          cs_description: String(row?.description?.cs || "").trim()
+        });
+      }
+    }
+
+    async function loadAssetCatalogs() {
+      const [characters, pets, loadouts] = await Promise.allSettled([
+        fetchJson(CHARACTER_JSON_URL),
+        fetchJson(PET_JSON_URL),
+        fetchJson(LOADOUT_JSON_URL)
+      ]);
+
+      ASSETS.charactersById.clear();
+      ASSETS.charactersByName.clear();
+      ASSETS.petsByName.clear();
+      seedFallbackLoadouts();
+
+      if (characters.status === "fulfilled") {
+        for (const row of (characters.value || [])) {
+          const imageUrl = row?.image_url || "";
+          const apiId = Number(row?.api_id);
+          const asset = {
+            name: row?.name || "",
+            image_url: imageUrl,
+            skill: row?.skill || "",
+            description: row?.description || ""
+          };
+
+          if (imageUrl && Number.isFinite(apiId)) ASSETS.charactersById.set(apiId, asset);
+          if (row?.name) ASSETS.charactersByName.set(normalizeKey(row.name), asset);
+          if (row?.skill) ASSETS.charactersByName.set(normalizeKey(row.skill), asset);
+
+          const shortName = firstWord(row?.name);
+          const shortSkill = firstWord(row?.skill);
+          if (shortName) ASSETS.charactersByName.set(normalizeKey(shortName), asset);
+          if (shortSkill) ASSETS.charactersByName.set(normalizeKey(shortSkill), asset);
+        }
+      }
+
+      if (pets.status === "fulfilled") {
+        for (const row of (pets.value || [])) {
+          if (!row?.name) continue;
+          ASSETS.petsByName.set(normalizeKey(row.name), {
+            name: row.name,
+            image_url: row?.image_url || "",
+            skill: row?.skill || "",
+            description: row?.description || ""
+          });
+        }
+      }
+
+      if (loadouts.status === "fulfilled") extractLoadoutRows(loadouts.value);
+
+      assetsLoaded = true;
+      return {
+        characters: ASSETS.charactersById.size,
+        pets: ASSETS.petsByName.size,
+        loadouts: ASSETS.loadoutsById.size
+      };
+    }
+
+    async function warmUp() {
+      setStatus("Loading lookup and image catalogs...");
+      const [lookupResult, assetResult] = await Promise.allSettled([loadMatchApiLookups(), loadAssetCatalogs()]);
+      const errors = [];
+
+      if (lookupResult.status === "rejected") {
+        matchApiLoaded = false;
+        errors.push(`match_api: ${lookupResult.reason?.message || lookupResult.reason}`);
+      }
+      if (assetResult.status === "rejected") {
+        assetsLoaded = false;
+        errors.push(`asset catalogs: ${assetResult.reason?.message || assetResult.reason}`);
+      }
+
+      if (errors.length) {
+        setStatus(`Some data failed to load:\n${errors.join("\n")}`, true);
+        return;
+      }
+
+      setStatus(
+        `Ready.\n` +
+        `match_api → Type0 ${lookupResult.value.storeItems}, Type1 ${lookupResult.value.items}, Skills ${lookupResult.value.skills}, Pets ${lookupResult.value.pets}\n` +
+        `Assets → Characters ${assetResult.value.characters}, Pets ${assetResult.value.pets}, Loadouts ${assetResult.value.loadouts}`
+      );
+    }
+
+    function getCharacterAsset(skillId, fallbackName = "") {
+      const byId = ASSETS.charactersById.get(Number(skillId));
+      if (byId) return byId;
+
+      const full = normalizeKey(fallbackName);
+      if (full && ASSETS.charactersByName.has(full)) return ASSETS.charactersByName.get(full);
+
+      const short = normalizeKey(firstWord(fallbackName));
+      if (short && ASSETS.charactersByName.has(short)) return ASSETS.charactersByName.get(short);
+
+      return null;
+    }
+
+    function getPetAsset(name = "") {
+      if (!name) return null;
+      return ASSETS.petsByName.get(normalizeKey(name)) || null;
+    }
+
+    function getLoadoutAsset(loadoutId) {
+      const id = Number(loadoutId);
+      if (!Number.isFinite(id)) return null;
+      return ASSETS.loadoutsById.get(id) || null;
+    }
+
+    function getActiveSkillInfo(player) {
+      const info = Array.isArray(player?.skill_info) ? player.skill_info : [];
+      return info.find(s => s && s.skill_active === true) || info[0] || null;
+    }
+
+    function getActiveSkillId(player) {
+      const activeInfo = getActiveSkillInfo(player);
+      return activeInfo?.skill_id ?? (Array.isArray(player?.skill_ids) ? player.skill_ids[0] : null);
+    }
+
+    function getActiveSkillEntry(player) {
+      const activeInfo = getActiveSkillInfo(player);
+      const activeId = getActiveSkillId(player);
+
+      if (!activeId) {
+        return { id:null, label:"—", skill:"", description:"", image_url:"", slotType:"Active" };
+      }
+
+      const lookupName = getLookupName(2, activeId) || activeInfo?.skill_name || `Skill ID ${activeId}`;
+      const lookupFirst = firstWord(lookupName);
+      const asset = getCharacterAsset(activeId, lookupFirst || lookupName);
+
+      return {
+        id: Number(activeId),
+        label: asset?.name || lookupFirst || lookupName,
+        skill: asset?.skill || lookupFirst || activeInfo?.skill_name || lookupName,
+        description: asset?.description || "",
+        image_url: asset?.image_url || "",
+        slotType: "Active"
+      };
+    }
+
+    function getPassiveSkillEntries(player) {
+      const ids = Array.isArray(player?.skill_ids) ? player.skill_ids : [];
+      const activeId = getActiveSkillId(player);
+      const uniquePassiveIds = [...new Set(ids.filter(id => Number(id) !== Number(activeId)))];
+
+      return uniquePassiveIds.map(id => {
+        const lookupName = getLookupName(2, id) || `Skill ID ${id}`;
+        const lookupFirst = firstWord(lookupName);
+        const asset = getCharacterAsset(id, lookupFirst || lookupName);
+        return {
+          id: Number(id),
+          label: asset?.name || lookupFirst || lookupName,
+          skill: asset?.skill || lookupFirst || lookupName,
+          description: asset?.description || "",
+          image_url: asset?.image_url || "",
+          slotType: "Passive"
+        };
+      });
+    }
+
+    function getPetEntry(player) {
+      const petId = player?.pet_skill_id;
+      if (!petId) return { id:null, label:"—", skill:"", description:"", image_url:"", slotType:"Pet" };
+
+      const lookupName = getLookupName(3, petId) || `Pet ID ${petId}`;
+      const asset = getPetAsset(lookupName);
+
+      return {
+        id: Number(petId),
+        label: asset?.name || lookupName,
+        skill: asset?.skill || lookupName,
+        description: asset?.description || "",
+        image_url: asset?.image_url || "",
+        slotType: "Pet"
+      };
+    }
+
+    function getPlayerLoadoutId(player) {
+      const arr = Array.isArray(player?.loadouts) ? player.loadouts : [];
+      if (!arr.length) return null;
+      const id = Number(arr[0]);
+      return Number.isFinite(id) ? id : null;
+    }
+
+    function getPlayerLoadoutEntry(player) {
+      const id = getPlayerLoadoutId(player);
+      if (!Number.isFinite(id)) return { loadout_id:null, name:"No loadout found", image_url:"", cs_description:"" };
+
+      const asset = getLoadoutAsset(id);
+      return {
+        loadout_id: id,
+        name: asset?.name || `Loadout ${id}`,
+        image_url: asset?.image_url || "",
+        cs_description: asset?.cs_description || ""
+      };
+    }
+
+    function getLatestRoundStat(player) {
+      const rounds = Array.isArray(player?.round_stats) ? [...player.round_stats] : [];
+      if (!rounds.length) return null;
+      rounds.sort((a, b) => toNum(b?.round_index, -1) - toNum(a?.round_index, -1));
+      return rounds[0];
+    }
+
+    function getLatestRoundIndex(player) {
+      const round = getLatestRoundStat(player);
+      const idx = Number(round?.round_index);
+      return Number.isFinite(idx) ? idx : null;
+    }
+
+    function getRoundStatByIndex(player, targetRoundIndex) {
+      const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+      return rounds.find(r => toNum(r?.round_index, -999) === targetRoundIndex) || null;
+    }
+
+    function getPlayerRoundIndices(player) {
+      const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+      const set = new Set();
+      for (const round of rounds) {
+        const idx = toNum(round?.round_index, -1);
+        if (idx >= 0 && idx < MAX_DISPLAY_ROUNDS) set.add(idx);
+      }
+      return [...set].sort((a, b) => a - b);
+    }
+
+    function getItemsForRound(player, roundIndex) {
+      const round = getRoundStatByIndex(player, roundIndex);
+      const items = Array.isArray(round?.item_nums) ? round.item_nums : [];
+
+      return items
+        .filter(item => toNum(item?.item_num) > 0)
+        .map(item => {
+          const id = Number(item?.item_id);
+          const name = resolveItemName(id, false) || item?.item_name || `Item ID ${id}`;
+          return { id, name, count: toNum(item?.item_num) };
+        })
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    }
+
+    function getPurchasedItemsForRound(player, targetRoundIndex) {
+      const round = getRoundStatByIndex(player, targetRoundIndex);
+      if (!round) return [];
+
+      const purchased = Array.isArray(round?.purchased_items) ? round.purchased_items : [];
+      const counts = new Map();
+
+      for (const rawId of purchased) {
+        const id = Number(rawId);
+        if (!Number.isFinite(id)) continue;
+        if (id >= 500000000) continue;
+
+        const resolvedName = resolveItemName(id, true);
+        if (!resolvedName) continue;
+        counts.set(id, (counts.get(id) || 0) + 1);
+      }
+
+      return [...counts.entries()]
+        .map(([id, count]) => ({ id, name: resolveItemName(id, true), count }))
+        .filter(item => item.name)
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    }
+
+    function getWeaponUsagesForRound(player, roundIndex) {
+      const round = getRoundStatByIndex(player, roundIndex);
+      const usages = Array.isArray(round?.weapon_usages) ? round.weapon_usages : [];
+
+      return usages.map(weapon => ({
+        raw: weapon || {},
+        id: Number(weapon?.weapon_id),
+        name: weapon?.weapon_name || `Weapon ID ${weapon?.weapon_id ?? "?"}`
+      }));
+    }
+
+    function extractMatchId(payload) {
+      return (
+        payload?.match?.match_id ||
+        payload?.match_id ||
+        payload?.match?.id ||
+        null
+      );
+    }
+
+    function getActualRoundIndicesFromTeams(teams = []) {
+      const set = new Set();
+      for (const team of teams) {
+        const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+        for (const player of players) {
+          const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+          for (const round of rounds) {
+            const idx = toNum(round?.round_index, -1);
+            if (idx >= 0 && idx < MAX_DISPLAY_ROUNDS) set.add(idx);
+          }
+        }
+      }
+      return [...set].sort((a, b) => a - b);
+    }
+
+    function deriveMatchKey(payload, teams) {
+      const rawMatchId = extractMatchId(payload);
+      if (rawMatchId) return `match_${rawMatchId}`;
+
+      const teamA = slugify(teams?.[0]?.team_name || 'team-a');
+      const teamB = slugify(teams?.[1]?.team_name || 'team-b');
+      const stampSource =
+        payload?.match?.start_time ||
+        payload?.match?.create_time ||
+        payload?.match?.game_time ||
+        new Date().toISOString();
+
+      const stamp = String(stampSource).replace(/[^0-9]/g, '').slice(0, 14) || String(Date.now());
+      return `adhoc_${teamA}_${teamB}_${stamp}`;
+    }
+
+    function chunkArray(arr, size = 500) {
+      const out = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    }
+
+    function buildMatchUploadRow(payload, teams, matchKey) {
+      const roundIndices = getActualRoundIndicesFromTeams(teams);
+      const teamAScore = computeTeamScore(teams[0]);
+      const teamBScore = computeTeamScore(teams[1]);
+
+      return {
+        match_key: matchKey,
+        match_id: extractMatchId(payload),
+        display_round: getDisplayRound(payload, teams),
+        total_rounds: roundIndices.length,
+        team_a_name: teams?.[0]?.team_name || 'Team A',
+        team_b_name: teams?.[1]?.team_name || 'Team B',
+        team_a_score: teamAScore,
+        team_b_score: teamBScore,
+        match_payload: payload,
+        uploaded_at: new Date().toISOString()
+      };
+    }
+
+    function buildReportUploadRows(payload, teams, matchKey) {
+      const matchId = extractMatchId(payload);
+      const teamScores = teams.map(team => computeTeamScore(team));
+      const rows = [];
+
+      teams.slice(0, 2).forEach((team, teamIndex) => {
+        const teamName = team?.team_name || `Team ${teamIndex === 0 ? "A" : "B"}`;
+        const opponent = teams[teamIndex === 0 ? 1 : 0];
+        const opponentName = opponent?.team_name || `Team ${teamIndex === 0 ? "B" : "A"}`;
+
+        const teamScore = teamScores[teamIndex] || 0;
+        const opponentScore = teamScores[teamIndex === 0 ? 1 : 0] || 0;
+
+        const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+
+        players.forEach((player, playerIndex) => {
+          const playerName = player?.nickname || player?.account_id || `Player ${playerIndex + 1}`;
+          const accountId = player?.account_id || null;
+
+          const activeSkill = getActiveSkillEntry(player);
+          const passiveSkills = getPassiveSkillEntries(player);
+          const pet = getPetEntry(player);
+          const loadout = getPlayerLoadoutEntry(player);
+
+          const skillIds = Array.isArray(player?.skill_ids) ? player.skill_ids : [];
+          const skillInfo = Array.isArray(player?.skill_info) ? player.skill_info : [];
+          const roundIndices = getPlayerRoundIndices(player);
+          const effectiveRoundIndices = roundIndices.length ? roundIndices : [null];
+
+          effectiveRoundIndices.forEach((roundIndex) => {
+            const round = Number.isInteger(roundIndex) ? getRoundStatByIndex(player, roundIndex) : null;
+            const isLatestRound = Number.isInteger(roundIndex) && roundIndex === getLatestRoundIndex(player);
+
+            const currentItems = Number.isInteger(roundIndex) ? getItemsForRound(player, roundIndex) : [];
+            const purchasedItems = Number.isInteger(roundIndex) ? getPurchasedItemsForRound(player, roundIndex) : [];
+            const weaponUsages = Number.isInteger(roundIndex) ? getWeaponUsagesForRound(player, roundIndex) : [];
+
+            rows.push({
+              match_key: matchKey,
+              match_id: matchId,
+
+              team_index: teamIndex,
+              team_side: teamIndex === 0 ? 'A' : 'B',
+              team_name: teamName,
+              opponent_team_name: opponentName,
+              team_score: teamScore,
+              opponent_score: opponentScore,
+
+              player_index: playerIndex,
+              player_name: playerName,
+              account_id: accountId,
+
+              active_skill_id: activeSkill?.id || null,
+              active_skill_name: activeSkill?.label || null,
+
+              passive_skill_ids: passiveSkills.map(s => s.id).filter(v => v !== null),
+              passive_skill_names: passiveSkills.map(s => s.label).filter(Boolean),
+
+              pet_id: pet?.id || null,
+              pet_name: pet?.label && pet.label !== '—' ? pet.label : null,
+
+              loadout_id: loadout?.loadout_id || null,
+              loadout_name: loadout?.name || null,
+
+              round_index: Number.isInteger(roundIndex) ? roundIndex : null,
+              round_label: Number.isInteger(roundIndex) ? `Round ${roundIndex + 1}` : null,
+              is_latest_round: !!isLatestRound,
+
+              is_win: round?.is_win ?? null,
+              is_first_down: round?.is_first_down ?? null,
+              is_first_taken_down: round?.is_first_taken_down ?? null,
+
+              kills: toFiniteNumberOrNull(round?.kill),
+              assists: toFiniteNumberOrNull(round?.assists),
+              headshots: toFiniteNumberOrNull(round?.headshots),
+              damage: toFiniteNumberOrNull(round?.real_damage),
+              damage_taken: toFiniteNumberOrNull(round?.real_damage_taken),
+              knock_down: toFiniteNumberOrNull(round?.knock_down),
+
+              economy_spent_self: toFiniteNumberOrNull(round?.economy_spent_self),
+              economy_spent_on_teammates: toFiniteNumberOrNull(round?.economy_spent_on_teammates),
+              initial_item_value: toFiniteNumberOrNull(round?.initial_item_value),
+              airdrop_points: toFiniteNumberOrNull(round?.airdrop_points),
+
+              medkit_use: toFiniteNumberOrNull(round?.medkit_use),
+              grenade_use: toFiniteNumberOrNull(round?.grenade_use),
+              icewall_use: toFiniteNumberOrNull(round?.icewall_use),
+
+              current_items: currentItems,
+              current_items_text: formatItemsInline(currentItems, 'None'),
+
+              purchased_items: purchasedItems,
+              purchased_items_text: purchasedItems.length
+                ? purchasedItems.map(item => `${item.name} x${item.count}`).join(', ')
+                : 'None',
+
+              weapon_usages: weaponUsages.map(w => ({
+                weapon_id: w.id,
+                weapon_name: w.name,
+                ...w.raw
+              })),
+              weapon_usages_text: weaponUsages.length
+                ? weaponUsages.map(w => `${w.name}${w.id ? ` [${w.id}]` : ''} — ${summarizeWeaponUsageLine(w)}`).join('\n')
+                : 'None',
+
+              player_skill_ids: skillIds,
+              player_skill_info: skillInfo,
+              raw_round: round || null,
+
+              uploaded_at: new Date().toISOString()
+            });
+          });
+        });
+      });
+
+      return rows;
+    }
+
+    async function uploadReportData() {
+      if (!CURRENT_PAYLOAD || !CURRENT_TEAMS || CURRENT_TEAMS.length < 2) {
+        setStatus('Render match JSON first before uploading report data.', true);
+        return;
+      }
+
+      const btn = $('uploadReportBtn');
+      if (btn) btn.disabled = true;
+
+      try {
+        const matchKey = deriveMatchKey(CURRENT_PAYLOAD, CURRENT_TEAMS);
+        const matchRow = buildMatchUploadRow(CURRENT_PAYLOAD, CURRENT_TEAMS, matchKey);
+        const roundRows = buildReportUploadRows(CURRENT_PAYLOAD, CURRENT_TEAMS, matchKey);
+
+        setStatus(
+          `Uploading report data...\n` +
+          `Match key: ${matchKey}\n` +
+          `Match rows: 1\n` +
+          `Player-round rows: ${roundRows.length}`
+        );
+
+        const { error: matchError } = await client
+          .from(REPORT_MATCHES_TABLE)
+          .upsert(matchRow, { onConflict: 'match_key' });
+
+        if (matchError) throw new Error(`Match upload failed: ${matchError.message}`);
+
+        const { error: deleteError } = await client
+          .from(REPORT_ROUNDS_TABLE)
+          .delete()
+          .eq('match_key', matchKey);
+
+        if (deleteError) throw new Error(`Old round cleanup failed: ${deleteError.message}`);
+
+        const chunks = chunkArray(roundRows, 500);
+        for (let i = 0; i < chunks.length; i++) {
+          const { error: insertError } = await client
+            .from(REPORT_ROUNDS_TABLE)
+            .insert(chunks[i]);
+
+          if (insertError) {
+            throw new Error(`Round row upload failed on batch ${i + 1}/${chunks.length}: ${insertError.message}`);
+          }
+        }
+
+        setStatus(
+          `Upload complete.\n` +
+          `Match key: ${matchKey}\n` +
+          `Uploaded 1 match row and ${roundRows.length} player-round rows.`
+        );
+      } catch (err) {
+        setStatus(`Upload failed:\n${err.message || err}`, true);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function getDisplayRound(payload, teams = []) {
+      let best = -1;
+
+      const matchRounds = payload?.match?.match_stats_extra?.round_stats;
+      if (Array.isArray(matchRounds)) for (const r of matchRounds) best = Math.max(best, toNum(r?.round_index, -1));
+
+      for (const team of teams) {
+        const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+        for (const player of players) {
+          const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+          for (const r of rounds) best = Math.max(best, toNum(r?.round_index, -1));
+        }
+      }
+
+      return best >= 0 ? `Round ${Math.min(best + 1, MAX_DISPLAY_ROUNDS)}` : "Round —";
+    }
+
+    function computeTeamScore(team) {
+      const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+      const wonRounds = new Set();
+
+      for (const player of players) {
+        const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+        for (const round of rounds) {
+          const roundIndex = toNum(round?.round_index, -1);
+          if (roundIndex < 0 || roundIndex >= MAX_DISPLAY_ROUNDS) continue;
+          if (round?.is_win === true) wonRounds.add(roundIndex);
+        }
+      }
+
+      return wonRounds.size;
+    }
+
+    function renderTeamHeader(name, score, side = "left") {
+      const safeName = escapeHtml(name || "—");
+      const scoreHtml = Number.isFinite(score) ? `<span class="team-score-pill">${score}</span>` : "";
+
+      if (side === "right") {
+        return `
+          <div class="team-name-wrap">
+            ${scoreHtml}
+            <span class="team-name-text right">${safeName}</span>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="team-name-wrap">
+          <span class="team-name-text">${safeName}</span>
+          ${scoreHtml}
+        </div>
+      `;
+    }
+
+    function setTeamHeader(elId, name, score, side) {
+      const el = $(elId);
+      if (el) el.innerHTML = renderTeamHeader(name, score, side);
+    }
+
+    function renderHeroImage(imageUrl, alt) {
+      if (!imageUrl) return `<div class="hero-fallback">No Image</div>`;
+      return `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(alt)}" loading="lazy">`;
+    }
+
+    function renderPopup(title, meta, body) {
+      if (!body) return "";
+      return `
+        <div class="hover-popup">
+          <div class="hover-title">${escapeHtml(title || "Info")}</div>
+          <div class="hover-meta">${escapeHtml(meta || "")}</div>
+          <div class="hover-body">${escapeHtmlWithBreaks(body)}</div>
+        </div>
+      `;
+    }
+
+    function renderTooltip(entry) {
+      if (!entry || (!entry.skill && !entry.description)) return "";
+      const meta = entry.slotType ? `${entry.slotType}${entry.label ? " • " + entry.label : ""}` : (entry.label || "");
+      return renderPopup(entry.skill || entry.label || "Skill", meta, entry.description || "No description available.");
+    }
+
+    function renderSkillChip(entry) {
+      if (!entry) return "";
+      return `
+        <div class="skill-chip hover-wrap" tabindex="0">
+          <div class="skill-chip-icon">
+            ${entry.image_url
+              ? `<img src="${escapeHtml(entry.image_url)}" alt="${escapeHtml(entry.label)}" loading="lazy">`
+              : `<span class="icon-fallback">N/A</span>`
+            }
+          </div>
+          <div class="skill-chip-label">${escapeHtml(entry.label || "—")}</div>
+          ${renderTooltip(entry)}
+        </div>
+      `;
+    }
+
+    function renderLoadoutCard(loadout) {
+      const title = loadout?.name || "No loadout found";
+      const desc = loadout?.cs_description || "";
+      return `
+        <div class="hover-wrap" tabindex="0">
+          <div class="single-card primary">
+            <div class="card-thumb">
+              ${loadout?.image_url
+                ? `<img src="${escapeHtml(loadout.image_url)}" alt="${escapeHtml(title)}" loading="lazy">`
+                : `<span class="icon-fallback">N/A</span>`
+              }
+            </div>
+            <div class="card-copy">
+              <div class="card-title">${escapeHtml(title)}</div>
+            </div>
+          </div>
+          ${desc ? renderPopup(title, "Loadout", desc) : ""}
+        </div>
+      `;
+    }
+
+    function getTeamPassiveCounts(team) {
+      const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+      const map = new Map();
+
+      for (const player of players) {
+        const passiveSkills = getPassiveSkillEntries(player);
+
+        for (const skill of passiveSkills) {
+          const key = skill?.id != null ? `id-${skill.id}` : `name-${normalizeKey(skill?.label || "")}`;
+          if (!skill?.label || !key) continue;
+
+          if (!map.has(key)) {
+            map.set(key, {
+              id: skill.id ?? null,
+              label: skill.label || "Unknown Passive",
+              skill: skill.skill || skill.label || "Unknown Passive",
+              description: skill.description || "",
+              image_url: skill.image_url || "",
+              slotType: "Passive",
+              count: 0
+            });
+          }
+
+          map.get(key).count += 1;
+        }
+      }
+
+      return [...map.values()].sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return String(a.label || "").localeCompare(String(b.label || ""));
+      });
+    }
+
+    function renderPassiveSummaryList(entries) {
+      if (!entries.length) {
+        return `<div class="empty-lite">No passive skills found.</div>`;
+      }
+
+      return `
+        <div class="passive-list">
+          ${entries.map(entry => `
+            <div class="passive-row hover-wrap" tabindex="0">
+              <div class="card-thumb">
+                ${entry.image_url
+                  ? `<img src="${escapeHtml(entry.image_url)}" alt="${escapeHtml(entry.label)}" loading="lazy">`
+                  : `<span class="icon-fallback">N/A</span>`
+                }
+              </div>
+
+              <div class="passive-copy">
+                <div class="passive-name">${escapeHtml(entry.label)}</div>
+                <div class="passive-meta">${escapeHtml(entry.skill || "Passive")}</div>
+              </div>
+
+              <div class="passive-count">${entry.count}</div>
+
+              ${renderTooltip(entry)}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function renderPassiveSummaryPanels() {
+      const teamAEl = $("teamAPassiveSummary");
+      const teamBEl = $("teamBPassiveSummary");
+      if (!teamAEl || !teamBEl) return;
+
+      if (!CURRENT_TEAMS || CURRENT_TEAMS.length < 2) {
+        teamAEl.innerHTML = `<div class="empty-lite">No data rendered yet.</div>`;
+        teamBEl.innerHTML = `<div class="empty-lite">No data rendered yet.</div>`;
+        return;
+      }
+
+      const teamAPassives = getTeamPassiveCounts(CURRENT_TEAMS[0]);
+      const teamBPassives = getTeamPassiveCounts(CURRENT_TEAMS[1]);
+
+      teamAEl.innerHTML = renderPassiveSummaryList(teamAPassives);
+      teamBEl.innerHTML = renderPassiveSummaryList(teamBPassives);
+    }
+
+    function renderPlayerSummaryCard(player) {
+      const playerName = player?.nickname || player?.account_id || "Unknown";
+      const activeSkill = getActiveSkillEntry(player);
+      const passiveSkills = getPassiveSkillEntries(player);
+      const pet = getPetEntry(player);
+      const loadout = getPlayerLoadoutEntry(player);
+
+      return `
+        <div class="player-card">
+          <div class="hover-wrap" tabindex="0">
+            <div class="hero-card">
+              <div class="hero-card-inner">
+                ${renderHeroImage(activeSkill.image_url, activeSkill.label)}
+              </div>
+            </div>
+            ${renderTooltip(activeSkill)}
+          </div>
+
+          <div class="char-name">${escapeHtml(activeSkill.label || "—")}</div>
+          <div class="player-tag">${escapeHtml(playerName)}</div>
+
+          <div class="section-box">
+            <div class="section-title">Passive Skills</div>
+            <div class="skill-chip-row">
+              ${passiveSkills.length ? passiveSkills.map(renderSkillChip).join("") : `<div class="empty-lite">No passive skills found.</div>`}
+            </div>
+          </div>
+
+          <div class="section-box">
+            <div class="section-title">Pet</div>
+            <div class="skill-chip-row">
+              ${pet?.id ? renderSkillChip(pet) : `<div class="empty-lite">No pet found.</div>`}
+            </div>
+          </div>
+
+          <div class="section-box">
+            <div class="section-title">Loadout</div>
+            ${renderLoadoutCard(loadout)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTeamContent(team) {
+      const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+      if (!players.length) return `<div class="empty-lite">No players found.</div>`;
+      return `<div class="player-grid">${players.map(renderPlayerSummaryCard).join("")}</div>`;
+    }
+
+    function summarizeSimpleList(arr, mapper, emptyText = "None") {
+      const out = (Array.isArray(arr) ? arr : []).map(mapper).map(v => String(v || "").trim()).filter(Boolean);
+      return out.length ? out.join(", ") : emptyText;
+    }
+
+    function summarizeItemsForPrompt(items) {
+      return (items && items.length) ? items.map(item => `${item.name} x${item.count}`).join(", ") : "None";
+    }
+
+    function getPurchasedItemsByRound(player) {
+      const roundIndices = [];
+      const rounds = Array.isArray(player?.round_stats) ? player.round_stats : [];
+      for (const round of rounds) {
+        const idx = toNum(round?.round_index, -1);
+        if (idx >= 0 && idx < MAX_DISPLAY_ROUNDS) roundIndices.push(idx);
+      }
+      const uniqueSorted = [...new Set(roundIndices)].sort((a, b) => a - b);
+      return uniqueSorted.map(roundIndex => ({ roundIndex, items: getPurchasedItemsForRound(player, roundIndex) }));
+    }
+
+    function summarizePurchasedRoundsForPrompt(player) {
+      const rounds = getPurchasedItemsByRound(player);
+      const useful = rounds.filter(r => r.items.length);
+      if (!useful.length) return "None";
+      return useful.map(r => `Round ${r.roundIndex + 1}: ${r.items.map(item => `${item.name} x${item.count}`).join(", ")}`).join("\n      - ");
+    }
+
+    function summarizeWeaponUsageLine(weapon, compact = false) {
+      const fields = Object.entries(weapon?.raw || {})
+        .filter(([k, v]) => k !== "weapon_name" && k !== "weapon_id" && v !== null && v !== undefined && String(v) !== "")
+        .map(([k, v]) => `${humanizeKey(k)}: ${compact ? formatDisplayValue(v) : formatGenericValue(v)}`);
+      return fields.length ? fields.join(" • ") : "No weapon usage fields found.";
+    }
+
+    function summarizeWeaponsForPrompt(usages) {
+      if (!usages || !usages.length) return "None";
+      return usages.map(weapon => {
+        const extra = Object.entries(weapon.raw || {})
+          .filter(([k]) => k !== "weapon_name" && k !== "weapon_id")
+          .map(([k, v]) => `${humanizeKey(k)}: ${formatGenericValue(v)}`)
+          .join("; ");
+        return `${weapon.name}${Number.isFinite(weapon.id) ? ` [ID ${weapon.id}]` : ""}${extra ? ` — ${extra}` : ""}`;
+      }).join("\n      - ");
+    }
+
+    function buildRoundStatsSections(round, compact = false) {
+      const out = compact
+        ? { "Outcome & Combat": [], "Economy & Utility": [] }
+        : { "First Blood": [], "Combat Output": [], "Economy & Purchases": [], "Abilities & Utility": [] };
+
+      const tags = [];
+      if (round?.is_first_down === true) tags.push("First Blood");
+      if (round?.is_first_taken_down === true) tags.push("First Down");
+
+      if (compact) {
+        out["Outcome & Combat"].push(["Result", round?.is_win === true ? "Win" : round?.is_win === false ? "Loss" : "—"]);
+        out["Outcome & Combat"].push(["Tag", tags.length ? tags.join(" • ") : "None"]);
+        out["Outcome & Combat"].push(["Kills", round?.kill]);
+        out["Outcome & Combat"].push(["Assists", round?.assists]);
+        out["Outcome & Combat"].push(["Damage", round?.real_damage]);
+        out["Outcome & Combat"].push(["Damage Taken", round?.real_damage_taken]);
+
+        out["Economy & Utility"].push(["Spent Self", round?.economy_spent_self]);
+        out["Economy & Utility"].push(["Initial Value", round?.initial_item_value]);
+        out["Economy & Utility"].push(["Grenade", round?.grenade_use]);
+        out["Economy & Utility"].push(["Icewall", round?.icewall_use]);
+        return out;
+      }
+
+      out["First Blood"].push(["Tag", tags.length ? tags.join(" • ") : "None"]);
+
+      const combat = [
+        ["Kills", round?.kill],
+        ["Assists", round?.assists],
+        ["Headshots", round?.headshots],
+        ["Damage", round?.real_damage],
+        ["Damage Taken", round?.real_damage_taken],
+        ["Knock Down", round?.knock_down],
+      ];
+      for (const [label, val] of combat) out["Combat Output"].push([label, val]);
+
+      const econKeys = ["economy_spent_self","economy_spent_on_teammates","initial_item_value","airdrop_points"];
+      for (const k of econKeys) {
+        if (k in (round || {})) out["Economy & Purchases"].push([humanizeKey(k), round[k]]);
+      }
+
+      const utilKeys = ["medkit_use","grenade_use","icewall_use"];
+      for (const k of utilKeys) {
+        if (k in (round || {})) out["Abilities & Utility"].push([humanizeKey(k), round[k]]);
+      }
+
+      return out;
+    }
+
+    function summarizeRoundStatsForPrompt(player) {
+      const round = getLatestRoundStat(player);
+      if (!round) return "No round_stats found.";
+      const sections = buildRoundStatsSections(round, false);
+
+      const lines = [];
+      for (const [title, rows] of Object.entries(sections)) {
+        if (!rows?.length) continue;
+        lines.push(`${title}: ${rows.map(([k, v]) => `${k} = ${formatGenericValue(v)}`).join("; ")}`);
+      }
+      return lines.length ? lines.join("\n      - ") : "No categorized round stats found.";
+    }
+
+    function buildPlayerPromptBlock(player, idx) {
+      const activeSkill = getActiveSkillEntry(player);
+      const passiveSkills = getPassiveSkillEntries(player);
+      const pet = getPetEntry(player);
+      const loadout = getPlayerLoadoutEntry(player);
+
+      const latestIdx = getLatestRoundIndex(player);
+      const currentItems = Number.isFinite(latestIdx) ? getItemsForRound(player, latestIdx) : [];
+      const weaponUsages = Number.isFinite(latestIdx) ? getWeaponUsagesForRound(player, latestIdx) : [];
+
+      const playerName = player?.nickname || player?.account_id || `Player ${idx + 1}`;
+      const accountId = player?.account_id || "N/A";
+
+      return [
+        `${idx + 1}. ${playerName}`,
+        `   - Account ID: ${accountId}`,
+        `   - Active Skill: ${activeSkill.label || "None"}`,
+        `   - Passive Skills: ${summarizeSimpleList(passiveSkills, s => s.label, "None")}`,
+        `   - Pet: ${pet.label || "None"}`,
+        `   - Loadout: ${loadout.name || "None"}`,
+        `   - Current Items (Latest Round Inventory): ${summarizeItemsForPrompt(currentItems)}`,
+        `   - Purchased Items By Round:`,
+        `      - ${summarizePurchasedRoundsForPrompt(player)}`,
+        `   - Weapon Usages (Latest Round):`,
+        `      - ${summarizeWeaponsForPrompt(weaponUsages)}`,
+        `   - Latest Round Stats By Section:`,
+        `      - ${summarizeRoundStatsForPrompt(player)}`
+      ].join("\n");
+    }
+
+    function buildTeamPromptBlock(team, fallbackName) {
+      const teamName = team?.team_name || fallbackName;
+      const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+      return [
+        `=== ${teamName} ===`,
+        players.length ? players.map((p, i) => buildPlayerPromptBlock(p, i)).join("\n\n") : "No players found."
+      ].join("\n");
+    }
+
+    function buildAiAnalysisPrompt(payload, teams) {
+      const roundText = getDisplayRound(payload, teams);
+      const teamAScore = computeTeamScore(teams[0]);
+      const teamBScore = computeTeamScore(teams[1]);
+
+      return [
+        `You are an expert esports commentator, analyst, and coach reviewing a Free Fire Clash Squad match snapshot.`,
+        ``,
+        `Use the data below to produce a deep but practical analysis.`,
+        ``,
+        `Please provide:`,
+        `0. A short final verdict: which team currently looks better and why.`,
+        `1. A caster-ready overview of both teams and their likely game plan.`,
+        `2. Player-by-player insights, including who is carrying, enabling, struggling, or playing supportive roles.`,
+        `3. A breakdown of weapon usage and what it says about preferred fight distances and execution.`,
+        `4. The most important storylines an esports commentator should highlight on broadcast.`,
+        `5. Clear coaching adjustments for each team if they were going into the next round.`,
+        ``,
+        `Keep the response useful for:`,
+        `- live shoutcasting / commentary`,
+        `- analyst desk breakdown`,
+        `- team coaching review`,
+        ``,
+        `Match Context:`,
+        `- Display Round: ${roundText}`,
+        `- Team A: ${teams[0]?.team_name || "Team A"}`,
+        `- Team B: ${teams[1]?.team_name || "Team B"}`,
+        `- Current Score: ${teams[0]?.team_name || "Team A"} ${teamAScore} - ${teamBScore} ${teams[1]?.team_name || "Team B"}`,
+        ``,
+        `Use the following player data, loadouts, items, purchased items, weapon usage, and latest round stats as the basis of the analysis.`,
+        ``,
+        `Data:`,
+        ``,
+        buildTeamPromptBlock(teams[0], "Team A"),
+        ``,
+        buildTeamPromptBlock(teams[1], "Team B"),
+        ``,
+        `Now analyze this as an esports commentator / analyst / coach.`
+      ].join("\n");
+    }
+
+    async function copyTextToClipboard(text) {
+      if (!text) return false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        }
+      } catch {}
+
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.opacity = "0";
+      temp.style.pointerEvents = "none";
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+
+      let ok = false;
+      try { ok = document.execCommand("copy"); }
+      catch { ok = false; }
+
+      document.body.removeChild(temp);
+      return ok;
+    }
+
+    function getPayload(data) {
+      return Array.isArray(data) ? data[0] : data;
+    }
+
+    function getTeamsFromPayload(payload) {
+      return Array.isArray(payload?.team_stats) ? payload.team_stats : [];
+    }
+
+    function getAllPlayerMetas(teams = CURRENT_TEAMS) {
+      const out = [];
+      const teamList = Array.isArray(teams) ? teams : [];
+
+      teamList.slice(0, 2).forEach((team, teamIndex) => {
+        const teamName = team?.team_name || `Team ${teamIndex === 0 ? "A" : "B"}`;
+        const players = Array.isArray(team?.player_stats) ? team.player_stats : [];
+
+        players.forEach((player, playerIndex) => {
+          const playerName = player?.nickname || player?.account_id || `Player ${playerIndex + 1}`;
+          const rawKey = `${teamIndex}__${playerIndex}__${normalizeKey(player?.account_id || player?.nickname || `PLAYER${playerIndex + 1}`)}`;
+
+          out.push({
+            key: rawKey,
+            teamIndex,
+            teamName,
+            playerIndex,
+            playerName,
+            player
+          });
+        });
+      });
+
+      return out;
+    }
+
+    function getTeamScopedPlayerMetas() {
+      const metas = getAllPlayerMetas();
+      if (detailsTeamFilter === "both") return metas;
+      return metas.filter(meta => String(meta.teamIndex) === String(detailsTeamFilter));
+    }
+
+    function getFilteredPlayerMetas() {
+      const metas = getTeamScopedPlayerMetas();
+      if (!detailsUseSpecificPlayers) return metas;
+      return metas.filter(meta => detailsSelectedPlayerKeys.has(meta.key));
+    }
+
+    function getTeamScopeLabel() {
+      if (!CURRENT_TEAMS || CURRENT_TEAMS.length < 2) return "No teams";
+      if (detailsTeamFilter === "0") return CURRENT_TEAMS[0]?.team_name || "Team A";
+      if (detailsTeamFilter === "1") return CURRENT_TEAMS[1]?.team_name || "Team B";
+      return `${CURRENT_TEAMS[0]?.team_name || "Team A"} + ${CURRENT_TEAMS[1]?.team_name || "Team B"}`;
+    }
+
+    function updateSpecificPlayersButton() {
+      const btn = $("toggleSpecificPlayersBtn");
+      if (!btn) return;
+      btn.textContent = detailsUseSpecificPlayers ? "Specific Players: On" : "Specific Players: Off";
+      btn.classList.toggle("active", detailsUseSpecificPlayers);
+    }
+
+    function renderDetailsTeamFilterOptions() {
+      const select = $("detailsTeamFilter");
+      if (!select) return;
+
+      const teamA = CURRENT_TEAMS?.[0]?.team_name || "Team A";
+      const teamB = CURRENT_TEAMS?.[1]?.team_name || "Team B";
+
+      select.innerHTML = `
+        <option value="both">Both Teams</option>
+        <option value="0">${escapeHtml(teamA)}</option>
+        <option value="1">${escapeHtml(teamB)}</option>
+      `;
+
+      select.value = ["both", "0", "1"].includes(String(detailsTeamFilter)) ? String(detailsTeamFilter) : "both";
+    }
+
+    function renderPlayerPills() {
+      const wrap = $("detailsPlayerPills");
+      if (!wrap) return;
+
+      if (!CURRENT_TEAMS || CURRENT_TEAMS.length < 2) {
+        wrap.innerHTML = "";
+        return;
+      }
+
+      const metas = getTeamScopedPlayerMetas();
+      if (!metas.length) {
+        wrap.innerHTML = `<div class="empty-lite">No players available for the selected team scope.</div>`;
+        return;
+      }
+
+      wrap.innerHTML = metas.map(meta => `
+        <button
+          type="button"
+          class="player-pill ${meta.teamIndex === 0 ? "team-a" : "team-b"} ${detailsSelectedPlayerKeys.has(meta.key) ? "active" : ""}"
+          data-player-key="${escapeHtml(meta.key)}"
+          title="${escapeHtml(meta.teamName)}"
+        >
+          ${escapeHtml(meta.playerName)}
+        </button>
+      `).join("");
+    }
+
+    function syncDetailFilterState() {
+      const allMetas = getAllPlayerMetas();
+      const validKeys = new Set(allMetas.map(meta => meta.key));
+      detailsSelectedPlayerKeys = new Set([...detailsSelectedPlayerKeys].filter(key => validKeys.has(key)));
+
+      if (!["both", "0", "1"].includes(String(detailsTeamFilter))) {
+        detailsTeamFilter = "both";
+      }
+
+      renderDetailsTeamFilterOptions();
+      updateSpecificPlayersButton();
+      renderPlayerPills();
+    }
+
+    function updateViewButtons() {
+      $("progressionViewBtn")?.classList.toggle("active", detailsViewMode === "progression");
+      $("stackedProgressBtn")?.classList.toggle("active", detailsViewMode === "stacked");
+      $("compareViewBtn")?.classList.toggle("active", detailsViewMode === "compare");
+
+      $("aggregatePlayersBtn")?.classList.toggle("active", detailsAggregateMode === "player");
+      $("aggregateTeamsBtn")?.classList.toggle("active", detailsAggregateMode === "team");
+
+      $("compactMetricsBtn")?.classList.toggle("active", detailsMetricDensity === "compact");
+      $("fullMetricsBtn")?.classList.toggle("active", detailsMetricDensity === "full");
+
+      $("latestModeBtn")?.classList.toggle("active", detailsMode === "latest");
+      $("allRoundsModeBtn")?.classList.toggle("active", detailsMode === "all");
+
+      const compareDisabled = detailsViewMode !== "compare";
+      if ($("latestModeBtn")) $("latestModeBtn").disabled = compareDisabled;
+      if ($("allRoundsModeBtn")) $("allRoundsModeBtn").disabled = compareDisabled;
+    }
+
+    function setDetailsViewMode(mode) {
+      detailsViewMode = mode === "compare" ? "compare" : mode === "stacked" ? "stacked" : "progression";
+      renderDetailsPanel();
+    }
+
+    function setDetailsMetricDensity(mode) {
+      detailsMetricDensity = mode === "full" ? "full" : "compact";
+      renderDetailsPanel();
+    }
+
+    function setDetailsAggregateMode(mode) {
+      detailsAggregateMode = mode === "team" ? "team" : "player";
+      renderDetailsPanel();
+    }
+
+    function getFilteredEntities() {
+      const metas = getFilteredPlayerMetas();
+
+      if (detailsAggregateMode !== "team") {
+        return metas.map(meta => ({ ...meta, kind: "player" }));
+      }
+
+      const grouped = new Map();
+
+      for (const meta of metas) {
+        const key = `team-${meta.teamIndex}`;
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            kind: "team",
+            key,
+            teamIndex: meta.teamIndex,
+            teamName: meta.teamName,
+            players: []
+          });
+        }
+        grouped.get(key).players.push(meta);
+      }
+
+      return [...grouped.values()].sort((a, b) => a.teamIndex - b.teamIndex);
+    }
+
+    function getEntityDisplayLabel(entity) {
+      if (entity.kind === "team") {
+        return `${entity.teamName} - Team - ${entity.teamIndex === 0 ? "A" : "B"}`;
+      }
+      return `${entity.playerName} - ${entity.teamName} - ${entity.teamIndex === 0 ? "A" : "B"}`;
+    }
+
+    function getEntityRoundIndices(entity) {
+      if (!entity) return [];
+      if (entity.kind !== "team") return getPlayerRoundIndices(entity.player);
+
+      const set = new Set();
+      for (const meta of entity.players) {
+        const rounds = getPlayerRoundIndices(meta.player);
+        for (const idx of rounds) set.add(idx);
+      }
+      return [...set].sort((a, b) => a - b);
+    }
+
+    function getAggregateRoundStat(entity, roundIndex) {
+      if (!entity || entity.kind !== "team") return null;
+
+      const rounds = entity.players
+        .map(meta => getRoundStatByIndex(meta.player, roundIndex))
+        .filter(Boolean);
+
+      if (!rounds.length) return null;
+
+      const sum = (key) => rounds.reduce((acc, r) => acc + toNum(r?.[key], 0), 0);
+
+      return {
+        round_index: roundIndex,
+        is_win: rounds.some(r => r?.is_win === true) ? true : (rounds.some(r => r?.is_win === false) ? false : null),
+        is_first_down: rounds.some(r => r?.is_first_down === true),
+        is_first_taken_down: rounds.some(r => r?.is_first_taken_down === true),
+
+        kill: sum("kill"),
+        assists: sum("assists"),
+        headshots: sum("headshots"),
+        real_damage: sum("real_damage"),
+        real_damage_taken: sum("real_damage_taken"),
+        knock_down: sum("knock_down"),
+
+        economy_spent_self: sum("economy_spent_self"),
+        economy_spent_on_teammates: sum("economy_spent_on_teammates"),
+        initial_item_value: sum("initial_item_value"),
+        airdrop_points: sum("airdrop_points"),
+
+        medkit_use: sum("medkit_use"),
+        grenade_use: sum("grenade_use"),
+        icewall_use: sum("icewall_use")
+      };
+    }
+
+    function aggregateCountEntries(lists) {
+      const map = new Map();
+
+      for (const list of lists || []) {
+        for (const item of (list || [])) {
+          const id = Number(item?.id);
+          const name = item?.name || "Unknown";
+          const key = Number.isFinite(id) ? `id-${id}` : `name-${name}`;
+
+          if (!map.has(key)) {
+            map.set(key, { id, name, count: 0 });
+          }
+
+          map.get(key).count += toNum(item?.count, 0);
+        }
+      }
+
+      return [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    }
+
+    function getAggregateItemsForRound(entity, roundIndex) {
+      if (!entity || entity.kind !== "team") return [];
+      return aggregateCountEntries(entity.players.map(meta => getItemsForRound(meta.player, roundIndex)));
+    }
+
+    function getAggregatePurchasedItemsForRound(entity, roundIndex) {
+      if (!entity || entity.kind !== "team") return [];
+      return aggregateCountEntries(entity.players.map(meta => getPurchasedItemsForRound(meta.player, roundIndex)));
+    }
+
+    function getAggregateWeaponUsagesForRound(entity, roundIndex) {
+      if (!entity || entity.kind !== "team") return [];
+
+      const map = new Map();
+
+      for (const meta of entity.players) {
+        const usages = getWeaponUsagesForRound(meta.player, roundIndex);
+
+        for (const weapon of usages) {
+          const id = Number(weapon?.id);
+          const name = weapon?.name || `Weapon ID ${weapon?.id ?? "?"}`;
+          const key = Number.isFinite(id) ? `id-${id}` : `name-${name}`;
+
+          if (!map.has(key)) {
+            map.set(key, {
+              id,
+              name,
+              raw: {
+                weapon_id: id,
+                weapon_name: name
+              }
+            });
+          }
+
+          const entry = map.get(key);
+          for (const [k, v] of Object.entries(weapon.raw || {})) {
+            if (k === "weapon_id" || k === "weapon_name") continue;
+            const n = Number(v);
+            if (Number.isFinite(n)) {
+              entry.raw[k] = (entry.raw[k] || 0) + n;
+            }
+          }
+        }
+      }
+
+      return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    function getEntityRoundStat(entity, roundIndex) {
+      return entity?.kind === "team"
+        ? getAggregateRoundStat(entity, roundIndex)
+        : getRoundStatByIndex(entity.player, roundIndex);
+    }
+
+    function getEntityItemsForRound(entity, roundIndex) {
+      return entity?.kind === "team"
+        ? getAggregateItemsForRound(entity, roundIndex)
+        : getItemsForRound(entity.player, roundIndex);
+    }
+
+    function getEntityPurchasedItemsForRound(entity, roundIndex) {
+      return entity?.kind === "team"
+        ? getAggregatePurchasedItemsForRound(entity, roundIndex)
+        : getPurchasedItemsForRound(entity.player, roundIndex);
+    }
+
+    function getEntityWeaponUsagesForRound(entity, roundIndex) {
+      return entity?.kind === "team"
+        ? getAggregateWeaponUsagesForRound(entity, roundIndex)
+        : getWeaponUsagesForRound(entity.player, roundIndex);
+    }
+
+    function renderFirstTagHtml(round) {
+      const isFB = round?.is_first_down === true;
+      const isFD = round?.is_first_taken_down === true;
+      if (!isFB && !isFD) return "—";
+      if (isFB && isFD) return `<span class="tag-fb">FB</span> <span class="tag-sep">/</span> <span class="tag-fd">FD</span>`;
+      if (isFB) return `<span class="tag-fb">FB</span>`;
+      return `<span class="tag-fd">FD</span>`;
+    }
+
+    function getProgressionMetrics() {
+      if (detailsMetricDensity === "compact") {
+        return [
+          {
+            title: "Round Outcome",
+            rows: [
+              {
+                label: "Result",
+                getValue: (round) => round?.is_win === true ? "W" : (round?.is_win === false ? "L" : "—"),
+                getClass: (value) => value === "W" ? "good tag" : value === "L" ? "bad tag" : "muted"
+              },
+              {
+                label: "First Tag",
+                getValue: (round) => {
+                  const tags = [];
+                  if (round?.is_first_down === true) tags.push("FB");
+                  if (round?.is_first_taken_down === true) tags.push("FD");
+                  return tags.length ? tags.join(" / ") : "—";
+                },
+                getClass: (value) => value !== "—" ? "tag" : "muted",
+                renderHtml: (round) => renderFirstTagHtml(round)
+              }
+            ]
+          },
+          {
+            title: "Combat",
+            rows: [
+              { label: "Kills", getValue: (round) => round?.kill ?? "—" },
+              { label: "Assists", getValue: (round) => round?.assists ?? "—" },
+              { label: "Damage", getValue: (round) => round?.real_damage ?? "—" },
+              { label: "Damage Taken", getValue: (round) => round?.real_damage_taken ?? "—" },
+              { label: "Knock Down", getValue: (round) => round?.knock_down ?? "—" }
+            ]
+          },
+          {
+            title: "Economy",
+            rows: [
+              { label: "Spent Self", getValue: (round) => round?.economy_spent_self ?? "—" },
+              { label: "Initial Value", getValue: (round) => round?.initial_item_value ?? "—" }
+            ]
+          },
+          {
+            title: "Utility",
+            rows: [
+              { label: "Grenade", getValue: (round) => round?.grenade_use ?? "—" },
+              { label: "Icewall", getValue: (round) => round?.icewall_use ?? "—" }
+            ]
+          }
+        ];
+      }
+
+      return [
+        {
+          title: "Round Outcome",
+          rows: [
+            {
+              label: "Result",
+              getValue: (round) => round?.is_win === true ? "W" : (round?.is_win === false ? "L" : "—"),
+              getClass: (value) => value === "W" ? "good tag" : value === "L" ? "bad tag" : "muted"
+            },
+            {
+              label: "First Tag",
+              getValue: (round) => {
+                const tags = [];
+                if (round?.is_first_down === true) tags.push("FB");
+                if (round?.is_first_taken_down === true) tags.push("FD");
+                return tags.length ? tags.join(" / ") : "—";
+              },
+              getClass: (value) => value !== "—" ? "tag" : "muted",
+              renderHtml: (round) => renderFirstTagHtml(round)
+            }
+          ]
+        },
+        {
+          title: "Combat",
+          rows: [
+            { label: "Kills", getValue: (round) => round?.kill ?? "—" },
+            { label: "Assists", getValue: (round) => round?.assists ?? "—" },
+            { label: "Headshots", getValue: (round) => round?.headshots ?? "—" },
+            { label: "Damage", getValue: (round) => round?.real_damage ?? "—" },
+            { label: "Damage Taken", getValue: (round) => round?.real_damage_taken ?? "—" },
+            { label: "Knock Down", getValue: (round) => round?.knock_down ?? "—" }
+          ]
+        },
+        {
+          title: "Economy",
+          rows: [
+            { label: "Spent Self", getValue: (round) => round?.economy_spent_self ?? "—" },
+            { label: "Spent Team", getValue: (round) => round?.economy_spent_on_teammates ?? "—" },
+            { label: "Initial Value", getValue: (round) => round?.initial_item_value ?? "—" },
+            { label: "Airdrop Points", getValue: (round) => round?.airdrop_points ?? "—" }
+          ]
+        },
+        {
+          title: "Utility",
+          rows: [
+            { label: "Medkit", getValue: (round) => round?.medkit_use ?? "—" },
+            { label: "Grenade", getValue: (round) => round?.grenade_use ?? "—" },
+            { label: "Icewall", getValue: (round) => round?.icewall_use ?? "—" }
+          ]
+        }
+      ];
+    }
+
+    function updateDetailsSummaryMeta(entities, visibleRoundIndices) {
+      const metaEl = $("detailsSummaryMeta");
+      if (!metaEl) return;
+
+      if (!CURRENT_TEAMS || CURRENT_TEAMS.length < 2) {
+        metaEl.textContent = "No data rendered yet.";
+        return;
+      }
+
+      let modeLabel = "";
+      if (detailsViewMode === "progression") {
+        modeLabel = `Progression • ${detailsMetricDensity === "compact" ? "Compact" : "Full"} • Fixed 11 Rounds`;
+      } else if (detailsViewMode === "stacked") {
+        modeLabel = `Stacked Progress • ${detailsMetricDensity === "compact" ? "Compact" : "Full"} • Fixed 11 Rounds`;
+      } else {
+        modeLabel = `Compare • ${detailsMetricDensity === "compact" ? "Compact" : "Full"} • ${detailsMode === "all" ? `Actual Rounds (${visibleRoundIndices.length})` : `Latest Round${visibleRoundIndices.length ? ` • R${visibleRoundIndices[visibleRoundIndices.length - 1] + 1}` : ""}`}`;
+      }
+
+      const aggregateLabel = detailsAggregateMode === "team"
+        ? `Team Aggregate • ${entities.length} team${entities.length === 1 ? "" : "s"}`
+        : `Player View • ${entities.length} player${entities.length === 1 ? "" : "s"}`;
+
+      const selectionLabel = detailsUseSpecificPlayers
+        ? (detailsAggregateMode === "team" ? "Using selected players in team totals" : "Specific Players On")
+        : "All Visible Players";
+
+      metaEl.textContent = `${getTeamScopeLabel()} • ${aggregateLabel} • ${selectionLabel} • ${modeLabel}`;
+    }
+
+    function formatItemsInline(items, emptyText = "None", compact = false) {
+      if (!items || !items.length) return emptyText;
+      return items.map(item => `${item.name} x${compact ? formatCompactNumber(item.count) : item.count}`).join(", ");
+    }
+
+    function formatPurchasedItemsList(items, emptyText = "None", compact = false) {
+      if (!items || !items.length) return emptyText;
+      return items.map(item => `, ${item.name} x${compact ? formatCompactNumber(item.count) : item.count}`).join("\n");
+    }
+
+    function formatWeaponsInline(usages, compact = false) {
+      if (!usages || !usages.length) return "None";
+      return usages
+        .map(weapon => `${weapon.name}${weapon.id ? ` [${weapon.id}]` : ""}${summarizeWeaponUsageLine(weapon, compact) ? ` — ${summarizeWeaponUsageLine(weapon, compact)}` : ""}`)
+        .join("\n");
+    }
+
+    function renderMatrixCell(value, className = "", inlineStyle = "", asHtml = false) {
+      const safeClass = className ? ` ${className}` : "";
+      const styleAttr = inlineStyle ? ` style="${inlineStyle}"` : "";
+      const content = asHtml ? String(value ?? "—") : escapeHtml(formatDisplayValue(value));
+      return `<td class="matrix-cell${safeClass}"${styleAttr}>${content}</td>`;
+    }
+
+    function getHeatStyle(value, min, max) {
+      const n = toFiniteNumberOrNull(value);
+      if (n === null || min === null || max === null) return "";
+
+      if (max === min) {
+        return [
+          "background: linear-gradient(180deg, rgba(77,211,255,.16), rgba(77,211,255,.08));",
+          "box-shadow: inset 0 0 0 1px rgba(77,211,255,.22);"
+        ].join(" ");
+      }
+
+      const ratio = (n - min) / (max - min);
+      const hue = 6 + (ratio * 126);
+      const topAlpha = 0.18 + (ratio * 0.12);
+      const bottomAlpha = 0.10 + (ratio * 0.18);
+
+      return [
+        `background: linear-gradient(180deg, hsla(${hue}, 92%, 64%, ${topAlpha}), hsla(${hue}, 86%, 44%, ${bottomAlpha}));`,
+        `box-shadow: inset 0 0 0 1px hsla(${hue}, 95%, 72%, .28), inset 0 10px 18px hsla(${hue}, 95%, 72%, .05);`
+      ].join(" ");
+    }
+
+    function renderComparePlayerCard(meta, roundIndex) {
+      const player = meta.player;
+      const teamClass = meta.teamIndex === 0 ? "team-a" : "team-b";
+      const teamBadge = meta.teamIndex === 0 ? "A" : "B";
+
+      const round = getRoundStatByIndex(player, roundIndex);
+      const activeSkill = getActiveSkillEntry(player);
+      const pet = getPetEntry(player);
+      const loadout = getPlayerLoadoutEntry(player);
+
+      const items = getItemsForRound(player, roundIndex);
+      const purchased = getPurchasedItemsForRound(player, roundIndex);
+      const weapons = getWeaponUsagesForRound(player, roundIndex);
+      const compact = detailsMetricDensity === "compact";
+
+      return `
+        <div class="detail-player-card ${teamClass}">
+          <div class="detail-player-card-head">
+            <div>
+              <div class="detail-player-name">${escapeHtml(meta.playerName)}</div>
+              <div class="detail-player-meta">
+                ${escapeHtml(meta.teamName)}
+                ${activeSkill?.label ? ` • Active: ${escapeHtml(activeSkill.label)}` : ""}
+                ${pet?.label && pet.label !== "—" ? ` • Pet: ${escapeHtml(pet.label)}` : ""}
+                ${loadout?.name ? ` • Loadout: ${escapeHtml(loadout.name)}` : ""}
+              </div>
+            </div>
+            <div class="detail-player-badge">${teamBadge}</div>
+          </div>
+
+          ${round
+            ? `
+              <div class="detail-block-grid">
+                ${renderStatBlock("Round Summary", buildRoundSummaryRows(round), "No round summary found.")}
+                ${renderStatBlock("Economy & Utility", buildEconomyUtilityRows(round), "No economy / utility data found.")}
+                ${renderItemsBlock("Purchased Items", purchased, "No valid purchased items found.", true)}
+                ${renderWeaponsBlock(weapons)}
+                ${compact ? "" : renderItemsBlock("Current Items", items, "No item snapshot found.")}
+              </div>
+            `
+            : `<div class="empty-lite">No round data found for Round ${roundIndex + 1}.</div>`}
+        </div>
+      `;
+    }
+
+    function renderProgressionMatrix(entity, roundIndices) {
+      const metrics = getProgressionMetrics();
+
+      return `
+        <div class="matrix-wrap">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th class="metric-col">Metric</th>
+                ${roundIndices.map(idx => `<th>R${idx + 1}</th>`).join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${metrics.map(group => `
+                <tr class="matrix-category-row">
+                  <td colspan="${roundIndices.length + 1}">${escapeHtml(group.title)}</td>
+                </tr>
+                ${group.rows.map(row => `
+                  <tr>
+                    <td class="metric-col">${escapeHtml(row.label)}</td>
+                    ${roundIndices.map(idx => {
+                      const round = getEntityRoundStat(entity, idx);
+                      if (!round) return renderMatrixCell("—", "muted");
+                      const value = row.getValue(round);
+                      const cls = row.getClass ? row.getClass(value, round) : "";
+                      if (row.renderHtml) return renderMatrixCell(row.renderHtml(round), cls, "", true);
+                      return renderMatrixCell(value, cls);
+                    }).join("")}
+                  </tr>
+                `).join("")}
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderTrailCard(entity, roundIndex) {
+      const items = getEntityItemsForRound(entity, roundIndex);
+      const purchased = getEntityPurchasedItemsForRound(entity, roundIndex);
+      const weapons = getEntityWeaponUsagesForRound(entity, roundIndex);
+      const compact = detailsMetricDensity === "compact";
+
+      return `
+        <div class="trail-card">
+          <div class="trail-title">Round ${roundIndex + 1}</div>
+
+          <div class="trail-block">
+            <div class="trail-label">Purchased</div>
+            <div class="trail-body">${escapeHtmlWithBreaks(formatPurchasedItemsList(purchased, "None", true))}</div>
+          </div>
+
+          ${compact ? "" : `
+            <div class="trail-block">
+              <div class="trail-label">Inventory</div>
+              <div class="trail-body">${escapeHtml(formatItemsInline(items, "None", true))}</div>
+            </div>
+          `}
+
+          <div class="trail-block">
+            <div class="trail-label">Weapons</div>
+            <div class="trail-body">${escapeHtmlWithBreaks(formatWeaponsInline(weapons, true))}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderProgressionCard(entity) {
+      const fixedRoundIndices = getFixedRoundIndices();
+      const actualRoundIndices = getEntityRoundIndices(entity);
+      const teamClass = entity.teamIndex === 0 ? "team-a" : "team-b";
+
+      const latestIdx = actualRoundIndices.length ? actualRoundIndices[actualRoundIndices.length - 1] : null;
+      const latestRound = latestIdx !== null ? getEntityRoundStat(entity, latestIdx) : null;
+
+      const totalKills = actualRoundIndices.reduce((sum, idx) => sum + toNum(getEntityRoundStat(entity, idx)?.kill, 0), 0);
+      const totalDamage = actualRoundIndices.reduce((sum, idx) => sum + toNum(getEntityRoundStat(entity, idx)?.real_damage, 0), 0);
+
+      let title = "";
+      let metaLine = "";
+      let sectionId = "";
+
+      if (entity.kind === "team") {
+        title = entity.teamName;
+        metaLine = `Team Aggregate${detailsUseSpecificPlayers ? " • selected players only" : ""} • ${entity.players.length} player${entity.players.length === 1 ? "" : "s"}`;
+        sectionId = `jump-progress-team-${entity.teamIndex}`;
+      } else {
+        const activeSkill = getActiveSkillEntry(entity.player);
+        const pet = getPetEntry(entity.player);
+        const loadout = getPlayerLoadoutEntry(entity.player);
+
+        title = entity.playerName;
+        metaLine = [
+          entity.teamName,
+          activeSkill?.label ? `Active: ${activeSkill.label}` : "",
+          pet?.label && pet.label !== "—" ? `Pet: ${pet.label}` : "",
+          loadout?.name ? `Loadout: ${loadout.name}` : ""
+        ].filter(Boolean).join(" • ");
+
+        sectionId = `jump-progress-player-${entity.teamIndex}-${entity.playerIndex}`;
+      }
+
+      return `
+        <section
+          id="${sectionId}"
+          class="progression-card ${teamClass}"
+          data-jump-label="${escapeHtml(detailsAggregateMode === "team" ? `Team: ${title}` : `Player: ${title}`)}"
+        >
+          <div class="progression-head">
+            <div class="progression-head-left">
+              <div class="progression-player-name">${escapeHtml(title)}</div>
+              <div class="progression-player-meta">${escapeHtml(metaLine)}</div>
+            </div>
+
+            <div class="progression-head-right">
+              <span class="mini-badge">Rounds ${actualRoundIndices.length}</span>
+              <span class="mini-badge">Kills ${formatCompactNumber(totalKills)}</span>
+              <span class="mini-badge">Damage ${formatCompactNumber(totalDamage)}</span>
+              <span class="mini-badge">Latest R${latestRound ? toNum(latestRound.round_index, 0) + 1 : "—"}</span>
+            </div>
+          </div>
+
+          ${renderProgressionMatrix(entity, fixedRoundIndices)}
+
+          ${actualRoundIndices.length
+            ? `<div class="round-trail">${actualRoundIndices.map(idx => renderTrailCard(entity, idx)).join("")}</div>`
+            : `<div class="empty-lite">No round progression data found.</div>`}
+        </section>
+      `;
+    }
+
+    function flattenProgressionMetricRows() {
+      const groups = getProgressionMetrics();
+      const rows = [];
+
+      for (const group of groups) {
+        for (const row of group.rows) {
+          rows.push({
+            groupTitle: group.title,
+            label: row.label,
+            getValue: row.getValue,
+            getClass: row.getClass,
+            renderHtml: row.renderHtml
+          });
+        }
+      }
+
+      return rows;
+    }
+
+    function renderStackedMetricCard(metricDef, entities, roundIndices) {
+      const rangesByRound = new Map();
+
+      for (const idx of roundIndices) {
+        const nums = [];
+        for (const entity of entities) {
+          const round = getEntityRoundStat(entity, idx);
+          if (!round) continue;
+          const rawValue = metricDef.getValue(round);
+          const n = toFiniteNumberOrNull(rawValue);
+          if (n !== null) nums.push(n);
+        }
+
+        rangesByRound.set(
+          idx,
+          nums.length ? { min: Math.min(...nums), max: Math.max(...nums) } : { min: null, max: null }
+        );
+      }
+
+      const sectionId = `jump-stacked-${slugify(metricDef.groupTitle + "-" + metricDef.label)}`;
+
+      return `
+        <section
+          id="${sectionId}"
+          class="stacked-card"
+          data-jump-label="${escapeHtml(`Metric: ${metricDef.label}`)}"
+        >
+          <div class="stacked-card-head">
+            <div>
+              <div class="stacked-card-kicker">${escapeHtml(metricDef.groupTitle)}</div>
+              <div class="stacked-card-title">${escapeHtml(metricDef.label)}</div>
+            </div>
+            <div class="stacked-card-copy">
+              ${entities.length} row${entities.length === 1 ? "" : "s"} • R1–R${MAX_DISPLAY_ROUNDS}
+            </div>
+          </div>
+
+          <div class="matrix-wrap">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th class="player-cell">${detailsAggregateMode === "team" ? "Team" : "Player"}</th>
+                  ${roundIndices.map(idx => `<th>R${idx + 1}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${entities.map(entity => {
+                  const label = getEntityDisplayLabel(entity);
+
+                  return `
+                    <tr>
+                      <td class="player-cell" title="${escapeHtml(label)}">${escapeHtml(label)}</td>
+                      ${roundIndices.map(idx => {
+                        const round = getEntityRoundStat(entity, idx);
+                        if (!round) return renderMatrixCell("—", "muted");
+
+                        const value = metricDef.getValue(round);
+                        const cls = metricDef.getClass ? metricDef.getClass(value, round) : "";
+
+                        if (metricDef.renderHtml) {
+                          return renderMatrixCell(metricDef.renderHtml(round), cls, "", true);
+                        }
+
+                        const range = rangesByRound.get(idx) || { min: null, max: null };
+                        const heatStyle = getHeatStyle(value, range.min, range.max);
+
+                        return renderMatrixCell(value, cls, heatStyle);
+                      }).join("")}
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderWrappedTextMetricCard(title, kicker, entities, roundIndices, getTextFn, emptyText = "—") {
+      const sectionId = `jump-stacked-${slugify(title)}`;
+
+      return `
+        <section
+          id="${sectionId}"
+          class="stacked-card"
+          data-jump-label="${escapeHtml(`Metric: ${title}`)}"
+        >
+          <div class="stacked-card-head">
+            <div>
+              <div class="stacked-card-kicker">${escapeHtml(kicker)}</div>
+              <div class="stacked-card-title">${escapeHtml(title)}</div>
+            </div>
+            <div class="stacked-card-copy">
+              Wrapped card view
+            </div>
+          </div>
+
+          <div class="wrap-metric-list">
+            ${entities.map(entity => {
+              const label = getEntityDisplayLabel(entity);
+              return `
+                <div class="wrap-player-card">
+                  <div class="wrap-player-title">${escapeHtml(label)}</div>
+                  <div class="wrap-round-grid">
+                    ${roundIndices.map(idx => {
+                      const text = getTextFn(entity, idx) || emptyText;
+                      return `
+                        <div class="wrap-round-card">
+                          <div class="wrap-round-label">R${idx + 1}</div>
+                          <div class="wrap-round-body">${escapeHtmlWithBreaks(text)}</div>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderStackedProgressView(entities, roundIndices) {
+      if (!entities.length) {
+        return `
+          <div class="stats-category">
+            <div class="stats-table">
+              <div class="stats-row">
+                <div class="stats-key">Stacked Progress</div>
+                <div class="stats-val">
+                  ${detailsUseSpecificPlayers
+                    ? "Specific player filter is on but no visible rows are selected."
+                    : "No rows available for the current scope."}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      const metricDefs = flattenProgressionMetricRows();
+
+      return `
+        <div class="stacked-stack">
+          ${metricDefs.map(def => renderStackedMetricCard(def, entities, roundIndices)).join("")}
+
+          ${renderWrappedTextMetricCard(
+            "Purchased Items",
+            "Round Trail",
+            entities,
+            roundIndices,
+            (entity, idx) => formatPurchasedItemsList(getEntityPurchasedItemsForRound(entity, idx), "None", true),
+            "None"
+          )}
+
+          ${renderWrappedTextMetricCard(
+            "Weapons",
+            "Round Trail",
+            entities,
+            roundIndices,
+            (entity, idx) => formatWeaponsInline(getEntityWeaponUsagesForRound(entity, idx), true),
+            "None"
+          )}
+        </div>
+      `;
+    }
+
+    function buildRoundSummaryRows(round) {
+      const tags = [];
+      if (round?.is_first_down === true) tags.push("First Blood");
+      if (round?.is_first_taken_down === true) tags.push("First Down");
+
+      if (detailsMetricDensity === "compact") {
+        return [
+          ["Result", round?.is_win === true ? "Win" : round?.is_win === false ? "Loss" : "—"],
+          ["Tag", tags.length ? tags.join(" • ") : "None"],
+          ["Kills", round?.kill],
+          ["Assists", round?.assists],
+          ["Damage", round?.real_damage],
+          ["Damage Taken", round?.real_damage_taken]
+        ];
+      }
+
+      return [
+        ["Tag", tags.length ? tags.join(" • ") : "None"],
+        ["Kills", round?.kill],
+        ["Assists", round?.assists],
+        ["Headshots", round?.headshots],
+        ["Damage", round?.real_damage],
+        ["Damage Taken", round?.real_damage_taken],
+        ["Knock Down", round?.knock_down]
+      ];
+    }
+
+    function buildEconomyUtilityRows(round) {
+      const rows = [];
+      const compactKeys = [
+        "economy_spent_self",
+        "initial_item_value",
+        "grenade_use",
+        "icewall_use"
+      ];
+      const fullKeys = [
+        "economy_spent_self",
+        "economy_spent_on_teammates",
+        "initial_item_value",
+        "airdrop_points",
+        "medkit_use",
+        "grenade_use",
+        "icewall_use"
+      ];
+
+      const keys = detailsMetricDensity === "compact" ? compactKeys : fullKeys;
+      for (const key of keys) {
+        if (key in (round || {})) rows.push([humanizeKey(key), round[key]]);
+      }
+      return rows;
+    }
+
+    function renderStatBlock(title, rows, emptyText = "No data found.") {
+      return `
+        <div class="stats-category">
+          <div class="stats-category-title">${escapeHtml(title)}</div>
+          <div class="stats-table">
+            ${rows && rows.length
+              ? rows.map(([label, value]) => `
+                  <div class="stats-row">
+                    <div class="stats-key">${escapeHtml(label)}</div>
+                    <div class="stats-val">${escapeHtml(formatDisplayValue(value))}</div>
+                  </div>
+                `).join("")
+              : `
+                  <div class="stats-row">
+                    <div class="stats-key">${escapeHtml(title)}</div>
+                    <div class="stats-val">${escapeHtml(emptyText)}</div>
+                  </div>
+                `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderItemsBlock(title, items, emptyText = "No data found.", purchased = false) {
+      return `
+        <div class="stats-category">
+          <div class="stats-category-title">${escapeHtml(title)}</div>
+          <div class="stats-table">
+            ${items && items.length
+              ? items.map(item => `
+                  <div class="stats-row">
+                    <div class="stats-key">${escapeHtml(item.name)}</div>
+                    <div class="stats-val">${purchased ? `Purchased x${formatCompactNumber(item.count)}` : `Count: ${formatCompactNumber(item.count)}`}</div>
+                  </div>
+                `).join("")
+              : `
+                  <div class="stats-row">
+                    <div class="stats-key">${escapeHtml(title)}</div>
+                    <div class="stats-val">${escapeHtml(emptyText)}</div>
+                  </div>
+                `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderWeaponsBlock(usages) {
+      return `
+        <div class="stats-category">
+          <div class="stats-category-title">Weapon Usage</div>
+          <div class="stats-table">
+            ${usages && usages.length
+              ? usages.map(weapon => `
+                  <div class="stats-row">
+                    <div class="stats-key">${escapeHtml(weapon.name)}</div>
+                    <div class="stats-val">${escapeHtml(summarizeWeaponUsageLine(weapon, true))}</div>
+                  </div>
+                `).join("")
+              : `
+                  <div class="stats-row">
+                    <div class="stats-key">Weapons</div>
+                    <div class="stats-val">No weapon usage data found.</div>
+                  </div>
+                `}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCompareEntityCard(entity, roundIndex) {
+      if (entity.kind !== "team") {
+        return renderComparePlayerCard(entity, roundIndex);
+      }
+
+      const teamClass = entity.teamIndex === 0 ? "team-a" : "team-b";
+      const teamBadge = entity.teamIndex === 0 ? "A" : "B";
+
+      const round = getAggregateRoundStat(entity, roundIndex);
+      const items = getAggregateItemsForRound(entity, roundIndex);
+      const purchased = getAggregatePurchasedItemsForRound(entity, roundIndex);
+      const weapons = getAggregateWeaponUsagesForRound(entity, roundIndex);
+      const compact = detailsMetricDensity === "compact";
+
+      return `
+        <div class="detail-player-card ${teamClass}">
+          <div class="detail-player-card-head">
+            <div>
+              <div class="detail-player-name">${escapeHtml(entity.teamName)}</div>
+              <div class="detail-player-meta">
+                Team Aggregate${detailsUseSpecificPlayers ? " • selected players only" : ""} • ${entity.players.length} player${entity.players.length === 1 ? "" : "s"}
+              </div>
+            </div>
+            <div class="detail-player-badge">${teamBadge}</div>
+          </div>
+
+          ${round
+            ? `
+              <div class="detail-block-grid">
+                ${renderStatBlock("Round Summary", buildRoundSummaryRows(round), "No round summary found.")}
+                ${renderStatBlock("Economy & Utility", buildEconomyUtilityRows(round), "No economy / utility data found.")}
+                ${renderItemsBlock("Purchased Items", purchased, "No valid purchased items found.", true)}
+                ${renderWeaponsBlock(weapons)}
+                ${compact ? "" : renderItemsBlock("Current Items", items, "No item snapshot found.")}
+              </div>
+            `
+            : `<div class="empty-lite">No round data found for Round ${roundIndex + 1}.</div>`}
+        </div>
+      `;
+    }
+
+    function renderCompareView(entities, visibleRoundIndices) {
+      if (!entities.length) {
+        return `
+          <div class="stats-category">
+            <div class="stats-table">
+              <div class="stats-row">
+                <div class="stats-key">Details</div>
+                <div class="stats-val">
+                  ${detailsUseSpecificPlayers
+                    ? "Specific player filter is on but no visible rows are selected."
+                    : "No rows available for the current scope."}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (!visibleRoundIndices.length) {
+        return `
+          <div class="stats-category">
+            <div class="stats-table">
+              <div class="stats-row">
+                <div class="stats-key">Rounds</div>
+                <div class="stats-val">No round data found for the selected scope.</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="round-stack">
+          ${visibleRoundIndices.map(roundIndex => {
+            const sectionId = `jump-round-${roundIndex + 1}`;
+            return `
+              <section
+                id="${sectionId}"
+                class="round-section"
+                data-jump-label="${escapeHtml(`Round ${roundIndex + 1}`)}"
+              >
+                <div class="round-section-head">
+                  <div>
+                    <div class="round-section-kicker">Round Snapshot</div>
+                    <div class="round-section-title">Round ${roundIndex + 1}</div>
+                  </div>
+                  <div class="round-section-copy">
+                    ${entities.length} row${entities.length === 1 ? "" : "s"} visible
+                  </div>
+                </div>
+
+                <div class="round-player-grid">
+                  ${entities.map(entity => renderCompareEntityCard(entity, roundIndex)).join("")}
+                </div>
+              </section>
+            `;
+          }).join("")}
+        </div>
+      `;
+    }
+
+    function renderProgressionView(entities) {
+      if (!entities.length) {
+        return `
+          <div class="stats-category">
+            <div class="stats-table">
+              <div class="stats-row">
+                <div class="stats-key">Progression</div>
+                <div class="stats-val">
+                  ${detailsUseSpecificPlayers
+                    ? "Specific player filter is on but no visible rows are selected."
+                    : "No rows available for the current scope."}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="progression-stack">
+          ${entities.map(entity => renderProgressionCard(entity)).join("")}
+        </div>
+      `;
+    }
+
+    function populateJumpOptions() {
+      const select = $("jumpToMetricSelect");
+      if (!select) return;
+
+      const nodes = [...document.querySelectorAll("#globalPlayerDetails [data-jump-label][id]")];
+      select.innerHTML = `<option value="">Select section…</option>` +
+        nodes.map(node => `<option value="${escapeHtml(node.id)}">${escapeHtml(node.getAttribute("data-jump-label"))}</option>`).join("");
+    }
+
+    function jumpToSelectedSection() {
+      const select = $("jumpToMetricSelect");
+      if (!select || !select.value) return;
+
+      const target = document.getElementById(select.value);
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function updateJumpTopButton() {
+      const btn = $("jumpTopBtn");
+      if (!btn) return;
+      btn.classList.toggle("show", window.scrollY > 500);
+    }
+
+    function renderGlobalPlayerDetails() {
+      const entities = getFilteredEntities();
+      const fixedRoundIndices = getFixedRoundIndices();
+
+      const actualRoundSet = new Set();
+      for (const entity of entities) {
+        for (const idx of getEntityRoundIndices(entity)) actualRoundSet.add(idx);
+      }
+      const actualRoundIndices = [...actualRoundSet].sort((a, b) => a - b);
+
+      const compareRoundIndices = detailsMode === "all"
+        ? actualRoundIndices
+        : (actualRoundIndices.length ? [actualRoundIndices[actualRoundIndices.length - 1]] : []);
+
+      updateDetailsSummaryMeta(
+        entities,
+        detailsViewMode === "compare" ? compareRoundIndices : fixedRoundIndices
+      );
+
+      if (detailsViewMode === "progression") return renderProgressionView(entities);
+      if (detailsViewMode === "stacked") return renderStackedProgressView(entities, fixedRoundIndices);
+      return renderCompareView(entities, compareRoundIndices);
+    }
+
+    function renderDetailsPanel() {
+      if (!CURRENT_TEAMS || CURRENT_TEAMS.length < 2) {
+        $("globalPlayerDetails").innerHTML = "";
+        $("detailsPlayerPills").innerHTML = "";
+        $("detailsSummaryMeta").textContent = "No data rendered yet.";
+        renderDetailsTeamFilterOptions();
+        updateSpecificPlayersButton();
+        updateViewButtons();
+        populateJumpOptions();
+        renderPassiveSummaryPanels();
+        return;
+      }
+
+      syncDetailFilterState();
+      $("globalPlayerDetails").innerHTML = renderGlobalPlayerDetails();
+      updateSpecificPlayersButton();
+      updateViewButtons();
+      populateJumpOptions();
+      renderPassiveSummaryPanels();
+    }
+
+    async function setDetailsMode(mode) {
+      detailsMode = mode === "all" ? "all" : "latest";
+      renderDetailsPanel();
+      await saveSharedState();
+    }
+
+    function clearRender() {
+      setTeamHeader("teamAName", "—", null, "left");
+      setTeamHeader("teamBName", "—", null, "right");
+      $("matchRound").textContent = "Round —";
+      $("teamAContent").innerHTML = "";
+      $("teamBContent").innerHTML = "";
+      $("globalPlayerDetails").innerHTML = "";
+      $("detailsPlayerPills").innerHTML = "";
+      $("detailsSummaryMeta").textContent = "No data rendered yet.";
+      $("aiPromptOutput").value = "";
+      $("jumpToMetricSelect").innerHTML = `<option value="">Select section…</option>`;
+      if ($("teamAPassiveSummary")) $("teamAPassiveSummary").innerHTML = "";
+      if ($("teamBPassiveSummary")) $("teamBPassiveSummary").innerHTML = "";
+
+      CURRENT_TEAMS = null;
+      CURRENT_PAYLOAD = null;
+
+      detailsMode = "latest";
+      detailsViewMode = "stacked";
+      detailsMetricDensity = "full";
+      detailsAggregateMode = "player";
+      detailsTeamFilter = "both";
+      detailsUseSpecificPlayers = false;
+      detailsSelectedPlayerKeys = new Set();
+
+      renderDetailsTeamFilterOptions();
+      updateSpecificPlayersButton();
+      updateViewButtons();
+      renderPassiveSummaryPanels();
+      setCopyPromptStatus("The generated prompt is built for an esports commentator / analyst / coach perspective.");
+    }
+
+    async function saveSharedState() {
+      if (applyingRemoteState) return false;
+
+      const payload = {
+        room: SHARED_ROOM,
+        json_text: CURRENT_SHARED_JSON_TEXT || "",
+        details_mode: detailsMode === "all" ? "all" : "latest",
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await client
+        .from("shared_match_state")
+        .upsert(payload, { onConflict: "room" });
+
+      if (error) {
+        console.error("saveSharedState error:", error);
+        setStatus("Shared state save failed:\n" + JSON.stringify(error, null, 2), true);
+        return false;
+      }
+      return true;
+    }
+
+    async function loadSharedState() {
+      const { data, error } = await client
+        .from("shared_match_state")
+        .select("room, json_text, details_mode")
+        .eq("room", SHARED_ROOM)
+        .maybeSingle();
+
+      if (error) {
+        console.error("loadSharedState error:", error);
+        setStatus("Shared state load failed:\n" + JSON.stringify(error, null, 2), true);
+        return;
+      }
+
+      $("jsonInput").value = getLocalInput();
+
+      if (!data) {
+        updateViewButtons();
+        renderDetailsTeamFilterOptions();
+        updateSpecificPlayersButton();
+        populateJumpOptions();
+        renderPassiveSummaryPanels();
+        return;
+      }
+
+      applyingRemoteState = true;
+      try {
+        CURRENT_SHARED_JSON_TEXT = data.json_text || "";
+        detailsMode = data.details_mode === "all" ? "all" : "latest";
+        updateViewButtons();
+
+        if (CURRENT_SHARED_JSON_TEXT.trim()) {
+          await renderJson(false, CURRENT_SHARED_JSON_TEXT);
+        } else {
+          clearRender();
+        }
+      } finally {
+        applyingRemoteState = false;
+      }
+    }
+
+    function subscribeSharedState() {
+      if (sharedChannel) return;
+
+      sharedChannel = client
+        .channel("shared-match-state")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "shared_match_state", filter: `room=eq.${SHARED_ROOM}` },
+          async (payload) => {
+            const row = payload?.new;
+            if (!row) return;
+
+            applyingRemoteState = true;
+            try {
+              CURRENT_SHARED_JSON_TEXT = row.json_text || "";
+              detailsMode = row.details_mode === "all" ? "all" : "latest";
+              updateViewButtons();
+
+              if (CURRENT_SHARED_JSON_TEXT.trim()) {
+                await renderJson(false, CURRENT_SHARED_JSON_TEXT);
+              } else {
+                clearRender();
+              }
+            } finally {
+              applyingRemoteState = false;
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") {
+            if (!$("status").classList.contains("error")) {
+              const current = $("status").textContent || "";
+              if (!current.includes("Realtime")) {
+                $("status").textContent = current + (current ? "\n" : "") + "Realtime: SUBSCRIBED";
+              }
+            }
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            setStatus("Realtime status: " + status, true);
+          }
+        });
+    }
+
+    async function renderJson(shouldBroadcast = true, rawOverride = null) {
+      try {
+        const sourceRaw = typeof rawOverride === "string" ? rawOverride : ($("jsonInput").value || "");
+        if (typeof rawOverride !== "string") setLocalInput(sourceRaw);
+
+        const raw = sourceRaw.trim();
+        if (!raw) {
+          clearRender();
+          setStatus("Paste JSON first.", true);
+          if (shouldBroadcast) {
+            CURRENT_SHARED_JSON_TEXT = "";
+            await saveSharedState();
+          }
+          return;
+        }
+
+        CURRENT_SHARED_JSON_TEXT = raw;
+
+        await loadMatchApiLookups();
+        if (!assetsLoaded) await loadAssetCatalogs();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (err) {
+          clearRender();
+          setStatus(`Invalid JSON:\n${err.message}`, true);
+          return;
+        }
+
+        const payload = getPayload(data);
+        const teams = getTeamsFromPayload(payload);
+
+        if (teams.length < 2) {
+          clearRender();
+          setStatus("This JSON needs at least 2 teams inside team_stats.", true);
+          return;
+        }
+
+        CURRENT_PAYLOAD = payload;
+        CURRENT_TEAMS = [teams[0], teams[1]];
+
+        const teamAScore = computeTeamScore(CURRENT_TEAMS[0]);
+        const teamBScore = computeTeamScore(CURRENT_TEAMS[1]);
+
+        setTeamHeader("teamAName", CURRENT_TEAMS[0]?.team_name || "—", teamAScore, "left");
+        setTeamHeader("teamBName", CURRENT_TEAMS[1]?.team_name || "—", teamBScore, "right");
+        $("matchRound").textContent = getDisplayRound(payload, CURRENT_TEAMS);
+
+        $("teamAContent").innerHTML = renderTeamContent(CURRENT_TEAMS[0]);
+        $("teamBContent").innerHTML = renderTeamContent(CURRENT_TEAMS[1]);
+        renderPassiveSummaryPanels();
+
+        syncDetailFilterState();
+        renderDetailsPanel();
+        $("aiPromptOutput").value = buildAiAnalysisPrompt(payload, CURRENT_TEAMS);
+
+        let message = `Rendered ${CURRENT_TEAMS[0]?.team_name || "Team A"} (${teamAScore}) vs ${CURRENT_TEAMS[1]?.team_name || "Team B"} (${teamBScore}).`;
+        if (teams.length > 2) message += ` Found ${teams.length} teams total, so only the first 2 were shown.`;
+        message += ` Display rounds capped at ${MAX_DISPLAY_ROUNDS}.`;
+
+        setStatus(message);
+        setCopyPromptStatus("AI prompt generated. Use Copy Prompt to paste it into another AI tool.");
+
+        if (shouldBroadcast) await saveSharedState();
+      } catch (err) {
+        setStatus(`Render failed:\n${err.message || err}`, true);
+      }
+    }
+
+    $("jsonInput")?.addEventListener("input", () => setLocalInput($("jsonInput").value || ""));
+    $("renderBtn")?.addEventListener("click", () => renderJson());
+    $("uploadReportBtn")?.addEventListener("click", uploadReportData);
+
+    $("reloadLookupBtn")?.addEventListener("click", async () => {
+      matchApiLoaded = false;
+      assetsLoaded = false;
+      try {
+        await warmUp();
+        if (CURRENT_TEAMS && CURRENT_TEAMS.length >= 2) {
+          const teamAScore = computeTeamScore(CURRENT_TEAMS[0]);
+          const teamBScore = computeTeamScore(CURRENT_TEAMS[1]);
+          setTeamHeader("teamAName", CURRENT_TEAMS[0]?.team_name || "—", teamAScore, "left");
+          setTeamHeader("teamBName", CURRENT_TEAMS[1]?.team_name || "—", teamBScore, "right");
+          renderPassiveSummaryPanels();
+          renderDetailsPanel();
+        }
+      } catch (err) {
+        setStatus(`Reload failed:\n${err.message || err}`, true);
+      }
+    });
+
+    $("clearBtn")?.addEventListener("click", async () => {
+      $("jsonInput").value = "";
+      clearLocalInput();
+      clearRender();
+      setStatus("Cleared. Paste new JSON to render.");
+      CURRENT_SHARED_JSON_TEXT = "";
+      await saveSharedState();
+    });
+
+    $("copyPromptBtn")?.addEventListener("click", async () => {
+      const text = $("aiPromptOutput").value.trim();
+      if (!text) {
+        setCopyPromptStatus("No prompt to copy yet. Render match JSON first.");
+        return;
+      }
+      const ok = await copyTextToClipboard(text);
+      setCopyPromptStatus(ok ? "AI prompt copied to clipboard." : "Copy failed. You can still manually select and copy the prompt.");
+    });
+
+    $("progressionViewBtn")?.addEventListener("click", () => setDetailsViewMode("progression"));
+    $("stackedProgressBtn")?.addEventListener("click", () => setDetailsViewMode("stacked"));
+    $("compareViewBtn")?.addEventListener("click", () => setDetailsViewMode("compare"));
+
+    $("aggregatePlayersBtn")?.addEventListener("click", () => setDetailsAggregateMode("player"));
+    $("aggregateTeamsBtn")?.addEventListener("click", () => setDetailsAggregateMode("team"));
+
+    $("compactMetricsBtn")?.addEventListener("click", () => setDetailsMetricDensity("compact"));
+    $("fullMetricsBtn")?.addEventListener("click", () => setDetailsMetricDensity("full"));
+
+    $("latestModeBtn")?.addEventListener("click", () => {
+      if (detailsViewMode === "compare") setDetailsMode("latest");
+    });
+
+    $("allRoundsModeBtn")?.addEventListener("click", () => {
+      if (detailsViewMode === "compare") setDetailsMode("all");
+    });
+
+    $("detailsTeamFilter")?.addEventListener("change", () => {
+      detailsTeamFilter = $("detailsTeamFilter").value || "both";
+      renderDetailsPanel();
+    });
+
+    $("toggleSpecificPlayersBtn")?.addEventListener("click", () => {
+      const visibleMetas = getTeamScopedPlayerMetas();
+
+      if (!detailsUseSpecificPlayers) {
+        detailsUseSpecificPlayers = true;
+        if (!visibleMetas.some(meta => detailsSelectedPlayerKeys.has(meta.key))) {
+          detailsSelectedPlayerKeys = new Set(visibleMetas.map(meta => meta.key));
+        }
+      } else {
+        detailsUseSpecificPlayers = false;
+      }
+
+      renderDetailsPanel();
+    });
+
+    $("selectAllVisiblePlayersBtn")?.addEventListener("click", () => {
+      const visibleMetas = getTeamScopedPlayerMetas();
+      detailsUseSpecificPlayers = true;
+      detailsSelectedPlayerKeys = new Set(visibleMetas.map(meta => meta.key));
+      renderDetailsPanel();
+    });
+
+    $("resetPlayerFilterBtn")?.addEventListener("click", () => {
+      detailsUseSpecificPlayers = false;
+      detailsSelectedPlayerKeys = new Set();
+      renderDetailsPanel();
+    });
+
+    $("detailsPlayerPills")?.addEventListener("click", (event) => {
+      const btn = event.target.closest("[data-player-key]");
+      if (!btn) return;
+
+      const key = btn.getAttribute("data-player-key");
+      if (!key) return;
+
+      if (!detailsUseSpecificPlayers) {
+        detailsUseSpecificPlayers = true;
+        detailsSelectedPlayerKeys = new Set([key]);
+      } else {
+        if (detailsSelectedPlayerKeys.has(key)) detailsSelectedPlayerKeys.delete(key);
+        else detailsSelectedPlayerKeys.add(key);
+      }
+
+      renderDetailsPanel();
+    });
+
+    $("jumpToMetricBtn")?.addEventListener("click", jumpToSelectedSection);
+    $("jumpToMetricSelect")?.addEventListener("change", () => {
+      if ($("jumpToMetricSelect").value) jumpToSelectedSection();
+    });
+
+    $("jumpTopBtn")?.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    window.addEventListener("scroll", updateJumpTopButton);
+
+    updateViewButtons();
+    renderDetailsTeamFilterOptions();
+    updateSpecificPlayersButton();
+    populateJumpOptions();
+    updateJumpTopButton();
+    renderPassiveSummaryPanels();
+
+    (async () => {
+      $("jsonInput").value = getLocalInput();
+      await warmUp();
+      await loadSharedState();
+      subscribeSharedState();
+    })();
+  </script>
+</body>
+</html>

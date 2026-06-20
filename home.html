@@ -1,0 +1,4335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Free Fire Dashboard</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --sb-w: 260px;
+      --sb-w-collapsed: 82px;
+    }
+
+    *{box-sizing:border-box}
+    html{
+      height:100%;
+      background: linear-gradient(180deg, var(--bg), var(--bg2));
+    }
+
+    body{
+      min-height:100%;
+      margin:0;
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+    }
+
+    .app{
+      min-height:100%;
+      height:auto;
+      display:flex;
+      gap:18px;
+      padding:18px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      filter: blur(.2px);
+      pointer-events:none;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    a{color:inherit}
+
+    select{
+      color-scheme: dark;
+      background: rgba(0,0,0,.28);
+      color: var(--ink);
+    }
+    select:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12);
+      border-color: rgba(77,211,255,.22) !important;
+    }
+    select option{
+      background: #0b1020;
+      color: var(--ink);
+    }
+
+    .sidebar{
+      width: var(--sb-w);
+      background: var(--panel2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      position:relative;
+      transition: width .18s ease;
+    }
+    .sidebar.collapsed{ width: var(--sb-w-collapsed); }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:16px 16px 10px 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-left{display:flex;align-items:center;gap:10px;min-width:0;}
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.5px;
+      color:var(--brand);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size: 1.05rem;
+      letter-spacing:.6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+    .brand small{
+      display:block;
+      color: var(--muted);
+      font-size:.78rem;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 150px;
+    }
+
+    .nav{
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      overflow:auto;
+    }
+    .nav::-webkit-scrollbar{width:10px}
+    .nav::-webkit-scrollbar-thumb{background: rgba(255,255,255,.08); border-radius:10px}
+    .nav::-webkit-scrollbar-track{background: transparent}
+
+    .nav-item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid transparent;
+      color: var(--muted);
+      text-decoration:none;
+      transition: .2s ease;
+      cursor:pointer;
+      min-width:0;
+    }
+    .nav-item:hover{
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.08);
+      color: var(--ink);
+    }
+    .nav-item.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.14), rgba(77,211,255,.09));
+      border-color: rgba(255,189,89,.22);
+      color: var(--ink);
+    }
+    .nav-ico{
+      width:26px;height:26px;border-radius:10px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      display:grid;place-items:center;
+      flex: 0 0 auto;
+    }
+    .nav-ico svg{width:14px;height:14px;opacity:.9}
+    .nav-label{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      min-width:0;
+    }
+
+    .sidebar.collapsed .brand h1,
+    .sidebar.collapsed .brand small,
+    .sidebar.collapsed .nav-label{display:none;}
+    .sidebar.collapsed .brand{justify-content:center;}
+    .sidebar.collapsed .brand-left{justify-content:center;}
+    .sidebar.collapsed .nav-item{
+      justify-content:center;
+      gap:0;
+      padding:10px 8px;
+    }
+
+    .main{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      min-width: 0;
+      gap: 14px;
+    }
+
+    .topbar{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap: nowrap;
+      overflow: hidden;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .topbar::-webkit-scrollbar{ display:none; }
+    .topbar > *{ min-width: 0; }
+
+    @media (max-width: 980px){
+      .topbar{ gap:10px; }
+      .search{ flex: 1 1 auto; min-width: 140px; }
+      .lang-select{ flex: 0 0 auto; width: auto; max-width: 150px; }
+      .top-actions{ flex: 0 0 auto; gap: 8px; }
+      .userchip{ max-width: 160px; padding: 6px 8px; gap: 8px; }
+      .usertext span{ display:none; }
+    }
+
+    @media (max-width: 720px){
+      .usertext{ display:none; }
+      .userchip{ padding: 6px; }
+    }
+
+    @media (max-width: 520px){
+      .lang-select{
+        max-width: 110px;
+        font-size: .8rem;
+        padding: 10px 10px;
+      }
+    }
+
+    .search{
+      flex:1;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 12px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      min-width: 0;
+    }
+    .search input{
+      width:100%;
+      background: transparent;
+      border:0;
+      outline:none;
+      color: var(--ink);
+      font-size: .95rem;
+    }
+    .search input::placeholder{color: rgba(170,177,197,.75)}
+
+    .lang-select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: var(--ink);
+      font-weight: 800;
+      font-size: .86rem;
+      letter-spacing: .2px;
+      cursor: pointer;
+      flex:0 0 auto;
+      max-width: 210px;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+
+    .icon-btn{
+      width:42px;height:42px;border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      cursor:pointer;
+      transition:.2s ease;
+      color: var(--ink);
+      flex:0 0 auto;
+    }
+    .icon-btn:hover{transform: translateY(-1px); background: rgba(255,255,255,.08)}
+    .icon-btn svg{width:18px;height:18px;opacity:.92}
+
+    .userchip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      max-width: 260px;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(255,189,89,.30), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .usertext{min-width:0}
+    .usertext b{
+      display:block;
+      font-size:.92rem;
+      font-family: Orbitron, sans-serif;
+      color: var(--brand);
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      max-width: 170px;
+    }
+    .usertext span{display:block; font-size:.78rem; color: var(--muted)}
+
+    .logout{
+      color: rgba(255,255,255,.70);
+      text-decoration:none;
+      font-size:.85rem;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      transition:.2s ease;
+      cursor:pointer;
+      white-space:nowrap;
+    }
+    .logout:hover{
+      border-color: rgba(255,77,77,.35);
+      color: #ff8d8d;
+      box-shadow: 0 0 0 3px rgba(255,77,77,.10);
+    }
+
+    .content{
+      min-height: 0;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card-inner{padding:14px}
+
+    .hero{
+      position:relative;
+      height: 170px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.10)),
+        url('https://i.imgur.com/qXFpizS.jpg') center/cover no-repeat;
+      overflow:hidden;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(420px 220px at 55% 45%, rgba(255,189,89,.16), transparent 60%);
+      pointer-events:none;
+      z-index: 1;
+    }
+    .hero-content{
+      position:absolute;
+      left:16px; right:16px; bottom:14px;
+      display:flex;
+      align-items:flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      z-index: 3;
+    }
+    .hero-title h2{
+      font-family: Orbitron, sans-serif;
+      font-size: 1.55rem;
+      color: var(--brand);
+      text-shadow: 0 0 18px rgba(255,189,89,.20);
+      margin:0;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hero-carousel{
+      position:absolute;
+      left:16px; right:16px;
+      top:50px;
+      height:78px;
+      z-index: 2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events: none;
+    }
+
+    .hero-carousel-track{
+      --chip: 150px;
+      --gap: 12px;
+      --visible: 3;
+      width: calc(var(--visible) * var(--chip) + (var(--visible) - 1) * var(--gap));
+      height: var(--chip);
+      overflow:hidden;
+      border-radius: 18px;
+      background: rgba(0,0,0,.12);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+      mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+      display:flex;
+      align-items:center;
+      padding: 6px;
+    }
+
+    .hero-carousel-strip{
+      display:flex;
+      gap: var(--gap);
+      align-items:center;
+      will-change: transform;
+      transform: translateX(0);
+    }
+
+    .hero-chip{
+      width: var(--chip);
+      height: var(--chip);
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+      filter: saturate(1.03) contrast(1.02);
+    }
+    .hero-chip img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    @media (max-width: 520px){
+      .hero-carousel{ height:70px; }
+      .hero-carousel-track{
+        --chip: 60px;
+        --gap: 10px;
+        border-radius: 16px;
+      }
+      .hero-chip{ border-radius: 16px; }
+      .lang-select{ max-width: 160px; }
+    }
+
+    .quickbar{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .qv-item{
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      transition: .2s ease;
+      min-width:0;
+    }
+    .qv-item:hover{
+      background: rgba(255,255,255,.07);
+      transform: translateY(-1px);
+    }
+
+    .qv-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+      min-width:0;
+    }
+    .qv-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+      font-weight:700;
+      color: rgba(244,246,255,.92);
+      letter-spacing:.2px;
+      font-size:.9rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .qv-count{
+      font-size:.75rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.78);
+      flex:0 0 auto;
+    }
+    .qv-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex:0 0 auto;
+    }
+    .qv-btn{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.88);
+      cursor:pointer;
+      font-weight:700;
+      font-size:.82rem;
+      transition:.2s ease;
+      white-space:nowrap;
+    }
+    .qv-btn:hover{
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+      border-color: rgba(77,211,255,.22);
+    }
+
+    .qv-body{
+      display:flex;
+      align-items:flex-start;
+      gap:10px;
+      min-width:0;
+    }
+    .qv-thumb{
+      width:54px;
+      height:54px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:grid;
+      place-items:center;
+    }
+    .qv-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    .qv-meta{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:1;
+    }
+    .qv-meta b{
+      font-size:.95rem;
+      font-weight:800;
+      color: rgba(244,246,255,.92);
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.15rem;
+    }
+    .qv-meta span{
+      color: var(--muted);
+      font-size:.84rem;
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.22rem;
+    }
+
+    .tap-more{cursor:pointer}
+    .tap-more:hover{color: rgba(244,246,255,.92);}
+
+    .modal{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 1000;
+    }
+    .modal.show{display:flex;}
+    .modal-card{
+      width: min(1040px, 100%);
+      max-height: min(84vh, 820px);
+      background: rgba(14, 18, 28, .92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: 0 26px 80px rgba(0,0,0,.65);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modal-top h3{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.6px;
+      color: var(--brand);
+      font-size: 1.05rem;
+    }
+    .modal-top p{
+      margin:6px 0 0 0;
+      color: var(--muted);
+      font-size:.85rem;
+    }
+
+    .modal-controls{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .modal-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .modal-controls input{
+      flex:1;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.95rem;
+      min-width: 220px;
+    }
+    .modal-controls select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.92rem;
+      min-width: 220px;
+    }
+    .modal-count{
+      flex:0 0 auto;
+      font-size:.78rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.80);
+      white-space:nowrap;
+    }
+
+    .filter-pills{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+    }
+    .pill-btn{
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.86);
+      cursor:pointer;
+      font-weight:800;
+      font-size:.82rem;
+      transition:.18s ease;
+      white-space:nowrap;
+    }
+    .pill-btn:hover{
+      background: rgba(0,0,0,.28);
+      border-color: rgba(77,211,255,.22);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+    }
+    .pill-btn.active{
+      background: linear-gradient(135deg, rgba(255,189,89,.18), rgba(255,119,51,.10));
+      border-color: rgba(255,189,89,.25);
+      color: rgba(244,246,255,.95);
+    }
+
+    .modal-grid{
+      padding: 14px;
+      overflow:auto;
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+      gap: 12px;
+    }
+    .modal-grid::-webkit-scrollbar{width:10px}
+    .modal-grid::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius:10px}
+    .modal-grid::-webkit-scrollbar-track{background: transparent}
+
+    .pick-card{
+      padding: 10px 10px 8px 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.09);
+      cursor:pointer;
+      transition:.18s ease;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+    .pick-card:hover{
+      background: rgba(255,255,255,.08);
+      transform: translateY(-1px);
+      border-color: rgba(255,189,89,.18);
+    }
+    .pick-thumb{
+      width:100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+    }
+    .pick-thumb img{
+      width:100%;
+      height:100%;
+      object-fit: contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+    .pick-name{
+      font-size:.82rem;
+      font-weight:800;
+      color: rgba(244,246,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-align:center;
+    }
+
+    .ld-wrap{
+      padding: 14px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .ld-head{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .ld-img{
+      width:64px;height:64px;border-radius: 16px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      flex: 0 0 auto;
+    }
+    .ld-img img{width:100%;height:100%;object-fit:contain;display:block;}
+    .ld-title{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+    .ld-title b{
+      font-family: Orbitron, sans-serif;
+      color: var(--brand);
+      letter-spacing:.4px;
+      font-size: 1.02rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 720px;
+    }
+    .ld-title span{
+      color: var(--muted);
+      font-size:.85rem;
+    }
+
+    details.ld-block{
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    details.ld-block > summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 12px 12px;
+      font-weight:900;
+      color: rgba(244,246,255,.92);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    details.ld-block > summary::-webkit-details-marker{display:none;}
+    .ld-pill{
+      font-size:.72rem;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.78);
+      flex:0 0 auto;
+    }
+    .ld-text{
+      padding: 0 12px 12px 12px;
+      color: rgba(244,246,255,.86);
+      line-height: 1.35rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: .92rem;
+    }
+
+    @media (max-width: 1200px){
+      .quickbar{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 980px){
+      .quickbar{ grid-template-columns: 1fr; }
+      .modal-controls input{min-width: 0; width:100%;}
+      .modal-controls select{min-width: 0; width:100%;}
+      .topbar{ flex-wrap: nowrap; gap:10px; }
+      .search{ flex: 1 1 auto; min-width: 160px; }
+      .lang-select{ flex: 0 0 auto; width: auto; max-width: 160px; }
+      .top-actions{ flex: 0 0 auto; gap: 8px; }
+      .userchip{ max-width: 180px; }
+      .usertext span{ display:none; }
+    }
+
+    .mapbar{
+      margin-top:12px;
+      padding:12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .mapbar-left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+    }
+    .mapbar-left b{
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.4px;
+      color: var(--accent);
+      font-size:.95rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .mapbar-left span{
+      color: var(--muted);
+      font-size:.83rem;
+      white-space:normal;
+    }
+    .mapbar-actions{
+      display:flex;
+      gap:8px;
+      flex:0 0 auto;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .skilldex{
+      margin-top:12px;
+      padding:12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.09);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .skilldex-top{
+      display:grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, .95fr);
+      gap:12px;
+      align-items:stretch;
+    }
+
+    .skilldex-main{
+      display:flex;
+      gap:12px;
+      min-width:0;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .skilldex-thumb{
+      width:82px;
+      height:82px;
+      border-radius:18px;
+      overflow:hidden;
+      flex:0 0 auto;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;
+      place-items:center;
+    }
+    .skilldex-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      background: rgba(255,255,255,.02);
+    }
+
+    .skilldex-copy{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:5px;
+    }
+    .skilldex-kicker{
+      font-size:.76rem;
+      font-weight:900;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color: var(--accent);
+    }
+    .skilldex-copy h3{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size:1.02rem;
+      color: var(--brand);
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .skilldex-skill{
+      font-size:.88rem;
+      font-weight:800;
+      color: rgba(244,246,255,.92);
+      line-height:1.2;
+    }
+    .skilldex-desc{
+      color: var(--muted);
+      font-size:.84rem;
+      line-height:1.34rem;
+      white-space:normal;
+      word-break:break-word;
+      overflow:visible;
+      display:block;
+    }
+
+    .skilldex-extra{
+      margin-top:6px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .skilldex-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      font-size:.74rem;
+      color: rgba(244,246,255,.88);
+    }
+
+    .skilldex-stats{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:8px;
+    }
+    .sd-stat{
+      padding:10px 10px 9px;
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      min-width:0;
+    }
+    .sd-stat span{
+      display:block;
+      color: var(--muted);
+      font-size:.72rem;
+      margin-bottom:4px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .sd-stat strong{
+      display:block;
+      font-size:.98rem;
+      color: rgba(244,246,255,.95);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .skilldex-grid{
+      display:grid;
+      grid-template-columns: 1.35fr 1fr 1fr 1fr 1.35fr;
+      gap:12px;
+    }
+    .skilldex-panel{
+      min-width:0;
+      border-radius:16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      padding:10px;
+    }
+    .skilldex-panel-title{
+      font-size:.8rem;
+      font-weight:900;
+      color: var(--brand2);
+      margin-bottom:8px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }
+
+    .skilldex-list{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+    .skilldex-row{
+      display:grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap:8px;
+      align-items:center;
+      padding:8px 9px;
+      border-radius:12px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .skilldex-row-main{
+      min-width:0;
+    }
+    .skilldex-row-main b{
+      display:block;
+      font-size:.84rem;
+      color: rgba(244,246,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .skilldex-row-main span{
+      display:block;
+      margin-top:2px;
+      font-size:.74rem;
+      color: var(--muted);
+      white-space:normal;
+      overflow:hidden;
+    }
+    .skilldex-row-meta{
+      text-align:right;
+      flex:0 0 auto;
+    }
+    .skilldex-row-meta strong{
+      display:block;
+      font-size:.86rem;
+      color: rgba(244,246,255,.94);
+    }
+    .skilldex-row-meta small{
+      display:block;
+      margin-top:2px;
+      font-size:.72rem;
+      color: var(--muted);
+    }
+
+    .counter-panel .skilldex-row{
+      display:grid;
+      grid-template-columns: minmax(0, 1.35fr) auto;
+      gap:8px;
+      align-items:start;
+      padding:7px 8px;
+      border-radius:12px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .counter-panel .skilldex-row-main{
+      min-width:0;
+    }
+    .counter-panel .skilldex-row-main b{
+      display:block;
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      max-width:100%;
+      font-size:.78rem;
+      line-height:1rem;
+      color: rgba(244,246,255,.92);
+    }
+    .counter-panel .skilldex-row-main span{
+      display:block;
+      margin-top:2px;
+      font-size:.74rem;
+      color: var(--muted);
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      line-height:1.15rem;
+    }
+    .counter-panel .skilldex-row-meta{
+      text-align:right;
+      flex:0 0 auto;
+      align-self:flex-start;
+    }
+    .counter-panel .skilldex-row-meta strong{
+      display:block;
+      font-size:.82rem;
+      line-height:1rem;
+      color: rgba(244,246,255,.94);
+      white-space:normal;
+      word-break:break-word;
+      overflow-wrap:anywhere;
+      max-width:120px;
+    }
+
+    .skilldex-recent{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .skilldex-recent-item{
+      padding:8px 9px;
+      border-radius:12px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      cursor:pointer;
+      transition:.18s ease;
+    }
+    .skilldex-recent-item:hover{
+      background: rgba(255,255,255,.07);
+      border-color: rgba(255,189,89,.18);
+      transform: translateY(-1px);
+    }
+    .skilldex-recent-top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .skilldex-recent-top b{
+      min-width:0;
+      font-size:.83rem;
+      color: rgba(244,246,255,.92);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .skilldex-recent-meta{
+      margin-top:3px;
+      color: var(--muted);
+      font-size:.74rem;
+      line-height:1.2rem;
+      white-space:normal;
+    }
+    .skilldex-badge{
+      font-size:.7rem;
+      font-weight:900;
+      padding:3px 7px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      flex:0 0 auto;
+    }
+    .skilldex-badge.win{
+      color:#8be3a3;
+      border-color: rgba(113,208,131,.28);
+      background: rgba(113,208,131,.10);
+    }
+    .skilldex-badge.loss{
+      color:#ff9999;
+      border-color: rgba(255,107,107,.28);
+      background: rgba(255,107,107,.10);
+    }
+
+    .skilldex-group-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .skilldex-group{
+      padding:9px;
+      border-radius:12px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+    }
+
+    .skilldex-group-head{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:8px;
+      align-items:start;
+    }
+
+    .skilldex-group-main{
+      min-width:0;
+    }
+
+    .skilldex-group-main b{
+      display:block;
+      font-size:.84rem;
+      color: rgba(244,246,255,.92);
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.05rem;
+    }
+
+    .skilldex-group-main span{
+      display:block;
+      margin-top:2px;
+      font-size:.74rem;
+      color: var(--muted);
+      white-space:normal;
+      overflow:visible;
+      text-overflow:unset;
+      word-break:break-word;
+      line-height:1.15rem;
+    }
+
+    .skilldex-group-meta{
+      text-align:right;
+      flex:0 0 auto;
+    }
+
+    .skilldex-group-meta strong{
+      display:block;
+      font-size:.86rem;
+      color: rgba(244,246,255,.94);
+    }
+
+    .skilldex-group-meta small{
+      display:block;
+      margin-top:2px;
+      font-size:.72rem;
+      color: var(--muted);
+    }
+
+    .skilldex-sublist{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:8px;
+    }
+
+    .skilldex-subchip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-size:.72rem;
+      color: rgba(244,246,255,.88);
+    }
+
+    .recent-modal-card{
+      width:min(1160px,100%);
+      max-height:min(88vh,900px);
+    }
+
+    .recent-match-wrap{
+      padding:14px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .recent-match-meta{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:10px;
+    }
+
+    .recent-meta-box{
+      padding:10px 12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .recent-meta-box span{
+      display:block;
+      font-size:.72rem;
+      color: var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:4px;
+    }
+    .recent-meta-box strong{
+      display:block;
+      font-size:.92rem;
+      color: rgba(244,246,255,.94);
+      word-break:break-word;
+    }
+
+    .recent-scorebar{
+      display:grid;
+      grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+      gap:12px;
+      align-items:center;
+      padding:12px;
+      border-radius:16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .recent-score-team{
+      font-family: Orbitron, sans-serif;
+      font-size:1rem;
+      color: var(--brand);
+      white-space:normal;
+      word-break:break-word;
+    }
+    .recent-score-team.right{
+      text-align:right;
+    }
+    .recent-score-center{
+      text-align:center;
+    }
+    .recent-score-center strong{
+      display:block;
+      font-size:1.25rem;
+      color: rgba(244,246,255,.95);
+    }
+    .recent-score-center span{
+      display:block;
+      margin-top:3px;
+      font-size:.76rem;
+      color: var(--muted);
+    }
+
+    .recent-side-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap:12px;
+    }
+
+    .recent-side-card{
+      padding:12px;
+      border-radius:16px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .recent-side-card.focus{
+      border-color: rgba(255,189,89,.24);
+      box-shadow: 0 0 0 3px rgba(255,189,89,.08);
+    }
+    .recent-side-head{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      align-items:start;
+      margin-bottom:10px;
+    }
+    .recent-side-head b{
+      display:block;
+      font-size:.95rem;
+      color: rgba(244,246,255,.94);
+      word-break:break-word;
+    }
+    .recent-side-head span{
+      display:block;
+      margin-top:3px;
+      font-size:.76rem;
+      color: var(--muted);
+    }
+    .recent-side-score{
+      min-width:44px;
+      text-align:center;
+      padding:6px 8px;
+      border-radius:12px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .recent-side-score.win{
+      color:#8be3a3;
+      border-color: rgba(113,208,131,.28);
+      background: rgba(113,208,131,.10);
+    }
+    .recent-side-score.loss{
+      color:#ff9999;
+      border-color: rgba(255,107,107,.28);
+      background: rgba(255,107,107,.10);
+    }
+
+    .recent-ban-line{
+      margin-bottom:10px;
+      font-size:.8rem;
+      color: var(--muted);
+    }
+    .recent-ban-line strong{
+      color: rgba(244,246,255,.9);
+    }
+
+    .recent-player-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .recent-player-card{
+      padding:9px 10px;
+      border-radius:12px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.07);
+    }
+    .recent-player-name{
+      font-weight:900;
+      font-size:.84rem;
+      color: rgba(244,246,255,.94);
+      margin-bottom:6px;
+    }
+    .recent-pill-wrap{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .recent-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:.72rem;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: rgba(244,246,255,.88);
+    }
+    .recent-pill.active{
+      border-color: rgba(77,211,255,.22);
+      background: rgba(77,211,255,.10);
+    }
+    .recent-pill.passive{
+      border-color: rgba(255,189,89,.20);
+      background: rgba(255,189,89,.08);
+    }
+    .recent-pill.pet{
+      border-color: rgba(255,119,51,.20);
+      background: rgba(255,119,51,.08);
+    }
+
+    .skilldex-empty{
+      color: var(--muted);
+      font-size:.82rem;
+      line-height:1.3rem;
+    }
+
+    @media (max-width: 1320px){
+      .skilldex-grid{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 980px){
+      .skilldex-top{
+        grid-template-columns: 1fr;
+      }
+      .skilldex-grid{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 900px){
+      .recent-match-meta{
+        grid-template-columns: repeat(2, minmax(0,1fr));
+      }
+      .recent-side-grid{
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 720px){
+      .skilldex-grid{
+        grid-template-columns: 1fr;
+      }
+      .skilldex-stats{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .modal-card.map-card{
+      height: min(88vh, 920px);
+    }
+    .map-toolbar{
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .map-toolbar .left{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      min-width: 0;
+    }
+    .map-toolbar select{
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      outline:none;
+      color: var(--ink);
+      font-size:.92rem;
+      min-width: 220px;
+    }
+    .map-toolbar .right{
+      display:flex; align-items:center; gap:8px; flex: 0 0 auto;
+    }
+    .map-hint{
+      color: var(--muted);
+      font-size:.82rem;
+      max-width: 520px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .map-viewport{
+      position:relative;
+      flex:1;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      touch-action: none;
+      border-top: 1px solid rgba(255,255,255,.08);
+      min-height: 520px;
+    }
+    .map-viewport::after{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background: radial-gradient(420px 220px at 60% 15%, rgba(77,211,255,.08), transparent 55%);
+    }
+
+    .map-img{
+      position:absolute;
+      left:0; top:0;
+      transform-origin: 0 0;
+      user-select:none;
+      -webkit-user-drag: none;
+      pointer-events:none;
+      will-change: transform;
+      filter: saturate(1.02) contrast(1.02);
+      display:block;
+      max-width:none;
+      max-height:none;
+    }
+
+    body.sb-lock{ overflow:hidden; }
+
+    .sb-backdrop{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.58);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      display:none;
+      z-index: 998;
+    }
+    .sb-backdrop.show{ display:block; }
+
+    @media (max-width: 980px){
+      .app{
+        display:block;
+        padding: 12px;
+        gap: 0;
+      }
+
+      .sidebar{
+        position: fixed;
+        top: 12px;
+        bottom: 12px;
+        left: 12px;
+        width: min(320px, 86vw);
+        z-index: 999;
+        transform: translateX(calc(-100% - 18px));
+        transition: transform .22s ease;
+      }
+      .sidebar.open{ transform: translateX(0); }
+
+      .sidebar.collapsed{ width: min(320px, 86vw); }
+      .sidebar.collapsed .brand h1,
+      .sidebar.collapsed .brand small,
+      .sidebar.collapsed .nav-label{ display: initial; }
+      .sidebar.collapsed .brand{ justify-content:flex-start; }
+      .sidebar.collapsed .brand-left{ justify-content:flex-start; }
+      .sidebar.collapsed .nav-item{
+        justify-content:flex-start;
+        gap:10px;
+        padding:10px 10px;
+      }
+
+      .main{ width:100%; }
+    }
+
+    #loadoutModal .modal-card{
+      height: min(84vh, 820px);
+      max-height: none;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #loadoutModal .modal-top{
+      flex: 0 0 auto;
+    }
+
+    #loadoutModal .ld-wrap{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 18px;
+      touch-action: pan-y;
+      overscroll-behavior: contain;
+    }
+
+    #loadoutModal .ld-text{
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    :root{ --vh: 1vh; }
+
+    #loadoutModal.modal{
+      align-items: stretch;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    #loadoutModal .modal-card{
+      height: auto;
+      max-height: calc((var(--vh) * 100) - 24px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #loadoutModal .modal-top{
+      flex: 0 0 auto;
+    }
+
+    #loadoutModal .ld-wrap{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: max(22px, env(safe-area-inset-bottom));
+      touch-action: pan-y;
+    }
+
+    #loadoutModal details.ld-block{
+      overflow: visible;
+    }
+
+    #loadoutModal .ld-text{
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    :root{
+      color-scheme: dark;
+    }
+    :root[data-theme="light"]{
+      color-scheme: light;
+
+      --bg:#f6f8ff;
+      --bg2:#e9eefc;
+
+      --panel: rgba(255, 255, 255, .78);
+      --panel2: rgba(255, 255, 255, .72);
+
+      --line: rgba(10, 20, 40, .10);
+      --ink:#0d1220;
+      --muted:#4a5871;
+
+      --shadow: 0 22px 70px rgba(16,24,40,.12);
+    }
+
+    :root[data-theme="light"] body{
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.22), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.20), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.16), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+    }
+
+    :root[data-theme="light"] .search,
+    :root[data-theme="light"] .lang-select,
+    :root[data-theme="light"] .qv-btn,
+    :root[data-theme="light"] .qv-count,
+    :root[data-theme="light"] .qv-thumb,
+    :root[data-theme="light"] .pick-thumb,
+    :root[data-theme="light"] .modal-controls input,
+    :root[data-theme="light"] .modal-controls select,
+    :root[data-theme="light"] .map-toolbar select,
+    :root[data-theme="light"] select{
+      background: rgba(255,255,255,.62) !important;
+      border-color: rgba(10,20,40,.14) !important;
+      color: var(--ink) !important;
+    }
+
+    :root[data-theme="light"] .nav-ico{
+      background: rgba(10,20,40,.05);
+      border-color: rgba(10,20,40,.10);
+    }
+
+    :root[data-theme="light"] .icon-btn,
+    :root[data-theme="light"] .userchip,
+    :root[data-theme="light"] .logout{
+      background: rgba(10,20,40,.04);
+      border-color: rgba(10,20,40,.10);
+      color: var(--ink);
+    }
+
+    :root[data-theme="light"] .modal{
+      background: rgba(10,14,20,.45);
+    }
+    :root[data-theme="light"] .modal-card{
+      background: rgba(255,255,255,.92);
+      border-color: rgba(10,20,40,.12);
+    }
+
+    :root[data-theme="light"] .skilldex,
+    :root[data-theme="light"] .mapbar,
+    :root[data-theme="light"] .qv-item{
+      background: rgba(255,255,255,.46);
+      border-color: rgba(10,20,40,.10);
+    }
+    :root[data-theme="light"] .skilldex-main,
+    :root[data-theme="light"] .sd-stat,
+    :root[data-theme="light"] .skilldex-panel,
+    :root[data-theme="light"] .skilldex-row,
+    :root[data-theme="light"] .skilldex-recent-item,
+    :root[data-theme="light"] .skilldex-chip,
+    :root[data-theme="light"] .recent-meta-box,
+    :root[data-theme="light"] .recent-scorebar,
+    :root[data-theme="light"] .recent-side-card,
+    :root[data-theme="light"] .recent-player-card{
+      background: rgba(255,255,255,.55);
+      border-color: rgba(10,20,40,.10);
+      color: var(--ink);
+    }
+
+    select{
+      color-scheme: inherit;
+    }
+    select option{
+      background: var(--bg2);
+      color: var(--ink);
+    }
+  </style>
+
+  <script>
+    (function(){
+      const key = 'ff_theme_v1';
+      const saved = localStorage.getItem(key);
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved || (prefersDark ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+    })();
+  </script>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-left">
+          <div class="logo">FF</div>
+          <div class="brand-text">
+            <h1>Free Fire</h1>
+            <small class="muted">Caster Dashboard</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <a class="nav-item" href="home.html" data-page="home.html" title="Dashboard">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 4h7v7H4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 4h7v4h-7V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 10h7v10h-7V10Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M4 13h7v7H4v-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+
+        <a class="nav-item" href="character.html" data-page="character.html" title="Character Skills">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M4.5 21a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M17 5l1.5-2M19 8h2M17 11l1.5 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Character Skills</span>
+        </a>
+
+        <a class="nav-item" href="pet.html" data-page="pet.html" title="Pets">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 10a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M20 10a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M10 7a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M18 7a2 2 0 1 0-4 0 2 2 0 0 0 4 0Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M7 18c0-2.2 2.2-4 5-4s5 1.8 5 4c0 1.4-1 2.5-2.4 2.5-.9 0-1.6-.5-2.6-.5s-1.7.5-2.6.5C8 20.5 7 19.4 7 18Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Pets</span>
+        </a>
+
+        <a class="nav-item" href="weapon.html" data-page="weapon.html" title="Weapons">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M3 14h8l2-3h8v4h-5l-2 3H8l-2 3H3v-7Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M14 11V8h5l2 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 14v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Weapons</span>
+        </a>
+
+        <a class="nav-item" href="loadout.html" data-page="loadout.html" title="Loadout">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 7V6a4 4 0 0 1 8 0v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 8h12l1 12H5L6 8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Loadout</span>
+        </a>
+
+        <a class="nav-item" href="preset.html" data-page="preset.html" title="Preset Builder">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 7h10M18 7h2M16 5v4M4 17h2M10 17h10M8 15v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15 11l1.2 2.4L19 14l-2.1 1.9.5 2.8L15 17.3l-2.4 1.4.5-2.8L11 14l2.8-.6L15 11Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Preset Builder</span>
+        </a>
+
+        <a class="nav-item" href="map.html" data-page="map.html" title="Map">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 18l-5 2V6l5-2 6 2 5-2v14l-5 2-6-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Map</span>
+        </a>
+
+        <a class="nav-item" href="br-team.html" data-page="br-team.html" title="BR Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 19V5M4 19h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M8 16v-5M12 16V8M16 16v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M7 10l4-3 4 5 5-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">BR Data</span>
+        </a>
+
+        <a class="nav-item" href="clash-draft-team.html" data-page="clash-draft-team.html" title="CS Draft">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M9 4V2h6v2M8 10h8M8 14h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M15 18l1-3 4-4 2 2-4 4-3 1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Draft</span>
+        </a>
+
+        <a class="nav-item" href="clash-data.html" data-page="clash-data.html" title="CS Data">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 6c0-1.7 3.1-3 7-3s7 1.3 7 3-3.1 3-7 3-7-1.3-7-3Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6" stroke="currentColor" stroke-width="2"/>
+              <path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" stroke="currentColor" stroke-width="2"/>
+              <path d="M9 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Data</span>
+        </a>
+
+        <a class="nav-item" href="clash-compare.html" data-page="clash-compare.html" title="CS Compare">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 5h6v14H5V5ZM13 5h6v14h-6V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M7 9h2M15 9h2M7 14h2M15 14h2M11 12h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Compare</span>
+        </a>
+
+        <a class="nav-item" href="store.html" data-page="store.html" title="Stores">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 10h16l-1-5H5l-1 5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M5 10v10h14V10M9 20v-6h6v6" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M8 10v2a2 2 0 0 1-4 0v-2M14 10v2a2 2 0 0 1-4 0v-2M20 10v2a2 2 0 0 1-4 0v-2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </span>
+          <span class="nav-label">Stores</span>
+        </a>
+
+        <a class="nav-item" href="clash-combo.html" data-page="clash-combo.html" title="Clash Squad Combo">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 8h4v4H8V8ZM12 12h4v4h-4v-4ZM4 16h4v4H4v-4ZM16 4h4v4h-4V4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M10 12l2 2M14 12l2-4M8 18l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">CS Combo</span>
+        </a>
+
+        <a class="nav-item" href="split-view.html" data-page="split-view.html" title="Split View">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M11 5v14M7 9h1M16 9h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">Split View</span>
+        </a>
+
+        <a class="nav-item" href="ff-update.html" data-page="ff-update.html" title="OB Updates">
+          <span class="nav-ico">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 5h7v14H4V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M13 5h7v14h-7V5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M11 5v14M7 9h1M16 9h1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="nav-label">OB Updates</span>
+        </a>
+      </nav>
+    </aside>
+
+    <div class="sb-backdrop" id="sbBackdrop" aria-hidden="true"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn" id="sbToggle" aria-label="Toggle sidebar" aria-expanded="false" title="Toggle sidebar">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path id="sbTogglePath" d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px;opacity:.85">
+            <path d="M21 21l-4.3-4.3m1.3-5.2a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" placeholder="Search pages..." />
+        </div>
+
+        <select id="langSelect" class="lang-select" aria-label="Language"></select>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"></svg>
+          </button>
+          <div class="userchip">
+            <div class="avatar"></div>
+            <div class="usertext">
+              <b id="gamertag">PlayerOne</b>
+              <span id="userEmail" class="muted">loading…</span>
+            </div>
+          </div>
+
+          <a class="logout" href="#" id="logoutBtn">Logout</a>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="card">
+          <div class="hero">
+            <div class="hero-carousel" aria-hidden="true">
+              <div class="hero-carousel-track" id="heroCarouselTrack"></div>
+            </div>
+
+            <div class="hero-content">
+              <div class="hero-title">
+                <h2>Free Fire Dashboard</h2>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-inner">
+            <div class="quickbar">
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Character
+                    <span class="qv-count" id="charCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="character">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="charThumb" alt="Character" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="charName">—</b>
+                    <span id="charDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Pet
+                    <span class="qv-count" id="petCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="pet">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="petThumb" alt="Pet" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="petName">—</b>
+                    <span id="petDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Weapon
+                    <span class="qv-count" id="weaponCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="weapon">Choose</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="weaponThumb" alt="Weapon" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="weaponName">—</b>
+                    <span id="weaponDesc">—</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qv-item">
+                <div class="qv-head">
+                  <div class="qv-title">
+                    Loadout
+                    <span class="qv-count" id="loadoutCount">—</span>
+                  </div>
+                  <div class="qv-actions">
+                    <button class="qv-btn" data-open="loadout">Choose</button>
+                    <button class="qv-btn" id="loadoutDetailsBtn" title="View full BR/CS details">Details</button>
+                  </div>
+                </div>
+                <div class="qv-body">
+                  <div class="qv-thumb"><img id="loadoutThumb" alt="Loadout" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <div class="qv-meta">
+                    <b id="loadoutName">—</b>
+                    <span id="loadoutDesc" class="tap-more" title="Click to view full details">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mapbar">
+              <div class="mapbar-left">
+                <b>Map Window</b>
+                <span>Pan: drag. Zoom: mouse wheel / trackpad. Touch: drag + pinch zoom.</span>
+              </div>
+              <div class="mapbar-actions">
+                <label style="display:flex;align-items:center;gap:8px;">
+                  <span class="muted" style="font-size:.8rem;">Tournament</span>
+                  <select id="skillDexTournamentFilter" class="lang-select" style="max-width:220px;min-width:180px;padding:8px 10px;">
+                    <option value="__ALL__">All tournaments</option>
+                  </select>
+                </label>
+                <button class="qv-btn" id="openMapBtn">Open</button>
+              </div>
+            </div>
+
+            <div class="skilldex" id="skillDexCard">
+              <div class="skilldex-top">
+                <div class="skilldex-main">
+                  <div class="skilldex-thumb">
+                    <img id="skillDexThumb" alt="Active Skill" loading="lazy" referrerpolicy="no-referrer" />
+                  </div>
+
+                  <div class="skilldex-copy">
+                    <div class="skilldex-kicker">Active Skill Quick Reference</div>
+                    <h3 id="skillDexName">—</h3>
+                    <div class="skilldex-skill" id="skillDexSkill">—</div>
+                    <div class="skilldex-desc" id="skillDexDesc">Choose an active skill character to see its draft reference.</div>
+                    <div class="skilldex-extra" id="skillDexExtra"></div>
+                  </div>
+                </div>
+
+                <div class="skilldex-stats" id="skillDexStats">
+                  <div class="sd-stat">
+                    <span>Uses</span>
+                    <strong>—</strong>
+                  </div>
+                  <div class="sd-stat">
+                    <span>Win %</span>
+                    <strong>—</strong>
+                  </div>
+                  <div class="sd-stat">
+                    <span>Bans</span>
+                    <strong>—</strong>
+                  </div>
+                  <div class="sd-stat">
+                    <span>Ban %</span>
+                    <strong>—</strong>
+                  </div>
+                  <div class="sd-stat">
+                    <span>Teams</span>
+                    <strong>—</strong>
+                  </div>
+                  <div class="sd-stat">
+                    <span>Players</span>
+                    <strong>—</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="skilldex-grid">
+                <div class="skilldex-panel counter-panel">
+                  <div class="skilldex-panel-title">Counter Skills</div>
+                  <div id="skillDexCounters" class="skilldex-list">
+                    <div class="skilldex-empty">No counter data yet.</div>
+                  </div>
+                </div>
+
+                <div class="skilldex-panel">
+                  <div class="skilldex-panel-title">All Players</div>
+                  <div id="skillDexPlayers" class="skilldex-list">
+                    <div class="skilldex-empty">No data yet.</div>
+                  </div>
+                </div>
+
+                <div class="skilldex-panel">
+                  <div class="skilldex-panel-title">Grouped by Team</div>
+                  <div id="skillDexTeams" class="skilldex-list">
+                    <div class="skilldex-empty">No data yet.</div>
+                  </div>
+                </div>
+
+                <div class="skilldex-panel">
+                  <div class="skilldex-panel-title">Grouped by Map</div>
+                  <div id="skillDexMaps" class="skilldex-list">
+                    <div class="skilldex-empty">No data yet.</div>
+                  </div>
+                </div>
+
+                <div class="skilldex-panel">
+                  <div class="skilldex-panel-title">Recent Usage</div>
+                  <div id="skillDexRecent" class="skilldex-recent">
+                    <div class="skilldex-empty">No data yet.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="muted" style="font-size:.8rem; padding: 10px 2px 0 2px;">
+              Free Fire Caster © 2025 — Misai Productions Sdn. Bhd.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="pickerModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Picker">
+      <div class="modal-top">
+        <div>
+          <h3 id="pickerTitle">Select</h3>
+          <p id="pickerSub">Click an item to apply it to Quick View.</p>
+        </div>
+        <button class="icon-btn" id="pickerClose" aria-label="Close picker" title="Close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-controls">
+        <div class="modal-row">
+          <input id="pickerSearch" placeholder="Search..." />
+          <select id="pickerFilterSelect" style="display:none"></select>
+          <div class="modal-count" id="pickerCount">—</div>
+        </div>
+        <div class="filter-pills" id="pickerFilterPills" style="display:none"></div>
+      </div>
+
+      <div class="modal-grid" id="pickerGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="loadoutModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Loadout Details">
+      <div class="modal-top">
+        <div>
+          <h3 id="loadoutModalTitle">Loadout Details</h3>
+          <p id="loadoutModalSub">Full BR / CS details for your selected loadout.</p>
+        </div>
+        <button class="icon-btn" id="loadoutClose" aria-label="Close loadout details" title="Close">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="ld-wrap">
+        <div class="ld-head">
+          <div class="ld-img"><img id="ldImg" alt="Loadout" loading="lazy" referrerpolicy="no-referrer" /></div>
+          <div class="ld-title">
+            <b id="ldName">—</b>
+            <span id="ldHint">BR and CS effects (full text)</span>
+          </div>
+        </div>
+
+        <details class="ld-block" open>
+          <summary>
+            BR
+            <span class="ld-pill">Battle Royale</span>
+          </summary>
+          <div class="ld-text" id="ldBR">—</div>
+        </details>
+
+        <details class="ld-block" open>
+          <summary>
+            CS
+            <span class="ld-pill">Clash Squad</span>
+          </summary>
+          <div class="ld-text" id="ldCS">—</div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="mapModal" aria-hidden="true">
+    <div class="modal-card map-card" role="dialog" aria-modal="true" aria-label="Map Window">
+      <div class="modal-top">
+        <div>
+          <h3>Map Window</h3>
+          <p class="muted">Map image viewer (no iframe). Drag to pan, wheel/pinch to zoom.</p>
+        </div>
+        <button class="icon-btn" id="mapClose" aria-label="Close map window" title="Close">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="map-toolbar">
+        <div class="left">
+          <select id="mapImgSelect" aria-label="Select map"></select>
+          <div class="map-hint" id="mapStatus">Ready</div>
+        </div>
+        <div class="right">
+          <button class="qv-btn" id="zoomOutBtn">-</button>
+          <button class="qv-btn" id="zoomInBtn">+</button>
+          <button class="qv-btn" id="fitBtn">Fit</button>
+          <button class="qv-btn" id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <div class="map-viewport" id="mapViewport">
+        <img id="mapImg" class="map-img" alt="Map" referrerpolicy="no-referrer" crossorigin="anonymous" />
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="recentMatchModal" aria-hidden="true">
+    <div class="modal-card recent-modal-card" role="dialog" aria-modal="true" aria-label="Recent Match Details">
+      <div class="modal-top">
+        <div>
+          <h3 id="recentMatchTitle">Match Details</h3>
+          <p id="recentMatchSub">Team and opponent skill details</p>
+        </div>
+        <button class="icon-btn" id="recentMatchClose" aria-label="Close recent match details" title="Close">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="recent-match-wrap" id="recentMatchBody">
+        <div class="skilldex-empty">No match selected.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const client = supabase.createClient(
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+      (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+    );
+
+    async function ensureSession(){
+      const { data: { session } } = await client.auth.getSession();
+      if (!session) {
+        window.location.href = "index.html";
+        return null;
+      }
+      return session;
+    }
+
+    async function logout(){
+      await client.auth.signOut();
+      window.location.href = "index.html";
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    const sbBackdrop = document.getElementById('sbBackdrop');
+
+    (function initSidebarCollapse(){
+      const key = 'ff_sidebar_collapsed_v1';
+      const btn = document.getElementById('sbToggle');
+      const path = document.getElementById('sbTogglePath');
+
+      const isMobile = () => window.matchMedia('(max-width: 980px)').matches;
+
+      function setBackdrop(on){
+        if (!sbBackdrop) return;
+        sbBackdrop.classList.toggle('show', !!on);
+        sbBackdrop.setAttribute('aria-hidden', on ? 'false' : 'true');
+        document.body.classList.toggle('sb-lock', !!on);
+      }
+
+      function applyDesktopCollapsedFromStorage(){
+        const saved = localStorage.getItem(key) === '1';
+        sidebar.classList.toggle('collapsed', saved);
+      }
+
+      function syncIcon(){
+        if (!path) return;
+
+        if (isMobile()){
+          const open = sidebar.classList.contains('open');
+          path.setAttribute('d', open
+            ? 'M6 6l12 12M18 6L6 18'
+            : 'M4 7h16M4 12h16M4 17h16'
+          );
+          btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+          return;
+        }
+
+        const collapsed = sidebar.classList.contains('collapsed');
+        path.setAttribute('d', collapsed
+          ? 'M10 7l5 5-5 5'
+          : 'M14 7l-5 5 5 5'
+        );
+        btn?.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      }
+
+      function closeMobileDrawer(){
+        sidebar.classList.remove('open');
+        setBackdrop(false);
+        syncIcon();
+      }
+
+      if (isMobile()){
+        sidebar.classList.remove('collapsed');
+      } else {
+        applyDesktopCollapsedFromStorage();
+      }
+      syncIcon();
+
+      btn?.addEventListener('click', () => {
+        if (isMobile()){
+          const willOpen = !sidebar.classList.contains('open');
+          sidebar.classList.toggle('open', willOpen);
+          setBackdrop(willOpen);
+          syncIcon();
+          return;
+        }
+
+        sidebar.classList.toggle('collapsed');
+        localStorage.setItem(key, sidebar.classList.contains('collapsed') ? '1' : '0');
+        syncIcon();
+      });
+
+      sbBackdrop?.addEventListener('click', closeMobileDrawer);
+
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        a.addEventListener('click', () => {
+          if (isMobile()) closeMobileDrawer();
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        if (isMobile()){
+          sidebar.classList.remove('collapsed');
+          setBackdrop(sidebar.classList.contains('open'));
+        } else {
+          sidebar.classList.remove('open');
+          setBackdrop(false);
+          applyDesktopCollapsedFromStorage();
+        }
+        syncIcon();
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobile() && sidebar.classList.contains('open')){
+          closeMobileDrawer();
+        }
+      });
+    })();
+
+    (function setActiveNav(){
+      const here = (location.pathname.split('/').pop() || 'home.html').toLowerCase();
+      document.querySelectorAll('.nav-item').forEach(a => {
+        const page = (a.getAttribute('data-page') || '').toLowerCase();
+        a.classList.toggle('active', page === here);
+      });
+    })();
+
+    document.getElementById('searchInput')?.addEventListener('input', (e) => {
+      const q = (e.target.value || '').toLowerCase().trim();
+      document.querySelectorAll('#nav .nav-item').forEach(a => {
+        const txt = a.textContent.toLowerCase();
+        a.style.display = (!q || txt.includes(q)) ? '' : 'none';
+      });
+    });
+
+    const DATA = {
+      character: { url:'https://misai-my.github.io/freefire-esports/character.json', items:[], selected:0 },
+      pet:       { url:'https://misai-my.github.io/freefire-esports/pet.json',       items:[], selected:0 },
+      weapon:    { url:'https://misai-my.github.io/freefire-esports/weapon.json',    items:[], selected:0 },
+      loadout:   { url:'https://misai-my.github.io/freefire-esports/loadout.json',   items:[], selected:0 },
+    };
+
+    const SELECTION_KEYS = {
+      character: 'ff_home_selected_character_v1',
+      pet: 'ff_home_selected_pet_v1',
+      weapon: 'ff_home_selected_weapon_v1',
+      loadout: 'ff_home_selected_loadout_v1'
+    };
+
+    function getItemStableName(type, item){
+      return safeText(item?.name || '').trim();
+    }
+
+    function saveSelection(type){
+      const state = DATA[type];
+      if (!state || !Array.isArray(state.items)) return;
+      const item = state.items[state.selected] || state.items[0];
+      if (!item) return;
+
+      try{
+        localStorage.setItem(SELECTION_KEYS[type], getItemStableName(type, item));
+      }catch{}
+    }
+
+    function restoreSelection(type){
+      const state = DATA[type];
+      if (!state || !Array.isArray(state.items) || !state.items.length) return;
+
+      let restored = false;
+      try{
+        const savedName = localStorage.getItem(SELECTION_KEYS[type]);
+        if (savedName){
+          const idx = state.items.findIndex(it => getItemStableName(type, it) === savedName);
+          if (idx >= 0){
+            state.selected = idx;
+            restored = true;
+          }
+        }
+      }catch{}
+
+      if (!restored) state.selected = 0;
+    }
+
+    const FILTER_STATE = {
+      character: 'all',
+      pet: 'all',
+      weapon: 'all',
+      loadout: 'all'
+    };
+
+    function safeText(v){ return (v ?? '').toString(); }
+    function norm(v){ return safeText(v).trim(); }
+    function normLower(v){ return norm(v).toLowerCase(); }
+
+    const SUPPORTED_LANGS = [
+      { code: "en", label: "English" },
+      { code: "ms", label: "Bahasa Melayu" },
+    ];
+
+    const LANG = { key: "ff_lang_v1", current: "en" };
+
+    function getLang(){
+      const saved = localStorage.getItem(LANG.key);
+      return SUPPORTED_LANGS.some(l => l.code === saved) ? saved : "en";
+    }
+
+    function setLang(code){
+      if (!SUPPORTED_LANGS.some(l => l.code === code)) code = "en";
+      LANG.current = code;
+      localStorage.setItem(LANG.key, code);
+
+      applyQuickView('character');
+      applyQuickView('pet');
+      applyQuickView('weapon');
+      applyQuickView('loadout');
+
+      if (modal?.classList.contains('show')) renderPickerGrid();
+    }
+
+    function initLangSelect(){
+      const sel = document.getElementById("langSelect");
+      if (!sel) return;
+
+      sel.innerHTML = SUPPORTED_LANGS
+        .map(l => `<option value="${l.code}">${l.label}</option>`)
+        .join("");
+
+      LANG.current = getLang();
+      sel.value = LANG.current;
+
+      sel.addEventListener("change", () => setLang(sel.value));
+    }
+
+    function tField(item, baseKey){
+      if (!item) return "";
+      const code = LANG.current || "en";
+
+      if (code !== "en"){
+        const v = item[`${baseKey}_${code}`];
+        if (v != null && String(v).trim() !== "") return String(v);
+      }
+
+      const v2 = item[baseKey];
+      return v2 != null ? String(v2) : "";
+    }
+
+    function tLoadoutDetails(item, mode){
+      if (!item) return "";
+      const code = LANG.current || "en";
+
+      if (code !== "en"){
+        const obj = item[`description_${code}`];
+
+        if (obj && typeof obj === "object"){
+          const v = obj?.[mode];
+          if (v != null && String(v).trim() !== "") return String(v);
+        }
+
+        if (typeof obj === "string" && obj.trim()){
+          return obj;
+        }
+      }
+
+      const v2 = item?.description?.[mode];
+      return v2 != null ? String(v2) : "";
+    }
+
+    function pickImg(item){
+      return item?.image_url || item?.icon || item?.img || 'https://i.imgur.com/qXFpizS.jpg';
+    }
+
+    function getCategory(type, item){
+      if (!item) return 'Other';
+      if (type === 'pet'){
+        return norm(item.category || item.type || item.pet_type || item.group || item.role || 'Other') || 'Other';
+      }
+      return norm(item.category || item.type || item.weapon_type || item.class || item.group || 'Other') || 'Other';
+    }
+
+    function buildDesc(type, item){
+      if (!item) return '—';
+
+      if (type === 'character'){
+        const skill = tField(item, "skill");
+        const d = tField(item, "description");
+        return (skill ? skill : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'pet'){
+        const skill = tField(item, "skill") || tField(item, "ability");
+        const d = tField(item, "description");
+        return (skill ? skill : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'weapon'){
+        const t = tField(item, "type") || tField(item, "category");
+        const d = tField(item, "description") || tField(item, "special") || tField(item, "desc");
+        return (t ? t : '—') + (d ? ` — ${d}` : '');
+      }
+
+      if (type === 'loadout'){
+        const br = tLoadoutDetails(item, "br");
+        const cs = tLoadoutDetails(item, "cs");
+
+        const headLine = (txt, max=170) => {
+          const t = safeText(txt).trim();
+          if (!t) return '';
+          const first = (t.split('\n').find(l => l.trim()) || t).trim();
+          return first.length > max ? first.slice(0, max-1) + '…' : first;
+        };
+
+        const brHead = headLine(br);
+        const csHead = headLine(cs);
+
+        const parts = [];
+        if (brHead) parts.push(`BR: ${brHead}`);
+        if (csHead) parts.push(`CS: ${csHead}`);
+
+        return parts.join('  ') || '—';
+      }
+
+      return '—';
+    }
+
+    async function loadJson(url){
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Fetch failed: ' + url);
+      return await res.json();
+    }
+
+    const SKILLDEX = {
+      records: [],
+      loaded: false,
+      loading: false,
+      error: null,
+      totalSides: 0
+    };
+
+    const COUNTERDEX = {
+      url: 'https://misai-my.github.io/freefire-esports/counter.json',
+      raw: [],
+      loaded: false,
+      loading: false,
+      error: null
+    };
+
+    let RECENT_USAGE_CACHE = [];
+
+    const skillDexTournamentFilter = document.getElementById('skillDexTournamentFilter');
+
+    function parseState(val){
+      if (!val) return {};
+      if (typeof val === 'object') return val;
+      try { return JSON.parse(val); } catch { return {}; }
+    }
+
+    function escapeHtml(v){
+      return safeText(v).replace(/[&<>"']/g, ch => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[ch]));
+    }
+
+    function normalizeSkillEntry(entry){
+      if (!entry) return { name:'', img:'' };
+      if (typeof entry === 'string') return { name: entry.trim(), img:'' };
+      return {
+        name: entry.name || entry.skill_name || entry.pet_name || entry.pet || entry.title || '',
+        img: entry.image_url || entry.img || entry.icon || entry.pet_image || entry.image || ''
+      };
+    }
+
+    function extractPetsArray(state){
+      if (Array.isArray(state?.pets)) return state.pets;
+      if (Array.isArray(state?.petSkills)) return state.petSkills;
+      if (Array.isArray(state?.pet_skill)) return state.pet_skill;
+      if (Array.isArray(state?.petskills)) return state.petskills;
+      if (Array.isArray(state?.pet)) return state.pet;
+      return [];
+    }
+
+    function slimKey(v){
+      return safeText(v).toLowerCase().replace(/[^a-z0-9]+/g, '');
+    }
+
+    function sameSkillName(a, b){
+      const aa = slimKey(a);
+      const bb = slimKey(b);
+      return !!aa && !!bb && aa === bb;
+    }
+
+    function fmtPctNum(n){
+      return Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : '—';
+    }
+
+    function currentCharacterItem(){
+      const list = DATA.character.items || [];
+      const idx = Number(DATA.character.selected || 0);
+      return list[idx] || list[0] || null;
+    }
+
+    function isPassiveCharacter(item){
+      return normLower(item?.skill_type || '') === 'passive';
+    }
+
+    function getLatestTournamentName(records){
+      if (!Array.isArray(records) || !records.length) return '__ALL__';
+
+      let latest = null;
+
+      for (const rec of records){
+        const tName = safeText(rec?.tournament_name).trim();
+        if (!tName) continue;
+
+        const stamp = new Date(rec?.match_date || 0).getTime() || 0;
+
+        if (!latest || stamp > latest.stamp){
+          latest = { name: tName, stamp };
+        }
+      }
+
+      return latest?.name || '__ALL__';
+    }
+
+    function populateSkillDexTournamentFilter(){
+      if (!skillDexTournamentFilter) return;
+
+      const names = [...new Set(
+        (SKILLDEX.records || [])
+          .map(r => safeText(r?.tournament_name).trim())
+          .filter(Boolean)
+      )].sort((a,b) => a.localeCompare(b));
+
+      const latestName = getLatestTournamentName(SKILLDEX.records);
+
+      skillDexTournamentFilter.innerHTML = `
+        <option value="__ALL__">All tournaments</option>
+        ${names.map(name => `<option value="${name}">${name}</option>`).join('')}
+      `;
+
+      skillDexTournamentFilter.value = names.includes(latestName) ? latestName : '__ALL__';
+    }
+
+    function getCounterEntryForSkill(skillName){
+      const key = slimKey(skillName);
+      if (!key || !Array.isArray(COUNTERDEX.raw)) return null;
+      return COUNTERDEX.raw.find(row => slimKey(row?.name) === key) || null;
+    }
+
+    function skilldexListHTML(list, noun){
+      if (!list.length) return `<div class="skilldex-empty">No ${noun.toLowerCase()} data.</div>`;
+
+      return list.map(row => `
+        <div class="skilldex-row">
+          <div class="skilldex-row-main">
+            <b>${row.label}</b>
+            <span>${row.sub}</span>
+          </div>
+          <div class="skilldex-row-meta">
+            <strong>${row.count}</strong>
+            <small>${row.rate}</small>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function skilldexGroupedHTML(groups, noun){
+      if (!groups.length) return `<div class="skilldex-empty">No ${noun.toLowerCase()} data.</div>`;
+
+      return `
+        <div class="skilldex-group-list">
+          ${groups.map(group => `
+            <div class="skilldex-group">
+              <div class="skilldex-group-head">
+                <div class="skilldex-group-main">
+                  <b>${group.label}</b>
+                  <span>${group.sub}</span>
+                </div>
+                <div class="skilldex-group-meta">
+                  <strong>${group.count}</strong>
+                  <small>${group.rate}</small>
+                </div>
+              </div>
+              ${
+                Array.isArray(group.children) && group.children.length
+                  ? `
+                    <div class="skilldex-sublist">
+                      ${group.children.map(child => `
+                        <span class="skilldex-subchip">${child.label} ×${child.count}</span>
+                      `).join('')}
+                    </div>
+                  `
+                  : ''
+              }
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function skilldexRecentHTML(list){
+      if (!list.length) return `<div class="skilldex-empty">No recent usage found.</div>`;
+
+      return list.map((row, index) => `
+        <div class="skilldex-recent-item" data-recent-index="${index}" tabindex="0" role="button">
+          <div class="skilldex-recent-top">
+            <b>${escapeHtml(row.player)}</b>
+            <span class="skilldex-badge ${row.result === 'W' ? 'win' : 'loss'}">${escapeHtml(row.result)}</span>
+          </div>
+          <div class="skilldex-recent-meta">
+            ${escapeHtml(row.team)} • ${escapeHtml(row.map)} • ${escapeHtml(row.date)}<br>
+            ${escapeHtml(row.tournament)}${row.game ? ` • Game ${escapeHtml(row.game)}` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setSkilldexStats(stats){
+      document.getElementById('skillDexStats').innerHTML = `
+        <div class="sd-stat"><span>Uses</span><strong>${stats.uses}</strong></div>
+        <div class="sd-stat"><span>Win %</span><strong>${stats.winRate}</strong></div>
+        <div class="sd-stat"><span>Bans</span><strong>${stats.bans}</strong></div>
+        <div class="sd-stat"><span>Ban %</span><strong>${stats.banRate}</strong></div>
+        <div class="sd-stat"><span>Teams</span><strong>${stats.teams}</strong></div>
+        <div class="sd-stat"><span>Players</span><strong>${stats.players}</strong></div>
+      `;
+    }
+
+    function analyzeSkillReference(characterName){
+      const usageRows = [];
+      const banRows = [];
+      const selectedTournament = skillDexTournamentFilter?.value || '__ALL__';
+
+      for (const rec of SKILLDEX.records){
+        const tournamentName = safeText(rec?.tournament_name).trim() || '—';
+
+        if (selectedTournament !== '__ALL__' && tournamentName !== selectedTournament) continue;
+
+        const s = parseState(rec.state);
+        const picks = Array.isArray(s.picks) ? s.picks : [];
+        const names = Array.isArray(s.playerCards) ? s.playerCards : [];
+        const bans  = Array.isArray(s.bans) ? s.bans : [];
+
+        const leftScore = Number(rec.team_left_score ?? 0);
+        const rightScore = Number(rec.team_right_score ?? 0);
+
+        const sides = [
+          {
+            team: rec.team_left || '—',
+            opponent: rec.team_right || '—',
+            score: leftScore,
+            oppScore: rightScore,
+            result: leftScore > rightScore ? 'W' : 'L',
+            ban: bans[0] || {},
+            idxs: [0,1,2,3]
+          },
+          {
+            team: rec.team_right || '—',
+            opponent: rec.team_left || '—',
+            score: rightScore,
+            oppScore: leftScore,
+            result: rightScore > leftScore ? 'W' : 'L',
+            ban: bans[1] || {},
+            idxs: [7,6,5,4]
+          }
+        ];
+
+        for (const side of sides){
+          if (sameSkillName(characterName, side?.ban?.name || '')){
+            banRows.push({
+              team: side.team,
+              opponent: side.opponent,
+              map: rec.map || '—',
+              date: safeText(rec.match_date).slice(0,10),
+              tournament: tournamentName,
+              game: rec.game_number || ''
+            });
+          }
+
+          side.idxs.forEach((idx, localIdx) => {
+            const pickObj = picks[idx] || {};
+            const pickName = pickObj?.name || '';
+
+            if (!sameSkillName(characterName, pickName)) return;
+
+            const player = norm(names[idx]) || `${side.team} P${localIdx + 1}`;
+
+            usageRows.push({
+              recId: rec.id,
+              team: side.team,
+              player,
+              opponent: side.opponent,
+              map: rec.map || '—',
+              result: side.result,
+              tournament: tournamentName,
+              date: safeText(rec.match_date).slice(0,10),
+              game: rec.game_number || '',
+              score: `${side.score}-${side.oppScore}`,
+              stamp: new Date(rec.match_date || 0).getTime() || 0
+            });
+          });
+        }
+      }
+
+      const playerAgg = new Map();
+      const teamAgg = new Map();
+      const mapAgg = new Map();
+
+      for (const row of usageRows){
+        const p = playerAgg.get(row.player) || {
+          label: row.player,
+          count: 0,
+          wins: 0,
+          teams: new Set(),
+          maps: new Set()
+        };
+        p.count += 1;
+        if (row.result === 'W') p.wins += 1;
+        p.teams.add(row.team);
+        p.maps.add(row.map);
+        playerAgg.set(row.player, p);
+
+        const t = teamAgg.get(row.team) || {
+          label: row.team,
+          count: 0,
+          wins: 0,
+          players: new Set(),
+          maps: new Map()
+        };
+        t.count += 1;
+        if (row.result === 'W') t.wins += 1;
+        t.players.add(row.player);
+        t.maps.set(row.map, (t.maps.get(row.map) || 0) + 1);
+        teamAgg.set(row.team, t);
+
+        const m = mapAgg.get(row.map) || {
+          label: row.map,
+          count: 0,
+          wins: 0,
+          teams: new Map(),
+          players: new Set()
+        };
+        m.count += 1;
+        if (row.result === 'W') m.wins += 1;
+        m.teams.set(row.team, (m.teams.get(row.team) || 0) + 1);
+        m.players.add(row.player);
+        mapAgg.set(row.map, m);
+      }
+
+      const allPlayers = [...playerAgg.values()]
+        .map(v => ({
+          label: v.label,
+          count: `${v.count}x`,
+          rate: fmtPctNum(v.count ? v.wins / v.count : 0),
+          countRaw: v.count,
+          winRate: v.count ? v.wins / v.count : 0,
+          sub: `${v.teams.size} team${v.teams.size === 1 ? '' : 's'} • ${v.maps.size} map${v.maps.size === 1 ? '' : 's'}`
+        }))
+        .sort((a, b) => b.countRaw - a.countRaw || b.winRate - a.winRate || a.label.localeCompare(b.label));
+
+      const teamGroups = [...teamAgg.values()]
+        .map(v => ({
+          label: v.label,
+          count: `${v.count}x`,
+          rate: fmtPctNum(v.count ? v.wins / v.count : 0),
+          countRaw: v.count,
+          winRate: v.count ? v.wins / v.count : 0,
+          sub: `${v.wins}W • ${v.count - v.wins}L • ${v.players.size} player${v.players.size === 1 ? '' : 's'} • ${v.maps.size} map${v.maps.size === 1 ? '' : 's'}`,
+          children: [...v.maps.entries()]
+            .map(([label, count]) => ({ label, count }))
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+        }))
+        .sort((a, b) => b.countRaw - a.countRaw || b.winRate - a.winRate || a.label.localeCompare(b.label));
+
+      const mapGroups = [...mapAgg.values()]
+        .map(v => ({
+          label: v.label,
+          count: `${v.count}x`,
+          rate: fmtPctNum(v.count ? v.wins / v.count : 0),
+          countRaw: v.count,
+          winRate: v.count ? v.wins / v.count : 0,
+          sub: `${v.wins}W • ${v.count - v.wins}L • ${v.teams.size} team${v.teams.size === 1 ? '' : 's'} • ${v.players.size} player${v.players.size === 1 ? '' : 's'}`,
+          children: [...v.teams.entries()]
+            .map(([label, count]) => ({ label, count }))
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+        }))
+        .sort((a, b) => b.countRaw - a.countRaw || b.winRate - a.winRate || a.label.localeCompare(b.label));
+
+      const recent = [...usageRows]
+        .sort((a, b) => b.stamp - a.stamp)
+        .slice(0, 10);
+
+      const uniqueTeams = new Set(usageRows.map(r => r.team).filter(Boolean)).size;
+      const uniquePlayers = new Set(usageRows.map(r => r.player).filter(Boolean)).size;
+      const wins = usageRows.filter(r => r.result === 'W').length;
+
+      const filteredSideCount = (() => {
+        if (selectedTournament === '__ALL__') return SKILLDEX.totalSides;
+        const filteredMatches = (SKILLDEX.records || []).filter(r => (safeText(r?.tournament_name).trim() || '—') === selectedTournament).length;
+        return filteredMatches * 2;
+      })();
+
+      return {
+        uses: usageRows.length,
+        wins,
+        bans: banRows.length,
+        winRate: usageRows.length ? wins / usageRows.length : 0,
+        banRate: filteredSideCount ? banRows.length / filteredSideCount : 0,
+        teams: uniqueTeams,
+        players: uniquePlayers,
+        allPlayers,
+        teamGroups,
+        mapGroups,
+        recent
+      };
+    }
+
+    function renderCounterSkills(){
+      const wrap = document.getElementById('skillDexCounters');
+      const extra = document.getElementById('skillDexExtra');
+      const item = currentCharacterItem();
+
+      if (!wrap || !extra) return;
+
+      if (!item){
+        wrap.innerHTML = `<div class="skilldex-empty">No counter data yet.</div>`;
+        extra.innerHTML = '';
+        return;
+      }
+
+      if (isPassiveCharacter(item)){
+        wrap.innerHTML = `<div class="skilldex-empty">Choose an active skill character to view counter skills.</div>`;
+        extra.innerHTML = '';
+        return;
+      }
+
+      if (COUNTERDEX.loading){
+        wrap.innerHTML = `<div class="skilldex-empty">Loading counter skills…</div>`;
+        extra.innerHTML = '';
+        return;
+      }
+
+      if (COUNTERDEX.error){
+        wrap.innerHTML = `<div class="skilldex-empty">Failed to load counter skills.</div>`;
+        extra.innerHTML = '';
+        return;
+      }
+
+      const skillName = safeText(tField(item, 'name') || item.name || '');
+      const entry = getCounterEntryForSkill(skillName);
+
+      if (!entry){
+        wrap.innerHTML = `<div class="skilldex-empty">No counter skills found for ${skillName || 'this character'}.</div>`;
+        extra.innerHTML = '';
+        return;
+      }
+
+      const chips = [];
+      if (entry.role) chips.push(`<span class="skilldex-chip">Role: ${safeText(entry.role)}</span>`);
+      if (entry.counter_category) chips.push(`<span class="skilldex-chip">Counter Angle: ${safeText(entry.counter_category)}</span>`);
+      extra.innerHTML = chips.join('');
+
+      const counters = Array.isArray(entry.counters) ? entry.counters : [];
+
+      if (!counters.length){
+        wrap.innerHTML = `<div class="skilldex-empty">No counter skills listed.</div>`;
+        return;
+      }
+
+      wrap.innerHTML = counters.map(row => `
+        <div class="skilldex-row">
+          <div class="skilldex-row-main">
+            <b>${safeText(row?.name || '—')}</b>
+            <span>${safeText(row?.skill || '')}${row?.reason ? ` — ${safeText(row.reason)}` : ''}</span>
+          </div>
+          <div class="skilldex-row-meta">
+            <strong>${safeText(row?.skill || '—')}</strong>
+            <small>Counter</small>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSkillReference(){
+      const item = currentCharacterItem();
+
+      const thumb = document.getElementById('skillDexThumb');
+      const nameEl = document.getElementById('skillDexName');
+      const skillEl = document.getElementById('skillDexSkill');
+      const descEl = document.getElementById('skillDexDesc');
+      const playersEl = document.getElementById('skillDexPlayers');
+      const teamsEl = document.getElementById('skillDexTeams');
+      const mapsEl = document.getElementById('skillDexMaps');
+      const recentEl = document.getElementById('skillDexRecent');
+      const extra = document.getElementById('skillDexExtra');
+
+      if (!item){
+        RECENT_USAGE_CACHE = [];
+        thumb.src = 'https://i.imgur.com/qXFpizS.jpg';
+        nameEl.textContent = '—';
+        skillEl.textContent = '—';
+        descEl.textContent = 'No character selected.';
+        extra.innerHTML = '';
+        setSkilldexStats({ uses:'—', winRate:'—', bans:'—', banRate:'—', teams:'—', players:'—' });
+        playersEl.innerHTML = `<div class="skilldex-empty">No data.</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">No data.</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">No data.</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">No data.</div>`;
+        renderCounterSkills();
+        return;
+      }
+
+      const charName = safeText(tField(item, 'name') || item.name || '—');
+      const skillName = safeText(tField(item, 'skill') || item.skill || '—');
+      const fullDesc = safeText(tField(item, 'description') || item.description || '—');
+      const counterEntry = getCounterEntryForSkill(charName);
+
+      thumb.src = pickImg(item);
+      nameEl.textContent = charName;
+      skillEl.textContent = skillName || '—';
+      descEl.textContent = fullDesc || '—';
+
+      const chips = [];
+      if (counterEntry?.role) chips.push(`<span class="skilldex-chip">Role: ${safeText(counterEntry.role)}</span>`);
+      if (counterEntry?.counter_category) chips.push(`<span class="skilldex-chip">Counter Angle: ${safeText(counterEntry.counter_category)}</span>`);
+      extra.innerHTML = chips.join('');
+
+      if (isPassiveCharacter(item)){
+        RECENT_USAGE_CACHE = [];
+        setSkilldexStats({ uses:'—', winRate:'—', bans:'—', banRate:'—', teams:'—', players:'—' });
+        playersEl.innerHTML = `<div class="skilldex-empty">This card only tracks active skill usage from draft records.</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">Choose an active skill character.</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">Choose an active skill character.</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">Choose an active skill character.</div>`;
+        renderCounterSkills();
+        return;
+      }
+
+      if (SKILLDEX.loading){
+        RECENT_USAGE_CACHE = [];
+        setSkilldexStats({ uses:'…', winRate:'…', bans:'…', banRate:'…', teams:'…', players:'…' });
+        playersEl.innerHTML = `<div class="skilldex-empty">Loading draft reference…</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">Loading draft reference…</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">Loading draft reference…</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">Loading draft reference…</div>`;
+        renderCounterSkills();
+        return;
+      }
+
+      if (SKILLDEX.error){
+        RECENT_USAGE_CACHE = [];
+        setSkilldexStats({ uses:'—', winRate:'—', bans:'—', banRate:'—', teams:'—', players:'—' });
+        playersEl.innerHTML = `<div class="skilldex-empty">Failed to load draft reference.</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">Failed to load draft reference.</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">Failed to load draft reference.</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">Failed to load draft reference.</div>`;
+        renderCounterSkills();
+        return;
+      }
+
+      if (!SKILLDEX.loaded){
+        RECENT_USAGE_CACHE = [];
+        setSkilldexStats({ uses:'…', winRate:'…', bans:'…', banRate:'…', teams:'…', players:'…' });
+        playersEl.innerHTML = `<div class="skilldex-empty">Preparing draft reference…</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">Preparing draft reference…</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">Preparing draft reference…</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">Preparing draft reference…</div>`;
+        renderCounterSkills();
+        return;
+      }
+
+      const report = analyzeSkillReference(charName);
+
+      setSkilldexStats({
+        uses: report.uses.toLocaleString(),
+        winRate: fmtPctNum(report.winRate),
+        bans: report.bans.toLocaleString(),
+        banRate: fmtPctNum(report.banRate),
+        teams: report.teams.toLocaleString(),
+        players: report.players.toLocaleString()
+      });
+
+      playersEl.innerHTML = skilldexListHTML(report.allPlayers, 'Player');
+      teamsEl.innerHTML = skilldexGroupedHTML(report.teamGroups, 'Team');
+      mapsEl.innerHTML = skilldexGroupedHTML(report.mapGroups, 'Map');
+      RECENT_USAGE_CACHE = report.recent || [];
+      recentEl.innerHTML = skilldexRecentHTML(RECENT_USAGE_CACHE);
+
+      if (!report.uses && !report.bans){
+        RECENT_USAGE_CACHE = [];
+        playersEl.innerHTML = `<div class="skilldex-empty">No draft usage or bans found yet for this active skill.</div>`;
+        teamsEl.innerHTML = `<div class="skilldex-empty">No team data yet.</div>`;
+        mapsEl.innerHTML = `<div class="skilldex-empty">No map data yet.</div>`;
+        recentEl.innerHTML = `<div class="skilldex-empty">No recent usage found.</div>`;
+      }
+
+      renderCounterSkills();
+    }
+
+    function buildRecentMatchSide(rec, sideKey){
+      const s = parseState(rec.state);
+      const picks = Array.isArray(s.picks) ? s.picks : [];
+      const passives = Array.isArray(s.passives) ? s.passives : [];
+      const bans = Array.isArray(s.bans) ? s.bans : [];
+      const names = Array.isArray(s.playerCards) ? s.playerCards : [];
+      const pets = extractPetsArray(s);
+
+      const isLeft = sideKey === 'left';
+      const idxs = isLeft ? [0,1,2,3] : [7,6,5,4];
+
+      const leftScore = Number(rec.team_left_score ?? 0);
+      const rightScore = Number(rec.team_right_score ?? 0);
+
+      return {
+        team: isLeft ? (rec.team_left || '—') : (rec.team_right || '—'),
+        opponent: isLeft ? (rec.team_right || '—') : (rec.team_left || '—'),
+        score: isLeft ? leftScore : rightScore,
+        oppScore: isLeft ? rightScore : leftScore,
+        result: (isLeft ? leftScore > rightScore : rightScore > leftScore) ? 'W' : 'L',
+        ban: bans[isLeft ? 0 : 1]?.name || '—',
+        players: idxs.map((idx, localIdx) => {
+          const pickObj = picks[idx] || {};
+          const passiveArr = Array.isArray(passives[idx]) ? passives[idx] : [];
+          const petObj = normalizeSkillEntry(pets[idx]);
+
+          return {
+            player: norm(names[idx]) || `P${localIdx + 1}`,
+            active: pickObj?.name || '—',
+            passives: passiveArr.map(p => p?.name || '').filter(Boolean).slice(0, 3),
+            pet: petObj?.name || ''
+          };
+        })
+      };
+    }
+
+    function renderRecentMatchModal(rec, focusTeam){
+      const titleEl = document.getElementById('recentMatchTitle');
+      const subEl = document.getElementById('recentMatchSub');
+      const bodyEl = document.getElementById('recentMatchBody');
+
+      const left = buildRecentMatchSide(rec, 'left');
+      const right = buildRecentMatchSide(rec, 'right');
+
+      const map = rec.map || '—';
+      const tournament = safeText(rec.tournament_name || '—');
+      const date = safeText(rec.match_date).slice(0,10) || '—';
+      const game = rec.game_number ? `Game ${rec.game_number}` : '—';
+
+      titleEl.textContent = `${left.team} vs ${right.team}`;
+      subEl.textContent = `${map} • ${tournament}`;
+
+      const renderSide = (side) => {
+        const isFocus = slimKey(side.team) === slimKey(focusTeam);
+
+        return `
+          <div class="recent-side-card ${isFocus ? 'focus' : ''}">
+            <div class="recent-side-head">
+              <div>
+                <b>${escapeHtml(side.team)}</b>
+                <span>vs ${escapeHtml(side.opponent)}</span>
+              </div>
+              <div class="recent-side-score ${side.result === 'W' ? 'win' : 'loss'}">${escapeHtml(side.score)}</div>
+            </div>
+
+            <div class="recent-ban-line">
+              <strong>Ban:</strong> ${escapeHtml(side.ban)}
+            </div>
+
+            <div class="recent-player-list">
+              ${side.players.map(p => `
+                <div class="recent-player-card">
+                  <div class="recent-player-name">${escapeHtml(p.player)}</div>
+                  <div class="recent-pill-wrap">
+                    <span class="recent-pill active">A: ${escapeHtml(p.active || '—')}</span>
+                    ${(p.passives || []).map(name => `<span class="recent-pill passive">P: ${escapeHtml(name)}</span>`).join('')}
+                    ${p.pet ? `<span class="recent-pill pet">Pet: ${escapeHtml(p.pet)}</span>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      };
+
+      bodyEl.innerHTML = `
+        <div class="recent-match-meta">
+          <div class="recent-meta-box">
+            <span>Map</span>
+            <strong>${escapeHtml(map)}</strong>
+          </div>
+          <div class="recent-meta-box">
+            <span>Tournament</span>
+            <strong>${escapeHtml(tournament)}</strong>
+          </div>
+          <div class="recent-meta-box">
+            <span>Date</span>
+            <strong>${escapeHtml(date)}</strong>
+          </div>
+          <div class="recent-meta-box">
+            <span>Game</span>
+            <strong>${escapeHtml(game)}</strong>
+          </div>
+        </div>
+
+        <div class="recent-scorebar">
+          <div class="recent-score-team">${escapeHtml(left.team)}</div>
+          <div class="recent-score-center">
+            <strong>${escapeHtml(left.score)} - ${escapeHtml(right.score)}</strong>
+            <span>Final score</span>
+          </div>
+          <div class="recent-score-team right">${escapeHtml(right.team)}</div>
+        </div>
+
+        <div class="recent-side-grid">
+          ${renderSide(left)}
+          ${renderSide(right)}
+        </div>
+      `;
+    }
+
+    async function loadSkilldexRecords(){
+      if (SKILLDEX.loading || SKILLDEX.loaded) return;
+      SKILLDEX.loading = true;
+      renderSkillReference();
+
+      try{
+        const batchSize = 1000;
+        let from = 0;
+        let done = false;
+        const rows = [];
+
+        while (!done){
+          const { data, error } = await client
+            .from('draft_records')
+            .select('id, match_date, game_number, map, tournament_name, team_left, team_right, team_left_score, team_right_score, state')
+            .order('match_date', { ascending:false })
+            .range(from, from + batchSize - 1);
+
+          if (error) throw error;
+
+          rows.push(...(data || []));
+
+          if (!data || data.length < batchSize){
+            done = true;
+          } else {
+            from += batchSize;
+          }
+        }
+
+        SKILLDEX.records = rows;
+        SKILLDEX.totalSides = rows.length * 2;
+        SKILLDEX.loaded = true;
+        SKILLDEX.error = null;
+
+        populateSkillDexTournamentFilter();
+      } catch (err){
+        console.error('Skilldex draft_records load failed:', err);
+        SKILLDEX.error = err;
+        SKILLDEX.records = [];
+        SKILLDEX.totalSides = 0;
+        SKILLDEX.loaded = false;
+      } finally {
+        SKILLDEX.loading = false;
+        renderSkillReference();
+      }
+    }
+
+    async function loadCounterDex(){
+      if (COUNTERDEX.loading || COUNTERDEX.loaded) return;
+      COUNTERDEX.loading = true;
+      renderCounterSkills();
+
+      try{
+        const res = await fetch(COUNTERDEX.url, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Counter JSON fetch failed: ${res.status}`);
+        const json = await res.json();
+        COUNTERDEX.raw = Array.isArray(json) ? json : [];
+        COUNTERDEX.loaded = true;
+        COUNTERDEX.error = null;
+      } catch (err){
+        console.error('Counter JSON load failed:', err);
+        COUNTERDEX.raw = [];
+        COUNTERDEX.loaded = false;
+        COUNTERDEX.error = err;
+      } finally {
+        COUNTERDEX.loading = false;
+        renderCounterSkills();
+      }
+    }
+
+    function applyQuickView(type){
+      const state = DATA[type];
+      const item = state.items[state.selected] || state.items[0];
+      if (!item) return;
+
+      const img = pickImg(item);
+      const name = safeText(tField(item, "name") || '—');
+      const desc = buildDesc(type, item);
+
+      if (type === 'character'){
+        document.getElementById('charThumb').src = img;
+        document.getElementById('charName').textContent = name;
+        document.getElementById('charDesc').textContent = desc || '—';
+        saveSelection(type);
+        renderSkillReference();
+      } else if (type === 'pet'){
+        document.getElementById('petThumb').src = img;
+        document.getElementById('petName').textContent = name;
+        document.getElementById('petDesc').textContent = desc || '—';
+        saveSelection(type);
+      } else if (type === 'weapon'){
+        document.getElementById('weaponThumb').src = img;
+        document.getElementById('weaponName').textContent = name;
+        document.getElementById('weaponDesc').textContent = desc || '—';
+        saveSelection(type);
+      } else if (type === 'loadout'){
+        document.getElementById('loadoutThumb').src = img;
+        document.getElementById('loadoutName').textContent = name;
+        document.getElementById('loadoutDesc').textContent = desc || '—';
+        saveSelection(type);
+      }
+    }
+
+    function setCounts(){
+      document.getElementById('charCount').textContent = DATA.character.items.length ? DATA.character.items.length.toLocaleString() : '—';
+      document.getElementById('petCount').textContent = DATA.pet.items.length ? DATA.pet.items.length.toLocaleString() : '—';
+      document.getElementById('weaponCount').textContent = DATA.weapon.items.length ? DATA.weapon.items.length.toLocaleString() : '—';
+      document.getElementById('loadoutCount').textContent = DATA.loadout.items.length ? DATA.loadout.items.length.toLocaleString() : '—';
+    }
+
+    const heroCarouselTrack = document.getElementById('heroCarouselTrack');
+    let heroCarouselTimer = null;
+
+    function shuffleCopy(arr){
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function stopHeroCarousel(){
+      if (heroCarouselTimer) {
+        clearInterval(heroCarouselTimer);
+        heroCarouselTimer = null;
+      }
+    }
+
+    function buildHeroCarousel(){
+      if (!heroCarouselTrack) return;
+
+      stopHeroCarousel();
+
+      const items = DATA.character.items || [];
+      if (!items.length){
+        heroCarouselTrack.innerHTML = '';
+        return;
+      }
+
+      const indices = items.map((_, i) => i);
+      const shuffled = shuffleCopy(indices);
+
+      const takeN = Math.min(24, shuffled.length);
+      const seq = shuffled.slice(0, takeN);
+      const finalSeq = seq.concat(seq.slice());
+
+      heroCarouselTrack.innerHTML = `
+        <div class="hero-carousel-strip" id="heroCarouselStrip">
+          ${finalSeq.map(idx => {
+            const it = items[idx];
+            const name = safeText(tField(it, "name") || it?.name || '—');
+            const img = pickImg(it);
+            return `
+              <div class="hero-chip" title="${name}">
+                <img src="${img}" alt="" loading="lazy" referrerpolicy="no-referrer" />
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      const strip = document.getElementById('heroCarouselStrip');
+      if (!strip) return;
+
+      const styles = getComputedStyle(heroCarouselTrack);
+      const chip = parseFloat(styles.getPropertyValue('--chip')) || 66;
+      const gap = parseFloat(styles.getPropertyValue('--gap')) || 12;
+      const step = chip + gap;
+
+      const TICK_MS = 3000;
+      const SLIDE_MS = 520;
+
+      heroCarouselTimer = setInterval(() => {
+        strip.style.transition = `transform ${SLIDE_MS}ms cubic-bezier(.22,.75,.2,1)`;
+        strip.style.transform = `translateX(-${step}px)`;
+
+        window.setTimeout(() => {
+          const first = strip.firstElementChild;
+          if (first) strip.appendChild(first);
+
+          strip.style.transition = 'none';
+          strip.style.transform = 'translateX(0)';
+          void strip.offsetHeight;
+        }, SLIDE_MS + 20);
+      }, TICK_MS);
+    }
+
+    const modal = document.getElementById('pickerModal');
+    const pickerTitle = document.getElementById('pickerTitle');
+    const pickerSub = document.getElementById('pickerSub');
+    const pickerSearch = document.getElementById('pickerSearch');
+    const pickerCount = document.getElementById('pickerCount');
+    const pickerGrid = document.getElementById('pickerGrid');
+    const pickerClose = document.getElementById('pickerClose');
+    const pickerFilterSelect = document.getElementById('pickerFilterSelect');
+    const pickerFilterPills = document.getElementById('pickerFilterPills');
+
+    let currentPickerType = 'character';
+
+    function openPicker(type){
+      currentPickerType = type;
+      const label =
+        type === 'character' ? 'Character' :
+        type === 'pet' ? 'Pet' :
+        type === 'weapon' ? 'Weapon' :
+        'Loadout';
+
+      pickerTitle.textContent = `Select ${label}`;
+      pickerSub.textContent = `Click a ${label.toLowerCase()} to apply it to Quick View.`;
+      pickerSearch.value = '';
+
+      setupPickerFilters();
+      renderPickerGrid();
+
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      setTimeout(() => pickerSearch.focus(), 0);
+    }
+
+    function closePicker(){
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+    }
+
+    function setupPickerFilters(){
+      pickerFilterSelect.onchange = null;
+
+      if (currentPickerType === 'character'){
+        pickerFilterSelect.style.display = 'none';
+        pickerFilterPills.style.display = 'flex';
+
+        const options = [
+          { id:'all', label:'All' },
+          { id:'brmeta', label:'BR Meta' },
+          { id:'csmeta', label:'CS Meta' },
+          { id:'active', label:'Active' },
+          { id:'passive', label:'Passive' },
+        ];
+
+        pickerFilterPills.innerHTML = options.map(opt => `
+          <button class="pill-btn ${FILTER_STATE.character === opt.id ? 'active' : ''}" data-f="${opt.id}">
+            ${opt.label}
+          </button>
+        `).join('');
+
+        pickerFilterPills.querySelectorAll('button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            FILTER_STATE.character = btn.getAttribute('data-f') || 'all';
+            pickerFilterPills.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+            renderPickerGrid();
+          });
+        });
+
+      } else if (currentPickerType === 'pet' || currentPickerType === 'weapon') {
+        pickerFilterPills.style.display = 'none';
+        pickerFilterSelect.style.display = 'inline-flex';
+
+        const items = DATA[currentPickerType].items || [];
+        const cats = Array.from(new Set(items.map(it => getCategory(currentPickerType, it)).filter(Boolean)))
+          .sort((a,b) => a.localeCompare(b));
+
+        const stateKey = currentPickerType;
+        const current = FILTER_STATE[stateKey] || 'all';
+
+        pickerFilterSelect.innerHTML = [
+          `<option value="all">All</option>`,
+          ...cats.map(c => `<option value="${c}">${c}</option>`)
+        ].join('');
+
+        pickerFilterSelect.value = cats.includes(current) ? current : 'all';
+        FILTER_STATE[stateKey] = pickerFilterSelect.value;
+
+        pickerFilterSelect.onchange = () => {
+          FILTER_STATE[stateKey] = pickerFilterSelect.value || 'all';
+          renderPickerGrid();
+        };
+      } else {
+        pickerFilterPills.style.display = 'none';
+        pickerFilterSelect.style.display = 'none';
+      }
+    }
+
+    function passesTypeFilter(it){
+      if (!it) return false;
+
+      if (currentPickerType === 'character'){
+        const f = FILTER_STATE.character || 'all';
+        if (f === 'all') return true;
+        if (f === 'brmeta') return normLower(it.meta || 'no') === 'yes';
+        if (f === 'csmeta') return normLower(it.cs_meta || 'no') === 'yes';
+        if (f === 'active') return normLower(it.skill_type || '') !== 'passive';
+        if (f === 'passive') return normLower(it.skill_type || '') === 'passive';
+        return true;
+      }
+
+      if (currentPickerType === 'pet'){
+        const f = FILTER_STATE.pet || 'all';
+        if (f === 'all') return true;
+        return getCategory('pet', it) === f;
+      }
+
+      if (currentPickerType === 'weapon'){
+        const fw = FILTER_STATE.weapon || 'all';
+        if (fw === 'all') return true;
+        return getCategory('weapon', it) === fw;
+      }
+
+      return true;
+    }
+
+    function blobSearchText(type, it){
+      const code = LANG.current || "en";
+
+      const fields = [];
+      fields.push(safeText(it?.name));
+      fields.push(safeText(it?.skill));
+      fields.push(safeText(it?.ability));
+      fields.push(safeText(it?.type));
+      fields.push(safeText(it?.category));
+      fields.push(safeText(it?.description));
+      fields.push(safeText(it?.special));
+      fields.push(safeText(it?.desc));
+
+      if (code !== "en"){
+        fields.push(safeText(it?.[`name_${code}`]));
+        fields.push(safeText(it?.[`skill_${code}`]));
+        fields.push(safeText(it?.[`ability_${code}`]));
+        fields.push(safeText(it?.[`type_${code}`]));
+        fields.push(safeText(it?.[`category_${code}`]));
+        fields.push(safeText(it?.[`description_${code}`]));
+        fields.push(safeText(it?.[`special_${code}`]));
+        fields.push(safeText(it?.[`desc_${code}`]));
+      }
+
+      if (type === "loadout"){
+        fields.push(safeText(it?.description?.br));
+        fields.push(safeText(it?.description?.cs));
+        if (code !== "en"){
+          const d = it?.[`description_${code}`];
+          if (d && typeof d === "object"){
+            fields.push(safeText(d?.br));
+            fields.push(safeText(d?.cs));
+          } else {
+            fields.push(safeText(d));
+          }
+        }
+      }
+
+      return fields.join(" ").toLowerCase();
+    }
+
+    function renderPickerGrid(){
+      const state = DATA[currentPickerType];
+      const q = (pickerSearch.value || '').toLowerCase().trim();
+      const all = state.items || [];
+
+      const filtered = all.filter(it => {
+        if (!passesTypeFilter(it)) return false;
+        if (!q) return true;
+        const blob = blobSearchText(currentPickerType, it);
+        return blob.includes(q);
+      });
+
+      pickerCount.textContent = `${filtered.length.toLocaleString()} item${filtered.length===1?'':'s'}`;
+
+      pickerGrid.innerHTML = filtered.map(it => {
+        const idx = all.indexOf(it);
+        const img = pickImg(it);
+        const name = safeText(tField(it, "name") || it?.name || '—');
+        const tip = buildDesc(currentPickerType, it);
+        return `
+          <div class="pick-card" data-idx="${idx}" title="${name}${tip ? ' — ' + tip : ''}">
+            <div class="pick-thumb"><img src="${img}" alt="${name}" loading="lazy" referrerpolicy="no-referrer" /></div>
+            <div class="pick-name">${name}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    pickerClose?.addEventListener('click', closePicker);
+    modal?.addEventListener('click', (e) => { if (e.target === modal) closePicker(); });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('show')) closePicker(); });
+    pickerSearch?.addEventListener('input', renderPickerGrid);
+
+    pickerGrid?.addEventListener('click', (e) => {
+      const card = e.target.closest('.pick-card');
+      if (!card) return;
+      const idx = Number(card.getAttribute('data-idx'));
+      if (Number.isNaN(idx)) return;
+
+      DATA[currentPickerType].selected = idx;
+      applyQuickView(currentPickerType);
+      closePicker();
+    });
+
+    document.querySelectorAll('[data-open]').forEach(btn => {
+      btn.addEventListener('click', () => openPicker(btn.getAttribute('data-open')));
+    });
+
+    const loadoutModal = document.getElementById('loadoutModal');
+    const loadoutClose = document.getElementById('loadoutClose');
+    const loadoutDetailsBtn = document.getElementById('loadoutDetailsBtn');
+    const loadoutDescEl = document.getElementById('loadoutDesc');
+
+    function getSelectedLoadout(){
+      const list = DATA.loadout.items || [];
+      const idx = Number(DATA.loadout.selected || 0);
+      return list[idx] || list[0] || null;
+    }
+
+    function openLoadoutDetails(){
+      const it = getSelectedLoadout();
+      if (!it) return;
+
+      document.getElementById('ldImg').src = pickImg(it);
+      document.getElementById('ldName').textContent = safeText(tField(it, "name") || it.name || '—');
+
+      const br = safeText(tLoadoutDetails(it, "br") || '—').trim() || '—';
+      const cs = safeText(tLoadoutDetails(it, "cs") || '—').trim() || '—';
+
+      document.getElementById('ldBR').textContent = br;
+      document.getElementById('ldCS').textContent = cs;
+
+      loadoutModal.classList.add('show');
+      loadoutModal.setAttribute('aria-hidden','false');
+    }
+
+    function closeLoadoutDetails(){
+      loadoutModal.classList.remove('show');
+      loadoutModal.setAttribute('aria-hidden','true');
+    }
+
+    loadoutDetailsBtn?.addEventListener('click', openLoadoutDetails);
+    loadoutDescEl?.addEventListener('click', openLoadoutDetails);
+    loadoutClose?.addEventListener('click', closeLoadoutDetails);
+    loadoutModal?.addEventListener('click', (e) => { if (e.target === loadoutModal) closeLoadoutDetails(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && loadoutModal.classList.contains('show')) closeLoadoutDetails();
+    });
+
+    const mapModal = document.getElementById('mapModal');
+    const mapClose = document.getElementById('mapClose');
+    const openMapBtn = document.getElementById('openMapBtn');
+
+    const mapViewport = document.getElementById('mapViewport');
+    const mapImg = document.getElementById('mapImg');
+    const mapImgSelect = document.getElementById('mapImgSelect');
+    const mapStatus = document.getElementById('mapStatus');
+
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const fitBtn = document.getElementById('fitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const MAPS = [
+      { name: 'Bermuda',  url: 'https://i.imgur.com/V6iUHaA.jpeg' },
+      { name: 'Purgatory',url: 'https://i.imgur.com/ieY0LHk.jpeg' },
+      { name: 'Kalahari', url: 'https://i.imgur.com/4Yz12P9.jpeg' },
+      { name: 'NeXTerra', url: 'https://i.imgur.com/x5he05R.jpeg' },
+      { name: 'Alpine',   url: 'https://i.imgur.com/48O1Jf8.jpeg' },
+      { name: 'Solara',   url: 'https://i.imgur.com/IX1oY9Z.jpeg' },
+    ];
+
+    const view = {
+      scale: 1,
+      tx: 0,
+      ty: 0,
+      minScale: 0.05,
+      maxScale: 5,
+      imgW: 1,
+      imgH: 1,
+      isLoaded: false,
+    };
+
+    const pointers = new Map();
+    let dragStart = null;
+    let pinchStart = null;
+
+    function setStatus(text){ mapStatus.textContent = text; }
+
+    function applyTransform(){
+      mapImg.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`;
+    }
+
+    function clampTransform(){
+      const vw = mapViewport.clientWidth || 1;
+      const vh = mapViewport.clientHeight || 1;
+      const w = view.imgW * view.scale;
+      const h = view.imgH * view.scale;
+
+      if (w <= vw) {
+        view.tx = Math.round((vw - w) / 2);
+      } else {
+        const minTx = vw - w;
+        const maxTx = 0;
+        view.tx = Math.min(maxTx, Math.max(minTx, view.tx));
+      }
+
+      if (h <= vh) {
+        view.ty = Math.round((vh - h) / 2);
+      } else {
+        const minTy = vh - h;
+        const maxTy = 0;
+        view.ty = Math.min(maxTy, Math.max(minTy, view.ty));
+      }
+    }
+
+    function zoomAt(clientX, clientY, factor){
+      const rect = mapViewport.getBoundingClientRect();
+      const px = clientX - rect.left;
+      const py = clientY - rect.top;
+
+      const oldScale = view.scale;
+      const newScale = Math.min(view.maxScale, Math.max(view.minScale, oldScale * factor));
+      if (newScale === oldScale) return;
+
+      const ix = (px - view.tx) / oldScale;
+      const iy = (py - view.ty) / oldScale;
+
+      view.scale = newScale;
+      view.tx = px - ix * newScale;
+      view.ty = py - iy * newScale;
+
+      clampTransform();
+      applyTransform();
+      setStatus(`Zoom: ${(view.scale * 100).toFixed(0)}%`);
+    }
+
+    function fitToViewport(){
+      if (!view.isLoaded) return;
+
+      const vw = mapViewport.clientWidth || 1;
+      const vh = mapViewport.clientHeight || 1;
+
+      if (!mapModal.classList.contains('show') || vw < 5 || vh < 5) return;
+
+      const sx = vw / view.imgW;
+      const sy = vh / view.imgH;
+      view.scale = Math.min(sx, sy);
+      view.scale = Math.min(view.maxScale, Math.max(view.minScale, view.scale));
+
+      const w = view.imgW * view.scale;
+      const h = view.imgH * view.scale;
+      view.tx = Math.round((vw - w) / 2);
+      view.ty = Math.round((vh - h) / 2);
+
+      applyTransform();
+      setStatus('Fit');
+    }
+
+    function resetView(){ fitToViewport(); }
+
+    function setMapByUrl(url){
+      setStatus('Loading…');
+      view.isLoaded = false;
+      mapImg.src = url;
+    }
+
+    (function initMapSelect(){
+      mapImgSelect.innerHTML = MAPS.map(m => `<option value="${m.url}">${m.name}</option>`).join('');
+      mapImgSelect.value = MAPS[0].url;
+    })();
+
+    mapImg.addEventListener('load', () => {
+      view.imgW = mapImg.naturalWidth || 1;
+      view.imgH = mapImg.naturalHeight || 1;
+
+      mapImg.style.width = view.imgW + 'px';
+      mapImg.style.height = view.imgH + 'px';
+
+      view.isLoaded = true;
+
+      if (mapModal.classList.contains('show')) {
+        fitToViewport();
+        setStatus('Drag to pan • Wheel/pinch to zoom');
+      } else {
+        setStatus('Ready');
+      }
+    });
+
+    mapImg.addEventListener('error', () => {
+      setStatus('Failed to load map image (blocked/404). Try referrerpolicy or self-host images.');
+      console.error('Map image failed:', mapImg.src);
+    });
+
+    mapImgSelect.addEventListener('change', () => {
+      setMapByUrl(mapImgSelect.value);
+    });
+
+    mapViewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!view.isLoaded) return;
+      const factor = (e.deltaY > 0) ? 0.92 : 1.08;
+      zoomAt(e.clientX, e.clientY, factor);
+    }, { passive: false });
+
+    function getClientPos(e){ return { x: e.clientX, y: e.clientY }; }
+
+    mapViewport.addEventListener('pointerdown', (e) => {
+      if (!view.isLoaded) return;
+      mapViewport.setPointerCapture(e.pointerId);
+      const p = getClientPos(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1) {
+        dragStart = { x: p.x, y: p.y, tx: view.tx, ty: view.ty };
+        pinchStart = null;
+      } else if (pointers.size === 2) {
+        const pts = Array.from(pointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const rect = mapViewport.getBoundingClientRect();
+        const cx = (pts[0].x + pts[1].x) / 2 - rect.left;
+        const cy = (pts[0].y + pts[1].y) / 2 - rect.top;
+
+        const ix = (cx - view.tx) / view.scale;
+        const iy = (cy - view.ty) / view.scale;
+
+        pinchStart = { dist, scale: view.scale, cx, cy, ix, iy };
+        dragStart = null;
+      }
+    });
+
+    mapViewport.addEventListener('pointermove', (e) => {
+      if (!view.isLoaded) return;
+      if (!pointers.has(e.pointerId)) return;
+
+      const p = getClientPos(e);
+      pointers.set(e.pointerId, p);
+
+      if (pointers.size === 1 && dragStart) {
+        const dx = p.x - dragStart.x;
+        const dy = p.y - dragStart.y;
+        view.tx = dragStart.tx + dx;
+        view.ty = dragStart.ty + dy;
+        clampTransform();
+        applyTransform();
+        return;
+      }
+
+      if (pointers.size === 2 && pinchStart) {
+        const pts = Array.from(pointers.values());
+        const dx = pts[1].x - pts[0].x;
+        const dy = pts[1].y - pts[0].y;
+        const dist = Math.hypot(dx, dy);
+
+        const factor = dist / (pinchStart.dist || 1);
+        const newScale = Math.min(view.maxScale, Math.max(view.minScale, pinchStart.scale * factor));
+        view.scale = newScale;
+
+        view.tx = pinchStart.cx - pinchStart.ix * newScale;
+        view.ty = pinchStart.cy - pinchStart.iy * newScale;
+
+        clampTransform();
+        applyTransform();
+        setStatus(`Zoom: ${(view.scale * 100).toFixed(0)}%`);
+      }
+    });
+
+    function endPointer(e){
+      pointers.delete(e.pointerId);
+      if (pointers.size === 1) {
+        const remaining = Array.from(pointers.values())[0];
+        if (remaining) dragStart = { x: remaining.x, y: remaining.y, tx: view.tx, ty: view.ty };
+        pinchStart = null;
+      } else {
+        dragStart = null;
+        pinchStart = null;
+      }
+    }
+
+    mapViewport.addEventListener('pointerup', endPointer);
+    mapViewport.addEventListener('pointercancel', endPointer);
+    mapViewport.addEventListener('pointerleave', (e) => {
+      if (!mapViewport.hasPointerCapture(e.pointerId)) endPointer(e);
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+      if (!view.isLoaded) return;
+      const r = mapViewport.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 1.12);
+    });
+    zoomOutBtn.addEventListener('click', () => {
+      if (!view.isLoaded) return;
+      const r = mapViewport.getBoundingClientRect();
+      zoomAt(r.left + r.width/2, r.top + r.height/2, 0.88);
+    });
+    fitBtn.addEventListener('click', fitToViewport);
+    resetBtn.addEventListener('click', resetView);
+
+    const ro = new ResizeObserver(() => {
+      if (!mapModal.classList.contains('show')) return;
+      if (!view.isLoaded) return;
+      clampTransform();
+      applyTransform();
+    });
+    ro.observe(mapViewport);
+
+    function openMapWindow(){
+      mapModal.classList.add('show');
+      mapModal.setAttribute('aria-hidden','false');
+
+      if (!mapImgSelect.value) mapImgSelect.value = MAPS[0].url;
+      if (!mapImg.src) setMapByUrl(mapImgSelect.value);
+
+      requestAnimationFrame(() => {
+        if (view.isLoaded) {
+          fitToViewport();
+          setStatus('Drag to pan • Wheel/pinch to zoom');
+        }
+      });
+    }
+
+    (function fixIOSViewportHeight(){
+      function setVH(){
+        document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+      }
+      setVH();
+      window.addEventListener('resize', setVH, { passive: true });
+      window.addEventListener('orientationchange', setVH, { passive: true });
+    })();
+
+    function closeMapWindow(){
+      mapModal.classList.remove('show');
+      mapModal.setAttribute('aria-hidden','true');
+      pointers.clear();
+      dragStart = null;
+      pinchStart = null;
+    }
+
+    openMapBtn?.addEventListener('click', openMapWindow);
+    mapClose?.addEventListener('click', closeMapWindow);
+    mapModal?.addEventListener('click', (e) => { if (e.target === mapModal) closeMapWindow(); });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mapModal.classList.contains('show')) closeMapWindow();
+    });
+
+    const recentMatchModal = document.getElementById('recentMatchModal');
+    const recentMatchClose = document.getElementById('recentMatchClose');
+    const recentMatchBody = document.getElementById('recentMatchBody');
+    const skillDexRecent = document.getElementById('skillDexRecent');
+
+    function openRecentMatchModal(index){
+      const row = RECENT_USAGE_CACHE[index];
+      if (!row) return;
+
+      const rec = (SKILLDEX.records || []).find(r => String(r.id) === String(row.recId));
+      if (!rec){
+        recentMatchBody.innerHTML = `<div class="skilldex-empty">Match details not found.</div>`;
+        document.getElementById('recentMatchTitle').textContent = 'Match Details';
+        document.getElementById('recentMatchSub').textContent = 'Unable to load this record';
+      } else {
+        renderRecentMatchModal(rec, row.team);
+      }
+
+      recentMatchModal.classList.add('show');
+      recentMatchModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeRecentMatchModal(){
+      recentMatchModal.classList.remove('show');
+      recentMatchModal.setAttribute('aria-hidden', 'true');
+    }
+
+    recentMatchClose?.addEventListener('click', closeRecentMatchModal);
+    recentMatchModal?.addEventListener('click', (e) => {
+      if (e.target === recentMatchModal) closeRecentMatchModal();
+    });
+
+    skillDexRecent?.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-recent-index]');
+      if (!card) return;
+      const idx = Number(card.getAttribute('data-recent-index'));
+      if (Number.isNaN(idx)) return;
+      openRecentMatchModal(idx);
+    });
+
+    skillDexRecent?.addEventListener('keydown', (e) => {
+      const card = e.target.closest('[data-recent-index]');
+      if (!card) return;
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      const idx = Number(card.getAttribute('data-recent-index'));
+      if (Number.isNaN(idx)) return;
+      openRecentMatchModal(idx);
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && recentMatchModal.classList.contains('show')) {
+        closeRecentMatchModal();
+      }
+    });
+
+    const THEME = { key: 'ff_theme_v1' };
+
+    function getSystemTheme(){
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
+    }
+
+    function getSavedTheme(){
+      const t = localStorage.getItem(THEME.key);
+      return (t === 'light' || t === 'dark') ? t : null;
+    }
+
+    function applyTheme(theme, persist=false){
+      if (theme !== 'light' && theme !== 'dark') theme = getSystemTheme();
+      document.documentElement.dataset.theme = theme;
+      if (persist) localStorage.setItem(THEME.key, theme);
+      syncThemeToggleUI();
+    }
+
+    function syncThemeToggleUI(){
+      const btn = document.getElementById('themeToggle');
+      if (!btn) return;
+
+      const theme = document.documentElement.dataset.theme || 'dark';
+      const next = (theme === 'dark') ? 'light' : 'dark';
+
+      const svg = btn.querySelector('svg');
+      if (svg){
+        svg.innerHTML = (next === 'light')
+          ? `
+            <path
+              d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          `
+          : `
+            <path
+              d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.5 6.5 0 0 0 9.8 9.8Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          `;
+      }
+
+      btn.title = `Switch to ${next} mode`;
+      btn.setAttribute('aria-label', btn.title);
+    }
+
+    function initThemeToggle(){
+      const cur = document.documentElement.dataset.theme || getSystemTheme();
+      applyTheme(cur, false);
+
+      document.getElementById('themeToggle')?.addEventListener('click', () => {
+        const current = document.documentElement.dataset.theme || 'dark';
+        const next = (current === 'dark') ? 'light' : 'dark';
+        applyTheme(next, true);
+      });
+
+      const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+      if (mq && mq.addEventListener){
+        mq.addEventListener('change', () => {
+          if (!getSavedTheme()){
+            applyTheme(getSystemTheme(), false);
+          }
+        });
+      }
+    }
+
+    skillDexTournamentFilter?.addEventListener('change', () => {
+      renderSkillReference();
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      initThemeToggle();
+
+      const session = await ensureSession();
+      if (!session) return;
+
+      initLangSelect();
+
+      const email = session.user?.email || '';
+      document.getElementById('userEmail').textContent = email || 'signed in';
+      const username = email ? email.split('@')[0] : 'PlayerOne';
+      document.getElementById('gamertag').textContent = username;
+
+      document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        logout();
+      });
+
+      setMapByUrl(MAPS[0].url);
+
+      try{
+        const [chars, pets, weapons, loadouts] = await Promise.all([
+          loadJson(DATA.character.url),
+          loadJson(DATA.pet.url),
+          loadJson(DATA.weapon.url),
+          loadJson(DATA.loadout.url),
+        ]);
+
+        DATA.character.items = Array.isArray(chars) ? chars : [];
+        DATA.pet.items = Array.isArray(pets) ? pets : [];
+        DATA.weapon.items = Array.isArray(weapons) ? weapons : [];
+        DATA.loadout.items = Array.isArray(loadouts) ? loadouts : [];
+
+        LANG.current = getLang();
+        const sel = document.getElementById("langSelect");
+        if (sel) sel.value = LANG.current;
+
+        restoreSelection('character');
+        restoreSelection('pet');
+        restoreSelection('weapon');
+        restoreSelection('loadout');
+
+        buildHeroCarousel();
+        setCounts();
+
+        applyQuickView('character');
+        applyQuickView('pet');
+        applyQuickView('weapon');
+        applyQuickView('loadout');
+
+        loadCounterDex();
+        loadSkilldexRecords();
+        renderSkillReference();
+      }catch(err){
+        console.error(err);
+        setCounts();
+        renderSkillReference();
+      }
+    });
+
+    window.addEventListener('beforeunload', stopHeroCarousel);
+  </script>
+</body>
+</html>

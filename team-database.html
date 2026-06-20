@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8"/>
+  <!-- ✅ mobile-safe area + notch support -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>Team Database</title>
+
+  <!-- Supabase JS v2 (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <!-- Fonts (match your dashboard look) -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* ✅ Match the attached dashboard theme */
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.10);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --good:#71d083;
+      --bad:#ff6b6b;
+      --warn:#ffd166;
+
+      --header-h:56px;
+      --maxw:1200px;
+
+      color-scheme: dark;
+    }
+
+    *{box-sizing:border-box}
+    html,body{min-height:100%;margin:0}
+    body{
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow-x:hidden;
+      overflow-y:auto;
+    }
+
+    /* soft rings like your screenshot */
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      pointer-events:none;
+      z-index:0;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit;color:inherit}
+    :focus-visible{
+      outline:2px solid rgba(77,211,255,.65);
+      outline-offset:2px;
+      border-radius:12px;
+    }
+
+    .wrap{
+      max-width:var(--maxw);
+      margin:0 auto;
+      padding:14px;
+      position:relative;
+      z-index:1;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+
+    /* Header */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:var(--maxw);
+      margin:0 auto;
+      height:calc(var(--header-h) + env(safe-area-inset-top));
+      padding: env(safe-area-inset-top) 14px 0 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      display:flex; align-items:center; gap:10px; min-width:0;
+    }
+    .badge{
+      width:36px;height:36px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(255,189,89,.25), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      flex:0 0 auto;
+      font-family: Orbitron, sans-serif;
+      color:var(--brand);
+      letter-spacing:.4px;
+    }
+    .title h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size:15px;
+      letter-spacing:.3px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .title .sub{
+      font-size:12px; color:var(--muted); margin-top:2px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+
+    .actions{display:flex; gap:10px; align-items:center; flex:0 0 auto; min-width:0;}
+
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      transition:.2s ease;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      background: rgba(0,0,0,.28);
+      border-color: rgba(77,211,255,.22);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+    }
+    .btn:active{transform:translateY(0px)}
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(255,189,89,.18), rgba(255,119,51,.10));
+      border-color: rgba(255,189,89,.22);
+    }
+    .btn.primary:hover{
+      border-color: rgba(255,189,89,.30);
+      box-shadow: 0 0 0 3px rgba(255,189,89,.12);
+    }
+    .btn.danger{
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.22);
+      color: rgba(255,230,230,.95);
+    }
+    .btn.danger:hover{
+      border-color: rgba(255,107,107,.32);
+      box-shadow: 0 0 0 3px rgba(255,107,107,.12);
+    }
+    .btn.ghost{
+      background: rgba(255,255,255,.04);
+      border-color: rgba(255,255,255,.10);
+    }
+    .btn.ghost:hover{
+      border-color: rgba(255,255,255,.18);
+      box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+    }
+    .btn.sm{
+      padding:7px 10px;
+      border-radius:10px;
+      font-size:12px;
+      gap:6px;
+    }
+
+    .chip{
+      font-size:12px;
+      color:var(--muted);
+      padding:6px 10px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
+
+    .userchip{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      min-width: 0;
+      max-width: 280px;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(255,189,89,.30), rgba(77,211,255,.18));
+      border:1px solid rgba(255,255,255,.10);
+      flex:0 0 auto;
+    }
+    .usertext{min-width:0}
+    .usertext b{
+      display:block;
+      font-size:.9rem;
+      font-family: Orbitron, sans-serif;
+      color:var(--brand);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 170px;
+    }
+    .usertext span{
+      display:block;
+      font-size:.78rem;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Toolbar / panel */
+    .panel{
+      background: var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .toolbar{
+      padding:12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background: rgba(255,255,255,.03);
+    }
+    .tool-left,.tool-right{display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+
+    .field{
+      display:flex; align-items:center; gap:10px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:8px 10px;
+      min-height:42px;
+    }
+    .field input{
+      background:transparent; border:0; outline:none;
+      width:260px; max-width:55vw;
+      color:var(--ink);
+    }
+    .field select{
+      background:transparent; border:0; outline:none;
+      color:var(--ink);
+      cursor:pointer;
+    }
+    .field.small input{width:160px}
+    .field.small select{min-width:150px}
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* Table */
+    .table-wrap{
+      overflow:auto;
+    }
+    .table-wrap::-webkit-scrollbar{height:10px;width:10px}
+    .table-wrap::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius:10px}
+    .table-wrap::-webkit-scrollbar-track{background: transparent}
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      min-width:900px;
+    }
+    thead th{
+      position:sticky; top:0; z-index:2;
+      background: rgba(14,18,28,.92);
+      border-bottom:1px solid var(--line);
+      font-size:12px;
+      color:var(--muted);
+      text-align:left;
+      padding:10px 12px;
+      white-space:nowrap;
+    }
+    tbody td{
+      border-bottom:1px solid rgba(255,255,255,.06);
+      padding:10px 12px;
+      vertical-align:middle;
+      font-size:13px;
+      color:var(--ink);
+      white-space:nowrap;
+    }
+    tbody tr:hover td{ background:rgba(255,255,255,.04); }
+    tbody tr{cursor:pointer}
+    tbody tr .col-actions, tbody tr .col-actions *{cursor:default}
+
+    .col-actions{width:1%}
+    .row-actions{
+      display:flex; gap:8px; justify-content:flex-end; align-items:center;
+    }
+
+    .logo{
+      width:34px;height:34px;border-radius:12px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:grid;place-items:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .logo img{width:100%;height:100%;object-fit:cover;display:block}
+    .muted{color:var(--muted)}
+    .pill{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:4px 9px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-size:12px;color:var(--muted);
+    }
+
+    /* Mobile cards */
+    .cards{
+      display:none;
+      padding:12px;
+      gap:10px;
+    }
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius:18px;
+      padding:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      cursor:pointer;
+    }
+    .card .left{display:flex; gap:10px; align-items:center; min-width:0}
+    .card .meta{min-width:0}
+    .card .meta .t{font-weight:750; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .card .meta .s{font-size:12px;color:var(--muted);margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .card .right{display:flex; gap:8px; align-items:center}
+    .card .right *{cursor:default}
+
+    @media (max-width: 900px){
+      body::before, body::after{display:none;}
+      table{min-width:0}
+      .table-wrap{display:none}
+      .cards{display:grid}
+      .field input{width:220px}
+      .actions .chip{display:none}
+      .userchip{display:none;}
+    }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0; z-index:50;
+      background:rgba(0,0,0,.70);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      padding:14px;
+    }
+    .modal{
+      width:min(860px, 100%);
+      background: rgba(14,18,28,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:22px;
+      box-shadow:0 30px 110px rgba(0,0,0,.70);
+      overflow:hidden;
+    }
+    .modal-head{
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .modal-head h2{
+      margin:0;
+      font-size:14px;
+      font-family: Orbitron, sans-serif;
+      letter-spacing:.3px;
+      color: var(--brand);
+    }
+    .modal-body{padding:14px; max-height:65vh; overflow:auto}
+    .modal-body::-webkit-scrollbar{width:10px}
+    .modal-body::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius:10px}
+    .modal-body::-webkit-scrollbar-track{background: transparent}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .formrow{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:10px 10px 8px;
+    }
+    .formrow label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .formrow input, .formrow textarea, .formrow select{
+      width:100%;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:9px 10px;
+      outline:none;
+    }
+    .formrow textarea{min-height:74px; resize:vertical}
+    .formrow.readonly{opacity:.7;}
+    .formrow.readonly input, .formrow.readonly textarea, .formrow.readonly select{pointer-events:none;}
+
+    .logo-preview{
+      display:flex; gap:10px; align-items:center;
+      margin-top:8px;
+      padding:8px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+    .logo-preview .thumb{
+      width:40px;height:40px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      background: rgba(255,255,255,.06);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+    }
+    .logo-preview .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .logo-preview .txt{
+      min-width:0;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .modal-foot{
+      padding:12px 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      border-top:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+    }
+    .modal-foot .left, .modal-foot .right{display:flex; gap:10px; align-items:center}
+    @media (max-width: 720px){
+      .grid{grid-template-columns:1fr}
+      .modal-backdrop{align-items:flex-end}
+      .modal{border-radius:22px 22px 0 0;}
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      top: calc(env(safe-area-inset-top) + 14px);
+      transform:translateX(-50%);
+      background: rgba(14,18,28,.92);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:999px;
+      padding:10px 14px;
+      display:none;
+      gap:10px;
+      align-items:center;
+      box-shadow:0 18px 70px rgba(0,0,0,.6);
+      z-index:80;
+      max-width:min(720px, calc(100% - 28px));
+    }
+    .dot{width:8px;height:8px;border-radius:99px;background:var(--brand)}
+    .toast .msg{font-size:13px;color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .toast.ok .dot{background:var(--good)}
+    .toast.bad .dot{background:var(--bad)}
+    .toast.warn .dot{background:var(--warn)}
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="title">
+        <div class="badge">FF</div>
+        <div style="min-width:0">
+          <h1>Team Database</h1>
+          <div class="sub" id="subline">View • Update • Delete — Supabase: <span class="muted">team_database</span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="userchip" title="Signed in user">
+          <div class="avatar"></div>
+          <div class="usertext">
+            <b id="whoName">loading…</b>
+            <span id="whoEmail">—</span>
+          </div>
+        </div>
+
+        <a class="btn ghost" href="home.html">← Dashboard</a>
+        <button class="btn" id="btnRefresh">⟳ Refresh</button>
+        <button class="btn primary" id="btnAdd">＋ Add Team</button>
+        <div class="chip" id="countChip">0 rows</div>
+        <button class="btn danger" id="btnLogout" title="Logout">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="tool-left">
+          <div class="field">
+            🔎
+            <input id="q" type="text" placeholder="Search team name / tag / region…">
+          </div>
+
+          <div class="field small" title="Sort by">
+            <span class="muted">Sort</span>
+            <select id="sortBy">
+              <option value="updated_at">updated_at</option>
+              <option value="created_at">created_at</option>
+              <option value="team_name">team_name</option>
+              <option value="team_tag">team_tag</option>
+              <option value="region">region</option>
+            </select>
+          </div>
+
+          <div class="field small" title="Order">
+            <span class="muted">Order</span>
+            <select id="sortDir">
+              <option value="desc">desc</option>
+              <option value="asc">asc</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tool-right">
+          <div class="hint" id="status">Idle</div>
+        </div>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="table-wrap" id="tableWrap">
+        <table>
+          <thead>
+            <tr id="theadRow"></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Mobile cards -->
+      <div class="cards" id="cards"></div>
+    </div>
+  </div>
+
+  <!-- Edit/Add Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">Edit Team</h2>
+        <button class="btn ghost" id="btnClose">✕ Close</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="grid" id="formGrid"></div>
+        <div style="margin-top:10px" class="hint" id="formHint"></div>
+      </div>
+
+      <div class="modal-foot">
+        <div class="left">
+          <span class="pill" id="rowKeyPill">id: —</span>
+        </div>
+        <div class="right">
+          <button class="btn danger" id="btnDelete" style="display:none">Delete</button>
+          <button class="btn primary" id="btnSave">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"><div class="dot"></div><div class="msg" id="toastMsg"></div></div>
+
+  <script>
+    /***********************
+     * CONFIG
+     ***********************/
+    const SUPABASE_URL = "https://ooutjrewmwsixghbouxi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg";
+    const TABLE = "team_database";
+    const PK = "id";
+
+    // If your DB stores ONLY a storage path like: "logos/team.png" (not a full https url),
+    // set your bucket name here (must be public) e.g. "team-logos".
+    // Leave "" if your logo_url is already a full image URL (imgur, etc).
+    const LOGO_BUCKET = "";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /***********************
+     * Auth (match your dashboard behavior)
+     ***********************/
+    async function ensureSession(){
+      try{
+        const { data: { session } } = await client.auth.getSession();
+        if (!session){ window.location.href = "index.html"; return null; }
+        return session;
+      }catch(_){
+        window.location.href = "index.html";
+        return null;
+      }
+    }
+    async function logout(){
+      try{ await client.auth.signOut(); }catch(_){}
+      window.location.href = "index.html";
+    }
+
+    /***********************
+     * State
+     ***********************/
+    let rows = [];
+    let columns = [];
+    let editableCols = [];
+    let currentRow = null;
+    let isAddMode = false;
+
+    let logoKey = null; // detected
+    const READONLY_COLS = new Set([PK, "created_at", "updated_at"]);
+
+    /***********************
+     * UI helpers
+     ***********************/
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(text){ $("status").textContent = text; }
+    function setCount(n){ $("countChip").textContent = `${n} row${n===1?"":"s"}`; }
+
+    let toastTimer = null;
+    function toast(msg, type="ok"){
+      const el = $("toast");
+      el.className = `toast ${type}`;
+      $("toastMsg").textContent = msg;
+      el.style.display = "flex";
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=> el.style.display="none", 2400);
+    }
+
+    function esc(s){
+      return String(s ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    function findLogoKey(cols){
+      const priority = [
+        "logo_url","team_logo_url","team_logo","logo","logoUrl","image_url","image","icon_url","icon"
+      ];
+      for (const p of priority){
+        const hit = cols.find(c => String(c).toLowerCase() === String(p).toLowerCase());
+        if (hit) return hit;
+      }
+      const fallback = cols.find(c => /logo|image|icon/i.test(c));
+      return fallback || null;
+    }
+
+    function resolveLogoUrl(v){
+      if (!v) return "";
+      const s = String(v).trim();
+      if (!s) return "";
+      if (/^(https?:)?\/\//i.test(s) || s.startsWith("data:") || s.startsWith("blob:")) return s;
+
+      if (LOGO_BUCKET){
+        try{
+          const { data } = client.storage.from(LOGO_BUCKET).getPublicUrl(s);
+          return data?.publicUrl || s;
+        }catch(e){
+          return s;
+        }
+      }
+      return s;
+    }
+
+    function guessType(val, key){
+      if (val === null || val === undefined) return "text";
+      if (typeof val === "boolean") return "checkbox";
+      if (typeof val === "number") return "number";
+      if (/(created_at|updated_at|date|time)$/i.test(key)) return "datetime-local";
+      if (/url|logo|image|icon/i.test(key)) return "url";
+      if (typeof val === "string" && val.length > 80) return "textarea";
+      return "text";
+    }
+
+    function normalizeDatetimeLocal(v){
+      if (!v) return "";
+      const d = new Date(v);
+      if (isNaN(d)) return "";
+      const pad = (n)=> String(n).padStart(2,"0");
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const mi = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    }
+
+    /***********************
+     * Data fetching
+     ***********************/
+    async function fetchRows(){
+      const q = $("q").value.trim();
+      const sortBy = $("sortBy").value;
+      const sortDir = $("sortDir").value;
+
+      setStatus("Loading…");
+      try{
+        let query = client.from(TABLE).select("*");
+
+        if (q){
+          query = query.or(`team_name.ilike.%${q}%,team_tag.ilike.%${q}%,region.ilike.%${q}%`);
+        }
+
+        query = query.order(sortBy, { ascending: sortDir === "asc", nullsFirst: false });
+
+        const { data, error } = await query;
+        if (error){
+          if (q){
+            const fallback = await client.from(TABLE).select("*").order(sortBy, { ascending: sortDir === "asc" });
+            if (fallback.error) throw fallback.error;
+            rows = fallback.data || [];
+            toast("Search fields not found — loaded without search.", "warn");
+          } else {
+            throw error;
+          }
+        } else {
+          rows = data || [];
+        }
+
+        deriveColumns(rows);
+        renderAll();
+        setStatus(`Loaded ${rows.length} row(s)`);
+      }catch(err){
+        console.error(err);
+        setStatus("Error");
+        toast(err?.message || "Failed to load data", "bad");
+      }
+    }
+
+    function deriveColumns(data){
+      const keys = new Set();
+      for (const r of data){
+        Object.keys(r || {}).forEach(k => keys.add(k));
+      }
+
+      const preferred = ["logo_url","logo","image_url","icon_url","team_name","name","team_tag","tag","region","group","country"];
+      const tail = ["created_at","updated_at"];
+
+      const all = Array.from(keys);
+      const head = preferred.filter(k => keys.has(k));
+      const mid = all.filter(k => !head.includes(k) && !tail.includes(k)).sort();
+      const end = tail.filter(k => keys.has(k));
+
+      columns = [PK, ...head.filter(k => k!==PK), ...mid.filter(k => k!==PK), ...end.filter(k => k!==PK)];
+      editableCols = columns.filter(c => !READONLY_COLS.has(c));
+
+      logoKey = findLogoKey(columns);
+    }
+
+    /***********************
+     * Rendering
+     ***********************/
+    function renderAll(){
+      setCount(rows.length);
+      renderTable();
+      renderCards();
+    }
+
+    function renderTable(){
+      const thead = $("theadRow");
+      const tbody = $("tbody");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      if (!columns.length){
+        thead.innerHTML = `<th>—</th>`;
+        tbody.innerHTML = `<tr><td class="muted">No data</td></tr>`;
+        return;
+      }
+
+      const displayCols = columns.filter(c => c !== logoKey);
+
+      const thLogo = document.createElement("th");
+      thLogo.textContent = "logo";
+      thead.appendChild(thLogo);
+
+      for (const col of displayCols){
+        const th = document.createElement("th");
+        th.textContent = col;
+        thead.appendChild(th);
+      }
+
+      const thA = document.createElement("th");
+      thA.textContent = "";
+      thA.className = "col-actions";
+      thead.appendChild(thA);
+
+      for (const r of rows){
+        const tr = document.createElement("tr");
+        tr.addEventListener("click", () => openEdit(r));
+
+        const tdLogo = document.createElement("td");
+        const src = logoKey ? resolveLogoUrl(r[logoKey]) : "";
+        tdLogo.innerHTML = `
+          <div class="logo" title="${esc(src || "")}">
+            ${src ? `<img loading="lazy" referrerpolicy="no-referrer" src="${esc(src)}" alt="" onerror="this.remove(); this.parentElement.textContent='🏁';">` : "🏁"}
+          </div>
+        `;
+        tr.appendChild(tdLogo);
+
+        for (const col of displayCols){
+          const td = document.createElement("td");
+
+          if (col === "team_name" || col === "name"){
+            const name = r[col];
+            const tag = r.team_tag ?? r.tag ?? "";
+            const reg = r.region ?? "";
+            td.innerHTML = `
+              <div style="min-width:240px">
+                <div style="font-weight:750; overflow:hidden; text-overflow:ellipsis">${esc(name ?? "")}</div>
+                <div class="muted" style="font-size:12px; overflow:hidden; text-overflow:ellipsis">
+                  ${esc([tag, reg].filter(Boolean).join(" • "))}
+                </div>
+              </div>
+            `;
+          } else {
+            const v = r[col];
+            td.textContent = (v === null || v === undefined) ? "" : (typeof v === "object" ? JSON.stringify(v) : String(v));
+            if (col === PK || col === "created_at" || col === "updated_at") td.classList.add("muted");
+          }
+
+          tr.appendChild(td);
+        }
+
+        const tdA = document.createElement("td");
+        tdA.className = "col-actions";
+        tdA.innerHTML = `
+          <div class="row-actions">
+            <button class="btn sm" title="Edit">✎ Edit</button>
+            <button class="btn sm danger" title="Delete">🗑 Delete</button>
+          </div>
+        `;
+        const [btnEdit, btnDel] = tdA.querySelectorAll("button");
+        btnEdit.addEventListener("click", (e)=>{ e.stopPropagation(); openEdit(r); });
+        btnDel.addEventListener("click", (e)=>{ e.stopPropagation(); confirmDelete(r); });
+
+        tr.appendChild(tdA);
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderCards(){
+      const wrap = $("cards");
+      wrap.innerHTML = "";
+
+      const nameKey = columns.find(c => c==="team_name") || columns.find(c => c==="name") || "team_name";
+      const tagKey  = columns.find(c => c==="team_tag")  || columns.find(c => c==="tag")  || "team_tag";
+      const regionKey = columns.find(c => c==="region") || null;
+
+      if (!rows.length){
+        wrap.innerHTML = `<div class="muted" style="padding:12px;">No data</div>`;
+        return;
+      }
+
+      for (const r of rows){
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const src = (logoKey ? resolveLogoUrl(r[logoKey]) : "");
+
+        const line2 = [
+          tagKey ? (r[tagKey] ?? "") : "",
+          regionKey ? (r[regionKey] ?? "") : ""
+        ].filter(Boolean).join(" • ");
+
+        card.innerHTML = `
+          <div class="left">
+            <div class="logo">
+              ${src ? `<img loading="lazy" referrerpolicy="no-referrer" src="${esc(src)}" alt="" onerror="this.remove(); this.parentElement.textContent='🏁';">` : "🏁"}
+            </div>
+            <div class="meta">
+              <div class="t">${esc(r[nameKey] ?? "(unnamed)")}</div>
+              <div class="s">${esc(line2 || ("id: " + (r[PK] ?? "—")))}</div>
+            </div>
+          </div>
+          <div class="right">
+            <button class="btn sm" title="Edit">✎</button>
+            <button class="btn sm danger" title="Delete">🗑</button>
+          </div>
+        `;
+
+        card.addEventListener("click", ()=> openEdit(r));
+
+        const [btnEdit, btnDel] = card.querySelectorAll("button");
+        btnEdit.addEventListener("click", (e)=>{ e.stopPropagation(); openEdit(r); });
+        btnDel.addEventListener("click", (e)=>{ e.stopPropagation(); confirmDelete(r); });
+
+        wrap.appendChild(card);
+      }
+    }
+
+    /***********************
+     * Modal: Add/Edit
+     ***********************/
+    function openModal(){
+      $("modalBackdrop").style.display = "flex";
+      $("modalBackdrop").setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+    }
+    function closeModal(){
+      $("modalBackdrop").style.display = "none";
+      $("modalBackdrop").setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+      currentRow = null;
+      isAddMode = false;
+      $("formGrid").innerHTML = "";
+      $("formHint").textContent = "";
+    }
+
+    function openAdd(){
+      isAddMode = true;
+      currentRow = {};
+
+      if (!columns.length){
+        columns = [PK,"team_name","team_tag","region","logo_url","created_at","updated_at"];
+        editableCols = columns.filter(c => !READONLY_COLS.has(c));
+        logoKey = findLogoKey(columns);
+      }
+
+      $("modalTitle").textContent = "Add Team";
+      $("rowKeyPill").textContent = `${PK}: (new)`;
+      $("btnDelete").style.display = "none";
+
+      buildForm(currentRow);
+      $("formHint").textContent = "Fill out the fields you want, then Save.";
+      openModal();
+    }
+
+    function openEdit(row){
+      isAddMode = false;
+      currentRow = JSON.parse(JSON.stringify(row));
+
+      $("modalTitle").textContent = "Edit Team";
+      $("rowKeyPill").textContent = `${PK}: ${row?.[PK] ?? "—"}`;
+      $("btnDelete").style.display = "inline-flex";
+
+      buildForm(currentRow);
+      $("formHint").textContent = "Edit values then Save. Read-only fields are locked.";
+      openModal();
+    }
+
+    function buildForm(row){
+      const grid = $("formGrid");
+      grid.innerHTML = "";
+
+      const ordered = [PK, ...editableCols.filter(c => c!==PK), ...columns.filter(c => READONLY_COLS.has(c) && c!==PK)];
+
+      const seen = new Set();
+      for (const col of ordered){
+        if (!col || seen.has(col)) continue;
+        seen.add(col);
+
+        const val = row[col];
+        const type = guessType(val, col);
+        const readonly = READONLY_COLS.has(col) && !isAddMode;
+
+        const box = document.createElement("div");
+        box.className = "formrow" + (readonly ? " readonly" : "");
+
+        const label = document.createElement("label");
+        label.textContent = col;
+        box.appendChild(label);
+
+        let input;
+
+        if (type === "textarea"){
+          input = document.createElement("textarea");
+          input.value = val ?? "";
+        } else if (type === "checkbox"){
+          input = document.createElement("input");
+          input.type = "checkbox";
+          input.checked = Boolean(val);
+        } else if (type === "datetime-local"){
+          input = document.createElement("input");
+          input.type = "datetime-local";
+          input.value = normalizeDatetimeLocal(val);
+        } else {
+          input = document.createElement("input");
+          input.type = type;
+          input.value = (val === null || val === undefined) ? "" : String(val);
+          if (type === "number") input.inputMode = "numeric";
+        }
+
+        input.dataset.col = col;
+        if (readonly) input.disabled = true;
+
+        box.appendChild(input);
+
+        if (logoKey && col === logoKey){
+          const preview = document.createElement("div");
+          preview.className = "logo-preview";
+
+          const thumb = document.createElement("div");
+          thumb.className = "thumb";
+          thumb.innerHTML = "🏁";
+
+          const txt = document.createElement("div");
+          txt.className = "txt";
+          txt.textContent = val ? String(val) : "No logo set";
+
+          preview.appendChild(thumb);
+          preview.appendChild(txt);
+          box.appendChild(preview);
+
+          function paintLogo(url){
+            const resolved = resolveLogoUrl(url);
+            txt.textContent = resolved || "No logo set";
+            if (!resolved){
+              thumb.innerHTML = "🏁";
+              return;
+            }
+            thumb.innerHTML = `<img loading="lazy" referrerpolicy="no-referrer" src="${esc(resolved)}" alt="" onerror="this.remove(); this.parentElement.textContent='🏁';">`;
+          }
+
+          paintLogo(input.value);
+          input.addEventListener("input", ()=> paintLogo(input.value));
+        }
+
+        grid.appendChild(box);
+      }
+    }
+
+    function collectFormPayload(){
+      const payload = {};
+      const inputs = $("formGrid").querySelectorAll("input,textarea,select");
+
+      inputs.forEach(el=>{
+        const col = el.dataset.col;
+        if (!col) return;
+        if (READONLY_COLS.has(col) && !isAddMode) return;
+
+        if (el.type === "checkbox"){
+          payload[col] = el.checked;
+          return;
+        }
+
+        const raw = el.value;
+        if (raw === ""){
+          if (isAddMode) return;
+          payload[col] = "";
+          return;
+        }
+
+        if (el.type === "number"){
+          const n = Number(raw);
+          payload[col] = Number.isFinite(n) ? n : raw;
+          return;
+        }
+
+        if (el.type === "datetime-local"){
+          const d = new Date(raw);
+          payload[col] = isNaN(d) ? raw : d.toISOString();
+          return;
+        }
+
+        payload[col] = raw;
+      });
+
+      return payload;
+    }
+
+    /***********************
+     * CRUD
+     ***********************/
+    async function saveCurrent(){
+      if (!currentRow) return;
+
+      const payload = collectFormPayload();
+      if (!isAddMode) delete payload[PK];
+
+      try{
+        setStatus(isAddMode ? "Inserting…" : "Updating…");
+
+        if (isAddMode){
+          const { error } = await client.from(TABLE).insert(payload).select("*");
+          if (error) throw error;
+          toast("Inserted successfully", "ok");
+        } else {
+          const id = currentRow[PK];
+          if (id === null || id === undefined) throw new Error(`Missing primary key: ${PK}`);
+          const { error } = await client.from(TABLE).update(payload).eq(PK, id);
+          if (error) throw error;
+          toast("Updated successfully", "ok");
+        }
+
+        closeModal();
+        await fetchRows();
+      }catch(err){
+        console.error(err);
+        setStatus("Error");
+        toast(err?.message || "Save failed", "bad");
+      }finally{
+        setStatus("Idle");
+      }
+    }
+
+    async function confirmDelete(row){
+      const id = row?.[PK];
+      const name = row?.team_name ?? row?.name ?? row?.team_tag ?? row?.tag ?? id;
+
+      const ok = confirm(`Delete this row?\n\n${name}\n${PK}: ${id}\n\nThis cannot be undone.`);
+      if (!ok) return;
+
+      try{
+        setStatus("Deleting…");
+        const { error } = await client.from(TABLE).delete().eq(PK, id);
+        if (error) throw error;
+        toast("Deleted successfully", "ok");
+        if (currentRow && currentRow[PK] === id) closeModal();
+        await fetchRows();
+      }catch(err){
+        console.error(err);
+        setStatus("Error");
+        toast(err?.message || "Delete failed", "bad");
+      }finally{
+        setStatus("Idle");
+      }
+    }
+
+    async function deleteFromModal(){
+      if (!currentRow) return;
+      await confirmDelete(currentRow);
+    }
+
+    /***********************
+     * Events
+     ***********************/
+    $("btnRefresh").addEventListener("click", fetchRows);
+    $("btnAdd").addEventListener("click", openAdd);
+    $("btnClose").addEventListener("click", closeModal);
+    $("btnSave").addEventListener("click", saveCurrent);
+    $("btnDelete").addEventListener("click", deleteFromModal);
+    $("btnLogout").addEventListener("click", logout);
+
+    $("modalBackdrop").addEventListener("click", (e)=>{
+      if (e.target === $("modalBackdrop")) closeModal();
+    });
+    window.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape") closeModal();
+    });
+
+    // Debounced search
+    let t = null;
+    $("q").addEventListener("input", ()=>{
+      clearTimeout(t);
+      t = setTimeout(fetchRows, 350);
+    });
+    $("sortBy").addEventListener("change", fetchRows);
+    $("sortDir").addEventListener("change", fetchRows);
+
+    /***********************
+     * Boot (auth + load)
+     ***********************/
+    window.addEventListener("DOMContentLoaded", async () => {
+      const session = await ensureSession();
+      if (!session) return;
+
+      const email = session.user?.email || "signed in";
+      $("whoEmail").textContent = email;
+      $("whoName").textContent = email.includes("@") ? email.split("@")[0] : email;
+
+      await fetchRows();
+      setStatus("Idle");
+    });
+  </script>
+</body>
+</html>

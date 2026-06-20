@@ -1,0 +1,1811 @@
+<!doctype html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Supabase Report Builder (Drag & Drop Pivot)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+  <style>
+    :root{
+      --bg:#07090f; --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.10);
+      --ink:#f4f6ff; --muted:#aab1c5;
+      --brand:#ffbd59; --brand2:#ff7733; --accent:#4dd3ff;
+      --radius:16px; --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+      --good:#71d083; --bad:#ff6b6b;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, rgba(77,211,255,.18), transparent 60%),
+        radial-gradient(900px 600px at 90% 0%, rgba(255,189,89,.20), transparent 55%),
+        radial-gradient(900px 600px at 80% 110%, rgba(255,119,51,.16), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      font-family:var(--sans);
+      overflow-x:hidden;
+    }
+
+    header{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(7,9,15,.80), rgba(7,9,15,.55));
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1400px;margin:0 auto;padding:14px 16px}
+    .topbar{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}
+    .badge{
+      width:40px;height:40px;border-radius:14px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,189,89,.9), rgba(255,119,51,.7));
+      box-shadow: 0 14px 40px rgba(255,189,89,.18);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    h1{font-size:16px;margin:0;letter-spacing:.3px}
+    .sub{font-size:12px;color:var(--muted);margin-top:2px;max-width:900px}
+
+    .btn, input, select, textarea{font-family:inherit}
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .2s ease, background .2s ease;
+      user-select:none;
+      font-weight:900;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .btn:hover{border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.05)}
+    .btn:active{transform: translateY(1px)}
+    .btn.primary{
+      border-color: rgba(255,189,89,.35);
+      background: linear-gradient(180deg, rgba(255,189,89,.16), rgba(255,119,51,.10));
+    }
+    .btn.good{
+      border-color: rgba(113,208,131,.35);
+      background: linear-gradient(180deg, rgba(113,208,131,.16), rgba(113,208,131,.08));
+    }
+    .btn.bad{
+      border-color: rgba(255,107,107,.35);
+      background: linear-gradient(180deg, rgba(255,107,107,.16), rgba(255,107,107,.08));
+    }
+    .btn.ghost{
+      border-color: rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+    }
+
+    main{max-width:1400px;margin:0 auto;padding:16px}
+    .grid{
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      align-items:start;
+    }
+    @media (max-width: 1100px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, var(--panel), var(--panel2));
+      border:1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .card .hd h2{font-size:14px;margin:0;letter-spacing:.25px}
+    .card .bd{padding:14px}
+
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .row + .row{margin-top:10px}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:200px;flex:1}
+    label{font-size:12px;color:var(--muted)}
+    input[type="text"], input[type="password"], input[type="number"], select, textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.25);
+      color: var(--ink);
+      border-radius: 12px;
+      padding:10px 10px;
+      outline:none;
+    }
+    input:focus, textarea:focus, select:focus{
+      border-color: rgba(77,211,255,.45);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12);
+    }
+    .hint{font-size:12px;color:var(--muted);line-height:1.3}
+    .mono{font-family:var(--mono)}
+    .small{font-size:11px;color:var(--muted)}
+    .kbd{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:3px 7px;border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.25);
+      color: rgba(244,246,255,.88);
+    }
+
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color:var(--ink);
+      display:inline-flex;gap:8px;align-items:center;
+      white-space:nowrap;
+    }
+    .dot{width:8px;height:8px;border-radius:50%}
+    .dot.good{background:var(--good)}
+    .dot.bad{background:var(--bad)}
+    .dot.neutral{background:var(--accent)}
+
+    /* Fields */
+    .fieldSearch{
+      display:flex;gap:8px;align-items:center;
+      margin-bottom:10px;
+    }
+    .fieldList{
+      max-height: 520px;
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      padding:8px;
+    }
+    .groupTitle{
+      font-size:12px;
+      color: rgba(244,246,255,.90);
+      font-weight:900;
+      margin:10px 6px 6px;
+      letter-spacing:.2px;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .groupTitle .tag{
+      font-size:10px;
+      padding:2px 8px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:999px;
+      color: rgba(244,246,255,.75);
+      background: rgba(255,255,255,.05);
+      font-weight:900;
+    }
+    .fieldItem{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      border-radius:12px;
+      cursor:grab;
+      user-select:none;
+      margin:6px 0;
+    }
+    .fieldItem:hover{border-color: rgba(255,255,255,.14)}
+    .fieldItem:active{cursor:grabbing}
+    .fieldName{font-size:12px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .fieldMeta{font-size:10px;color:rgba(244,246,255,.70);font-family:var(--mono)}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      border-radius: 999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:900;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .chip .x{
+      border:0;background:transparent;color:rgba(244,246,255,.80);
+      cursor:pointer;font-weight:1000;font-size:14px;line-height:1;
+      padding:0;margin:0;
+    }
+    .chip select{
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+    }
+
+    /* Builder */
+    .builder{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    .zones{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 1100px){
+      .zones{grid-template-columns:1fr}
+    }
+    .zone{
+      border:1px dashed rgba(255,255,255,.20);
+      border-radius: 16px;
+      background: rgba(0,0,0,.16);
+      padding:12px;
+      min-height: 92px;
+      position:relative;
+      overflow:hidden;
+    }
+    .zone.dragover{
+      border-color: rgba(77,211,255,.55);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.12) inset;
+    }
+    .zoneTitle{
+      display:flex;align-items:center;justify-content:space-between;
+      font-weight:1000;font-size:12px;color:rgba(244,246,255,.90);
+      margin-bottom:8px;
+    }
+    .zoneTitle .mini{font-size:11px;color:var(--muted);font-weight:700}
+    .zoneBody{display:flex;flex-wrap:wrap;gap:8px}
+    .zoneEmpty{font-size:12px;color:rgba(244,246,255,.55)}
+    .filtersBox{
+      display:flex;flex-direction:column;gap:8px;
+      width:100%;
+    }
+    .filterRow{
+      display:grid;
+      grid-template-columns: 1.1fr .6fr 1fr auto;
+      gap:8px;
+      align-items:center;
+    }
+    .filterRow input, .filterRow select{padding:8px 10px;border-radius:12px}
+    .filterRow .rm{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      color: rgba(244,246,255,.85);
+      cursor:pointer;
+      font-weight:1000;
+    }
+
+    /* Output */
+    .status{
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-size:12px;
+      color: rgba(244,246,255,.92);
+      line-height:1.35;
+      white-space:pre-wrap;
+    }
+    .progress{
+      height:10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .bar{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(77,211,255,.75), rgba(255,189,89,.72), rgba(255,119,51,.72));
+      transition: width .2s ease;
+    }
+
+    .tablewrap{
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 14px;
+      overflow:auto;
+      background: rgba(0,0,0,.22);
+      max-height: 520px;
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead th{
+      position: sticky; top: 0;
+      background: rgba(7,9,15,.92);
+      border-bottom:1px solid rgba(255,255,255,.10);
+      padding:10px 10px;
+      text-align:left;
+      white-space:nowrap;
+      z-index:2;
+    }
+    tbody td{
+      border-top:1px solid rgba(255,255,255,.06);
+      padding:8px 10px;
+      vertical-align:top;
+      max-width: 420px;
+      word-break: break-word;
+      color: rgba(244,246,255,.92);
+    }
+    tbody tr:hover td{background: rgba(255,255,255,.03)}
+    .toolbar{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;
+      margin-top:10px;
+    }
+    .toolbar .left, .toolbar .right{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="badge"></div>
+        <div>
+          <h1>Supabase Report Builder</h1>
+          <div class="sub">
+            Drag & drop fields into Rows / Columns / Values / Filters. Generates pivot-style reports with auto aggregations.
+            <span class="kbd">Tip:</span> your column is <span class="kbd">player_stats_account_id</span> (underscore), not <span class="kbd">player_stats.account_id</span>.
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="pill" id="pillState"><span class="dot neutral"></span><span id="pillText">Not connected</span></div>
+        <button class="btn ghost" id="btnLoadSaved">Load Saved</button>
+        <button class="btn" id="btnClear">Clear Layout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- LEFT: Data source + Fields -->
+    <section class="card">
+      <div class="hd">
+        <h2>1) Data Source</h2>
+        <div class="pill"><span class="dot neutral"></span><span id="schemaText">No schema</span></div>
+      </div>
+      <div class="bd">
+        <div class="row">
+          <div class="field">
+            <label>Supabase URL</label>
+            <input id="sbUrl" type="text" placeholder="https://xxxx.supabase.co"/>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>Supabase anon key</label>
+            <input id="sbKey" type="password" placeholder="anon public key"/>
+            <div class="hint">Don’t put Service Role key in frontend. For private access, use an Edge Function.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field" style="flex:1.2">
+            <label>Table</label>
+            <input id="sbTable" type="text" placeholder="e.g. ff_player_stats_raw_rows"/>
+          </div>
+          <div class="field" style="flex:.8">
+            <label>Max rows to fetch</label>
+            <input id="maxFetch" type="number" min="100" step="100" value="20000"/>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="btnConnect">Connect & Load Schema</button>
+          <button class="btn" id="btnSuggest">Suggest Starter Layout</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="justify-content:space-between;align-items:flex-end">
+          <div>
+            <div style="font-weight:1000;font-size:12px">Fields</div>
+            <div class="small">Drag to builder zones</div>
+          </div>
+          <div class="small mono" id="fieldCount">0 fields</div>
+        </div>
+
+        <div class="fieldSearch">
+          <input id="fieldSearch" type="text" placeholder="Search fields…"/>
+          <select id="fieldMode" style="min-width:140px">
+            <option value="all" selected>All</option>
+            <option value="dim">Dimensions</option>
+            <option value="num">Numeric</option>
+            <option value="json">JSON</option>
+          </select>
+        </div>
+
+        <div class="fieldList" id="fieldList">
+          <div class="small" style="padding:10px;color:var(--muted)">Connect to load fields.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="status" id="leftStatus">Ready.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Builder + Output -->
+    <section class="card">
+      <div class="hd">
+        <h2>2) Build Report</h2>
+        <div class="pill"><span class="dot neutral"></span><span id="metaText">0 rows • 0 cols</span></div>
+      </div>
+      <div class="bd">
+
+        <div class="builder">
+          <div class="zones">
+            <div class="zone" id="zoneRows" data-zone="rows">
+              <div class="zoneTitle">
+                <div>Rows</div>
+                <div class="mini">Group by</div>
+              </div>
+              <div class="zoneBody" id="rowsBody"><div class="zoneEmpty">Drop fields here</div></div>
+            </div>
+
+            <div class="zone" id="zoneCols" data-zone="cols">
+              <div class="zoneTitle">
+                <div>Columns (optional)</div>
+                <div class="mini">Pivot columns</div>
+              </div>
+              <div class="zoneBody" id="colsBody"><div class="zoneEmpty">Drop 1 field here</div></div>
+            </div>
+
+            <div class="zone" id="zoneVals" data-zone="vals" style="grid-column:1 / -1">
+              <div class="zoneTitle">
+                <div>Values</div>
+                <div class="mini">Metrics</div>
+              </div>
+              <div class="zoneBody" id="valsBody"><div class="zoneEmpty">Drop numeric fields or KPI metrics here</div></div>
+            </div>
+
+            <div class="zone" id="zoneFilters" data-zone="filters" style="grid-column:1 / -1">
+              <div class="zoneTitle">
+                <div>Filters</div>
+                <div class="mini">Applied on fetch (basic ops)</div>
+              </div>
+              <div class="zoneBody" id="filtersBody">
+                <div class="filtersBox" id="filtersBox">
+                  <div class="zoneEmpty">Drop fields here to create filters</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="justify-content:space-between;align-items:center;margin-top:4px">
+            <div class="row">
+              <button class="btn good" id="btnRun">Run Report</button>
+              <button class="btn" id="btnSave">Save Layout</button>
+            </div>
+            <div class="row">
+              <label class="small" style="margin:0">Sort by</label>
+              <select id="sortBy" style="min-width:220px"></select>
+              <select id="sortDir" style="min-width:120px">
+                <option value="desc" selected>Desc</option>
+                <option value="asc">Asc</option>
+              </select>
+              <label class="small" style="margin:0">Top</label>
+              <select id="topN" style="min-width:120px">
+                <option value="0" selected>All</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="progress"><div class="bar" id="bar"></div></div>
+          <div class="status" id="runStatus">Build a layout, then Run Report.</div>
+
+          <div class="toolbar">
+            <div class="left">
+              <button class="btn" id="btnCSV">Export CSV</button>
+              <button class="btn" id="btnJSON">Export JSON</button>
+            </div>
+            <div class="right small mono" id="resultMeta">No results</div>
+          </div>
+
+          <div class="tablewrap">
+            <table id="outTable">
+              <thead><tr id="outHead"></tr></thead>
+              <tbody id="outBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  const $ = (id) => document.getElementById(id);
+
+  function setPill(state, text){
+    const pill = $("pillState");
+    const dot = pill.querySelector(".dot");
+    dot.classList.remove("good","bad","neutral");
+    dot.classList.add(state);
+    $("pillText").textContent = text;
+  }
+  function setSchemaPill(state, text){
+    $("schemaText").textContent = text;
+    const pill = $("schemaText").parentElement;
+    // schemaText is inside pill; we won't recolor dot here to keep simple
+  }
+  function setProgress(pct){
+    $("bar").style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  }
+  function safeString(v){
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string") return v;
+    if (typeof v === "number" || typeof v === "boolean") return String(v);
+    try { return JSON.stringify(v); } catch { return String(v); }
+  }
+  function isPlainObject(x){
+    return x && typeof x === "object" && !Array.isArray(x);
+  }
+  function isNumericLike(v){
+    if (v === null || v === undefined) return false;
+    if (typeof v === "number" && Number.isFinite(v)) return true;
+    if (typeof v !== "string") return false;
+    const s = v.trim();
+    if (!s) return false;
+    return /^-?\d+(\.\d+)?$/.test(s);
+  }
+  function toNum(v){
+    if (typeof v === "number") return v;
+    if (typeof v === "string" && isNumericLike(v)) return parseFloat(v.trim());
+    return null;
+  }
+  function downloadText(filename, content, mime="text/plain"){
+    const blob = new Blob([content], {type:mime});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 800);
+  }
+  function toCSV(rows, cols){
+    const esc = (s) => {
+      const str = s == null ? "" : String(s);
+      if(/[",\n\r]/.test(str)) return `"${str.replace(/"/g,'""')}"`;
+      return str;
+    };
+    const header = cols.map(esc).join(",");
+    const lines = rows.map(r => cols.map(c => esc(r[c])).join(","));
+    return [header, ...lines].join("\n");
+  }
+  function uniq(arr){ return Array.from(new Set(arr)); }
+
+  // -----------------------------
+  // App State
+  // -----------------------------
+  let SB = null;
+  let SCHEMA = [];          // [{name, typeHint: 'dim'|'num'|'json'|'bool'|'time'}]
+  let COL_TYPES = {};       // name -> typeHint
+  let KPI_METRICS = [];     // derived metric descriptors
+  let LAST_RESULT = [];     // array of objects
+  let LAST_COLS = [];       // output columns
+
+  const layout = {
+    rows: [],
+    col: null,              // single field or null
+    vals: [],               // [{kind:'agg', field, agg, label}] or {kind:'kpi', id, label}
+    filters: []             // [{field, op, value}]
+  };
+
+  const AGG_OPTIONS = [
+    {v:"sum",  t:"SUM"},
+    {v:"avg",  t:"AVG"},
+    {v:"min",  t:"MIN"},
+    {v:"max",  t:"MAX"},
+    {v:"count",t:"COUNT"},
+  ];
+
+  // -----------------------------
+  // Drag payload
+  // -----------------------------
+  function setDragData(ev, payload){
+    ev.dataTransfer.setData("text/plain", JSON.stringify(payload));
+    ev.dataTransfer.effectAllowed = "copy";
+  }
+  function getDragData(ev){
+    try { return JSON.parse(ev.dataTransfer.getData("text/plain")); }
+    catch { return null; }
+  }
+
+  // -----------------------------
+  // Render: Fields List
+  // -----------------------------
+  function buildKpisFromSchema(){
+    KPI_METRICS = [];
+
+    const has = (c)=>COL_TYPES[c] != null;
+
+    // Kills
+    if (has("player_stats_kills")){
+      KPI_METRICS.push({
+        id:"kpi_total_kills",
+        label:"Total Kills",
+        deps:["player_stats_kills"],
+        compute:(ctx)=>ctx.sum["player_stats_kills"] ?? 0
+      });
+      KPI_METRICS.push({
+        id:"kpi_avg_kills",
+        label:"Avg Kills",
+        deps:["player_stats_kills"],
+        compute:(ctx)=>ctx.avg["player_stats_kills"] ?? 0
+      });
+    }
+    // Damage
+    if (has("player_stats_damage")){
+      KPI_METRICS.push({
+        id:"kpi_total_damage",
+        label:"Total Damage",
+        deps:["player_stats_damage"],
+        compute:(ctx)=>ctx.sum["player_stats_damage"] ?? 0
+      });
+      KPI_METRICS.push({
+        id:"kpi_avg_damage",
+        label:"Avg Damage",
+        deps:["player_stats_damage"],
+        compute:(ctx)=>ctx.avg["player_stats_damage"] ?? 0
+      });
+    }
+    // Damage per kill
+    if (has("player_stats_damage") && has("player_stats_kills")){
+      KPI_METRICS.push({
+        id:"kpi_dmg_per_kill",
+        label:"Damage per Kill",
+        deps:["player_stats_damage","player_stats_kills"],
+        compute:(ctx)=>{
+          const d = ctx.sum["player_stats_damage"] ?? 0;
+          const k = ctx.sum["player_stats_kills"] ?? 0;
+          return k ? (d / k) : 0;
+        }
+      });
+    }
+    // Headshot rate
+    if (has("player_stats_headshots") && has("player_stats_hits")){
+      KPI_METRICS.push({
+        id:"kpi_headshot_rate",
+        label:"Headshot Rate",
+        deps:["player_stats_headshots","player_stats_hits"],
+        compute:(ctx)=>{
+          const hs = ctx.sum["player_stats_headshots"] ?? 0;
+          const hits = ctx.sum["player_stats_hits"] ?? 0;
+          return hits ? (hs / hits) : 0;
+        },
+        format:"pct"
+      });
+    }
+    // Survival time
+    if (has("player_stats_survival_time")){
+      KPI_METRICS.push({
+        id:"kpi_avg_survival",
+        label:"Avg Survival Time",
+        deps:["player_stats_survival_time"],
+        compute:(ctx)=>ctx.avg["player_stats_survival_time"] ?? 0
+      });
+    }
+  }
+
+  function renderFields(){
+    const q = ($("fieldSearch").value || "").trim().toLowerCase();
+    const mode = $("fieldMode").value;
+
+    const dims = [];
+    const nums = [];
+    const jsons = [];
+
+    for (const c of SCHEMA){
+      const n = c.name;
+      const t = c.typeHint;
+      if (q && !n.toLowerCase().includes(q)) continue;
+
+      if (mode === "dim" && t !== "dim" && t !== "bool" && t !== "time") continue;
+      if (mode === "num" && t !== "num") continue;
+      if (mode === "json" && t !== "json") continue;
+
+      if (t === "num") nums.push(c);
+      else if (t === "json") jsons.push(c);
+      else dims.push(c);
+    }
+
+    const list = $("fieldList");
+    list.innerHTML = "";
+
+    function addGroup(title, tag, items, kind){
+      const hdr = document.createElement("div");
+      hdr.className = "groupTitle";
+      hdr.innerHTML = `<div>${title}</div><div class="tag">${tag}</div>`;
+      list.appendChild(hdr);
+
+      if (!items.length){
+        const empty = document.createElement("div");
+        empty.className = "small";
+        empty.style.padding = "6px";
+        empty.style.color = "rgba(244,246,255,.55)";
+        empty.textContent = "—";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const it of items){
+        const el = document.createElement("div");
+        el.className = "fieldItem";
+        el.draggable = true;
+        el.innerHTML = `
+          <div style="min-width:0">
+            <div class="fieldName">${it.name}</div>
+            <div class="fieldMeta">${it.typeHint}</div>
+          </div>
+          <div class="fieldMeta">↗</div>
+        `;
+        el.addEventListener("dragstart", (ev)=>{
+          setDragData(ev, {type:"field", name: it.name, kind});
+        });
+        // click-to-add fallback
+        el.addEventListener("dblclick", ()=>{
+          // If numeric -> value, else -> rows
+          if (it.typeHint === "num") addValueAgg(it.name, "sum");
+          else addRow(it.name);
+          syncRenderBuilder();
+        });
+        list.appendChild(el);
+      }
+    }
+
+    addGroup("Dimensions", "group", dims, "dim");
+    addGroup("Numeric", "measure", nums, "num");
+
+    // KPI group
+    const kpiHdr = document.createElement("div");
+    kpiHdr.className = "groupTitle";
+    kpiHdr.innerHTML = `<div>Auto KPIs</div><div class="tag">${KPI_METRICS.length}</div>`;
+    list.appendChild(kpiHdr);
+
+    if (!KPI_METRICS.length){
+      const empty = document.createElement("div");
+      empty.className = "small";
+      empty.style.padding = "6px";
+      empty.style.color = "rgba(244,246,255,.55)";
+      empty.textContent = "No KPI presets detected for this schema.";
+      list.appendChild(empty);
+    } else {
+      for (const kpi of KPI_METRICS){
+        const el = document.createElement("div");
+        el.className = "fieldItem";
+        el.draggable = true;
+        el.innerHTML = `
+          <div style="min-width:0">
+            <div class="fieldName">${kpi.label}</div>
+            <div class="fieldMeta">kpi • deps: ${kpi.deps.join(", ")}</div>
+          </div>
+          <div class="fieldMeta">↗</div>
+        `;
+        el.addEventListener("dragstart",(ev)=>setDragData(ev,{type:"kpi", id:kpi.id}));
+        el.addEventListener("dblclick", ()=>{
+          addValueKpi(kpi.id);
+          syncRenderBuilder();
+        });
+        list.appendChild(el);
+      }
+    }
+
+    addGroup("JSON / Complex", "json", jsons, "json");
+
+    $("fieldCount").textContent = `${SCHEMA.length} fields`;
+  }
+
+  // -----------------------------
+  // Builder: add/remove items
+  // -----------------------------
+  function addRow(name){
+    if (!name) return;
+    if (!layout.rows.includes(name)) layout.rows.push(name);
+  }
+  function removeRow(name){
+    layout.rows = layout.rows.filter(x => x !== name);
+  }
+
+  function setCol(name){
+    layout.col = name || null;
+  }
+  function clearCol(){
+    layout.col = null;
+  }
+
+  function addValueAgg(field, agg){
+    if (!field) return;
+    layout.vals.push({kind:"agg", field, agg: agg || "sum", label: `${agg?.toUpperCase?.() || "SUM"}(${field})`});
+  }
+  function addValueKpi(kpiId){
+    const k = KPI_METRICS.find(x => x.id === kpiId);
+    if (!k) return;
+    layout.vals.push({kind:"kpi", id: kpiId, label: k.label});
+  }
+  function removeValue(idx){
+    layout.vals.splice(idx, 1);
+  }
+
+  function addFilter(field){
+    if (!field) return;
+    // default op depends on type
+    const t = COL_TYPES[field] || "dim";
+    const op = (t === "num") ? "gte" : "eq";
+    layout.filters.push({field, op, value:""});
+  }
+  function removeFilter(idx){
+    layout.filters.splice(idx, 1);
+  }
+
+  // -----------------------------
+  // Render Builder Zones
+  // -----------------------------
+  function syncRenderBuilder(){
+    // Rows
+    const rb = $("rowsBody");
+    rb.innerHTML = "";
+    if (!layout.rows.length){
+      rb.innerHTML = `<div class="zoneEmpty">Drop fields here</div>`;
+    } else {
+      layout.rows.forEach(r=>{
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML = `<span>${r}</span><button class="x" title="Remove">×</button>`;
+        chip.querySelector(".x").onclick = ()=>{ removeRow(r); syncRenderBuilder(); };
+        rb.appendChild(chip);
+      });
+    }
+
+    // Col
+    const cb = $("colsBody");
+    cb.innerHTML = "";
+    if (!layout.col){
+      cb.innerHTML = `<div class="zoneEmpty">Drop 1 field here</div>`;
+    } else {
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.innerHTML = `<span>${layout.col}</span><button class="x" title="Remove">×</button>`;
+      chip.querySelector(".x").onclick = ()=>{ clearCol(); syncRenderBuilder(); };
+      cb.appendChild(chip);
+    }
+
+    // Values
+    const vb = $("valsBody");
+    vb.innerHTML = "";
+    if (!layout.vals.length){
+      vb.innerHTML = `<div class="zoneEmpty">Drop numeric fields or KPI metrics here</div>`;
+    } else {
+      layout.vals.forEach((v, idx)=>{
+        const chip = document.createElement("div");
+        chip.className = "chip";
+
+        if (v.kind === "agg"){
+          const sel = document.createElement("select");
+          for (const opt of AGG_OPTIONS){
+            const o = document.createElement("option");
+            o.value = opt.v;
+            o.textContent = opt.t;
+            if (opt.v === v.agg) o.selected = true;
+            sel.appendChild(o);
+          }
+          sel.onchange = ()=>{
+            v.agg = sel.value;
+            v.label = `${sel.value.toUpperCase()}(${v.field})`;
+            syncRenderBuilder();
+          };
+
+          chip.appendChild(document.createTextNode(v.field));
+          chip.appendChild(sel);
+
+        } else {
+          chip.appendChild(document.createTextNode(v.label));
+          const meta = document.createElement("span");
+          meta.className = "small mono";
+          meta.textContent = "kpi";
+          chip.appendChild(meta);
+        }
+
+        const x = document.createElement("button");
+        x.className = "x";
+        x.textContent = "×";
+        x.title = "Remove";
+        x.onclick = ()=>{ removeValue(idx); syncRenderBuilder(); };
+        chip.appendChild(x);
+        vb.appendChild(chip);
+      });
+    }
+
+    // Filters
+    const fb = $("filtersBox");
+    fb.innerHTML = "";
+    if (!layout.filters.length){
+      fb.innerHTML = `<div class="zoneEmpty">Drop fields here to create filters</div>`;
+    } else {
+      layout.filters.forEach((f, idx)=>{
+        const row = document.createElement("div");
+        row.className = "filterRow";
+
+        const fieldSel = document.createElement("select");
+        for (const c of SCHEMA){
+          const o = document.createElement("option");
+          o.value = c.name;
+          o.textContent = c.name;
+          if (c.name === f.field) o.selected = true;
+          fieldSel.appendChild(o);
+        }
+        fieldSel.onchange = ()=>{
+          f.field = fieldSel.value;
+          const t = COL_TYPES[f.field] || "dim";
+          f.op = (t === "num") ? "gte" : "eq";
+          f.value = "";
+          syncRenderBuilder();
+        };
+
+        const opSel = document.createElement("select");
+        const t = COL_TYPES[f.field] || "dim";
+        const ops = (t === "num")
+          ? [
+              {v:"eq", t:"="},
+              {v:"gte",t:">="},
+              {v:"lte",t:"<="},
+              {v:"between",t:"between"},
+              {v:"in",t:"in"},
+            ]
+          : [
+              {v:"eq",t:"="},
+              {v:"contains",t:"contains"},
+              {v:"starts",t:"starts"},
+              {v:"in",t:"in"},
+            ];
+        for (const o2 of ops){
+          const o = document.createElement("option");
+          o.value = o2.v;
+          o.textContent = o2.t;
+          if (o2.v === f.op) o.selected = true;
+          opSel.appendChild(o);
+        }
+        opSel.onchange = ()=>{ f.op = opSel.value; syncRenderBuilder(); };
+
+        const val = document.createElement("input");
+        val.type = "text";
+        val.placeholder = (f.op === "between") ? "min,max" : (f.op === "in" ? "a,b,c" : "value");
+        val.value = f.value ?? "";
+        val.oninput = ()=>{ f.value = val.value; };
+
+        const rm = document.createElement("button");
+        rm.className = "rm";
+        rm.textContent = "×";
+        rm.title = "Remove filter";
+        rm.onclick = ()=>{ removeFilter(idx); syncRenderBuilder(); };
+
+        row.appendChild(fieldSel);
+        row.appendChild(opSel);
+        row.appendChild(val);
+        row.appendChild(rm);
+
+        fb.appendChild(row);
+      });
+    }
+
+    // Meta
+    const dimsCount = layout.rows.length + (layout.col ? 1 : 0);
+    $("metaText").textContent = `${layout.vals.length} values • ${dimsCount} dims • ${layout.filters.length} filters`;
+
+    // Sort options
+    refreshSortOptions();
+  }
+
+  function refreshSortOptions(){
+    const sort = $("sortBy");
+    sort.innerHTML = "";
+    const candidates = [];
+
+    // dims
+    for (const r of layout.rows) candidates.push({key:r, label:r});
+    if (layout.col) candidates.push({key:layout.col, label:layout.col});
+
+    // measures
+    layout.vals.forEach((v, i)=>{
+      const key = (v.kind === "agg") ? `${v.agg}(${v.field})` : v.label;
+      candidates.push({key, label:key});
+    });
+
+    if (!candidates.length){
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = "(none)";
+      sort.appendChild(o);
+      return;
+    }
+
+    for (const c of candidates){
+      const o = document.createElement("option");
+      o.value = c.key;
+      o.textContent = c.label;
+      sort.appendChild(o);
+    }
+  }
+
+  // -----------------------------
+  // Drag/drop wiring for zones
+  // -----------------------------
+  function wireZone(zoneEl){
+    zoneEl.addEventListener("dragover", (ev)=>{
+      ev.preventDefault();
+      zoneEl.classList.add("dragover");
+      ev.dataTransfer.dropEffect = "copy";
+    });
+    zoneEl.addEventListener("dragleave", ()=>{
+      zoneEl.classList.remove("dragover");
+    });
+    zoneEl.addEventListener("drop", (ev)=>{
+      ev.preventDefault();
+      zoneEl.classList.remove("dragover");
+
+      const payload = getDragData(ev);
+      if (!payload) return;
+
+      const zone = zoneEl.dataset.zone;
+
+      if (payload.type === "field"){
+        const name = payload.name;
+
+        if (zone === "rows"){
+          addRow(name);
+        } else if (zone === "cols"){
+          setCol(name);
+        } else if (zone === "vals"){
+          // Only allow numeric fields in values
+          if ((COL_TYPES[name] || "") !== "num"){
+            $("runStatus").textContent = `“${name}” is not numeric. Drop numeric fields into Values.`;
+            return;
+          }
+          addValueAgg(name, "sum");
+        } else if (zone === "filters"){
+          addFilter(name);
+        }
+
+      } else if (payload.type === "kpi"){
+        if (zone !== "vals"){
+          $("runStatus").textContent = `KPI metrics should be dropped into Values.`;
+          return;
+        }
+        addValueKpi(payload.id);
+      }
+
+      syncRenderBuilder();
+    });
+  }
+
+  wireZone($("zoneRows"));
+  wireZone($("zoneCols"));
+  wireZone($("zoneVals"));
+  wireZone($("zoneFilters"));
+
+  // -----------------------------
+  // Connect + Schema load
+  // -----------------------------
+  async function connectAndLoadSchema(){
+    const url = $("sbUrl").value.trim();
+    const key = $("sbKey").value.trim();
+    const table = $("sbTable").value.trim();
+
+    if (!url || !key || !table){
+      setPill("bad","Missing connection info");
+      $("leftStatus").textContent = "Enter Supabase URL, anon key, and table name.";
+      return;
+    }
+
+    setPill("neutral","Connecting…");
+    $("leftStatus").textContent = "Connecting and loading schema…";
+    setProgress(0);
+
+    SB = supabase.createClient(url, key);
+
+    try{
+      // Pull a sample row
+      const { data, error } = await SB.from(table).select("*").limit(1);
+      if (error) throw error;
+
+      const sample = (data && data[0]) ? data[0] : {};
+      const cols = Object.keys(sample);
+
+      // If no rows in table, still build from select result if possible
+      // We can fallback to the CSV-known minimal set
+      const fallback = ["match_id","Mode","Tournament","Stage","Year","Week","Day","team_name","team_id","player_stats_account_id","player_stats_kills","player_stats_damage","created_at","updated_at"];
+
+      const names = cols.length ? cols : fallback;
+
+      // Infer types
+      SCHEMA = [];
+      COL_TYPES = {};
+
+      for (const n of names){
+        const v = sample[n];
+        let t = "dim";
+
+        if (v === null || v === undefined){
+          // guess from name
+          if (/_at$/.test(n) || /created_at|updated_at/i.test(n)) t = "time";
+          else if (/^(is_|has_)/.test(n) || /(booyah|final)/i.test(n)) t = "bool";
+          else if (/(count|kills|damage|score|time|rank|hp|hits|headshots|assists|distance|inv|times|level|rate)$/i.test(n)) t = "num";
+          else if (/(_info|_usages|_loadouts|_list)$/i.test(n)) t = "json";
+          else t = "dim";
+        } else if (typeof v === "number"){
+          t = "num";
+        } else if (typeof v === "boolean"){
+          t = "bool";
+        } else if (Array.isArray(v) || isPlainObject(v)){
+          t = "json";
+        } else if (typeof v === "string"){
+          // JSON-ish string?
+          const s = v.trim();
+          if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) t = "json";
+          else if (isNumericLike(s)) t = "num";
+          else if (/_at$/.test(n) || /created_at|updated_at/i.test(n)) t = "time";
+          else t = "dim";
+        }
+
+        // Force JSON for known heavy fields in your export naming pattern
+        if (/(_info|_usages|_loadouts|_inv|_skill_info)$/i.test(n) && t !== "num") t = "json";
+
+        SCHEMA.push({name:n, typeHint:t});
+        COL_TYPES[n] = t;
+      }
+
+      // sort schema: common first, then alpha
+      const common = [
+        "match_id","Mode","Tournament","Stage","Year","Week","Day",
+        "team_name","team_id","booyah","ranking_score","killing_score","kill_count",
+        "player_stats_account_id","player_stats_nickname","player_stats_kills","player_stats_damage","player_stats_survival_time",
+        "created_at","updated_at"
+      ];
+      SCHEMA.sort((a,b)=>{
+        const ia = common.indexOf(a.name), ib = common.indexOf(b.name);
+        if (ia !== -1 || ib !== -1){
+          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        }
+        // group by type then name
+        const order = {dim:0, bool:1, time:2, num:3, json:4};
+        const oa = order[a.typeHint] ?? 9;
+        const ob = order[b.typeHint] ?? 9;
+        if (oa !== ob) return oa - ob;
+        return a.name.localeCompare(b.name);
+      });
+
+      buildKpisFromSchema();
+      renderFields();
+      syncRenderBuilder();
+
+      setPill("good","Connected");
+      $("leftStatus").textContent =
+`Connected ✅
+Table: ${table}
+Fields: ${SCHEMA.length}
+KPI presets: ${KPI_METRICS.length}
+
+Drag fields into Rows/Columns/Values/Filters, then Run Report.`;
+
+      $("schemaText").textContent = `${SCHEMA.length} fields`;
+      setProgress(0);
+
+    } catch (e){
+      setPill("bad","Connect failed");
+      $("leftStatus").textContent =
+`Failed to load schema:
+${e.message || e}
+
+Common causes:
+- RLS blocks SELECT for anon key (enable read policy or sign-in flow)
+- Wrong table name
+- Wrong URL/key`;
+      setProgress(0);
+    }
+  }
+
+  // -----------------------------
+  // Suggest a starter layout
+  // -----------------------------
+  function suggestStarterLayout(){
+    if (!SCHEMA.length){
+      $("runStatus").textContent = "Connect first to load schema.";
+      return;
+    }
+
+    // clear current
+    layout.rows = [];
+    layout.col = null;
+    layout.vals = [];
+    layout.filters = [];
+
+    // Try good defaults for your FF rows export
+    const tryAddRow = (c)=>{ if (COL_TYPES[c]) addRow(c); };
+    const trySetCol = (c)=>{ if (COL_TYPES[c]) setCol(c); };
+    const tryAgg = (c)=>{ if (COL_TYPES[c] === "num") addValueAgg(c, "sum"); };
+
+    // rows
+    tryAddRow("Tournament");
+    tryAddRow("Stage");
+    tryAddRow("team_name");
+
+    // columns optional
+    // trySetCol("map") // only if exists; your export didn't show it in first lines
+    if (COL_TYPES["Mode"]) tryAddRow("Mode");
+    if (COL_TYPES["Week"]) tryAddRow("Week");
+    if (COL_TYPES["Day"]) tryAddRow("Day");
+
+    // values
+    tryAgg("player_stats_kills");
+    tryAgg("player_stats_damage");
+    tryAgg("ranking_score");
+    tryAgg("killing_score");
+
+    // KPI metrics if exist
+    if (KPI_METRICS.find(x=>x.id==="kpi_dmg_per_kill")) addValueKpi("kpi_dmg_per_kill");
+
+    // filters defaults
+    if (COL_TYPES["Year"]) layout.filters.push({field:"Year", op:"eq", value:"2026"});
+    if (COL_TYPES["Tournament"]) layout.filters.push({field:"Tournament", op:"contains", value:"FFWS"});
+
+    syncRenderBuilder();
+    $("runStatus").textContent = "Starter layout applied. Click Run Report.";
+  }
+
+  // -----------------------------
+  // Supabase Fetch (with basic filters)
+  // -----------------------------
+  function applyFiltersToQuery(q){
+    for (const f of layout.filters){
+      const field = f.field;
+      const op = f.op;
+      const raw = (f.value ?? "").toString().trim();
+      if (!field || !op || !raw) continue;
+
+      const t = COL_TYPES[field] || "dim";
+
+      if (op === "eq"){
+        if (t === "num"){
+          const num = toNum(raw);
+          if (num == null) continue;
+          q = q.eq(field, num);
+        } else {
+          q = q.eq(field, raw);
+        }
+      } else if (op === "contains"){
+        // ilike %value%
+        q = q.ilike(field, `%${raw}%`);
+      } else if (op === "starts"){
+        q = q.ilike(field, `${raw}%`);
+      } else if (op === "gte"){
+        const num = toNum(raw);
+        if (num == null) continue;
+        q = q.gte(field, num);
+      } else if (op === "lte"){
+        const num = toNum(raw);
+        if (num == null) continue;
+        q = q.lte(field, num);
+      } else if (op === "between"){
+        // "min,max"
+        const parts = raw.split(",").map(s=>s.trim()).filter(Boolean);
+        if (parts.length < 2) continue;
+        const a = toNum(parts[0]), b = toNum(parts[1]);
+        if (a == null || b == null) continue;
+        q = q.gte(field, Math.min(a,b)).lte(field, Math.max(a,b));
+      } else if (op === "in"){
+        const parts = raw.split(",").map(s=>s.trim()).filter(Boolean);
+        if (!parts.length) continue;
+        if (t === "num"){
+          const nums = parts.map(toNum).filter(x=>x!=null);
+          if (!nums.length) continue;
+          q = q.in(field, nums);
+        } else {
+          q = q.in(field, parts);
+        }
+      }
+    }
+    return q;
+  }
+
+  async function fetchRowsForReport(neededCols, maxFetch){
+    const table = $("sbTable").value.trim();
+    if (!SB) throw new Error("Not connected.");
+
+    const selectStr = neededCols.join(",");
+    const totalWant = Math.max(1, maxFetch|0);
+
+    const pageSize = 1000; // safe chunk
+    const pages = Math.ceil(totalWant / pageSize);
+    let out = [];
+    let fetched = 0;
+
+    for (let p=0; p<pages; p++){
+      const from = p * pageSize;
+      const to = Math.min(totalWant, (p+1)*pageSize) - 1;
+
+      let q = SB.from(table).select(selectStr).range(from, to);
+      q = applyFiltersToQuery(q);
+
+      $("runStatus").textContent = `Fetching data… page ${p+1}/${pages} (rows ${from}-${to})`;
+      setProgress(Math.round((p/pages)*35));
+
+      const { data, error } = await q;
+      if (error) throw error;
+
+      if (data && data.length){
+        out = out.concat(data);
+        fetched += data.length;
+      }
+
+      // Stop early if returned less than requested page (end)
+      if (!data || data.length < (to-from+1)) break;
+    }
+
+    return out;
+  }
+
+  // -----------------------------
+  // Pivot Engine
+  // -----------------------------
+  function buildPivot(rows){
+    const rowDims = layout.rows.slice();
+    const colDim = layout.col;
+
+    // Ensure there is at least one value
+    if (!layout.vals.length) throw new Error("Add at least one metric in Values.");
+
+    // Resolve KPI descriptors
+    const kpiMap = Object.fromEntries(KPI_METRICS.map(k=>[k.id,k]));
+
+    // Determine base numeric deps needed for KPI + agg values
+    const aggFields = layout.vals
+      .filter(v=>v.kind==="agg")
+      .map(v=>v.field);
+
+    const kpiDeps = layout.vals
+      .filter(v=>v.kind==="kpi")
+      .flatMap(v=>{
+        const k = kpiMap[v.id];
+        return k ? k.deps : [];
+      });
+
+    const baseFields = uniq(aggFields.concat(kpiDeps));
+
+    // group map
+    const groups = new Map();
+
+    function makeKey(r){
+      const rk = rowDims.map(d=>safeString(r[d] ?? "")).join("¦");
+      const ck = colDim ? safeString(r[colDim] ?? "") : "";
+      return colDim ? (rk + "§" + ck) : rk;
+    }
+
+    function getDimOut(r){
+      const out = {};
+      for (const d of rowDims) out[d] = r[d];
+      if (colDim) out[colDim] = r[colDim];
+      return out;
+    }
+
+    // init group state
+    function initState(){
+      return {
+        sum: Object.create(null),
+        count: Object.create(null),
+        min: Object.create(null),
+        max: Object.create(null),
+        avg: Object.create(null),  // computed after
+        dim: null
+      };
+    }
+
+    // aggregate rows into groups
+    for (const r of rows){
+      const key = makeKey(r);
+      let st = groups.get(key);
+      if (!st){
+        st = initState();
+        st.dim = getDimOut(r);
+        // init fields
+        for (const f of baseFields){
+          st.sum[f] = 0;
+          st.count[f] = 0;
+          st.min[f] = null;
+          st.max[f] = null;
+        }
+        groups.set(key, st);
+      }
+
+      // update base fields
+      for (const f of baseFields){
+        const val = r[f];
+        const num = toNum(val);
+        if (num == null) continue;
+
+        st.sum[f] += num;
+        st.count[f] += 1;
+        st.min[f] = (st.min[f] == null) ? num : Math.min(st.min[f], num);
+        st.max[f] = (st.max[f] == null) ? num : Math.max(st.max[f], num);
+      }
+    }
+
+    // compute avg
+    for (const st of groups.values()){
+      for (const f of baseFields){
+        const c = st.count[f] || 0;
+        st.avg[f] = c ? (st.sum[f] / c) : 0;
+      }
+    }
+
+    // produce final rows
+    const out = [];
+
+    // If column pivot is selected, we will pivot the column dimension into separate measure columns.
+    // Example: Columns = Mode, Values = SUM(kills) -> columns like "SUM(player_stats_kills) | Mode=BR"
+    // Otherwise, we output one row per group.
+    if (colDim){
+      // regroup by rowDims only, then pivot over col values
+      const byRowKey = new Map();
+
+      for (const [key, st] of groups){
+        const [rk, ck] = key.split("§");
+        let row = byRowKey.get(rk);
+        if (!row){
+          row = {...st.dim};
+          // remove column dim itself from base row dims output to avoid duplicates; we pivot it
+          delete row[colDim];
+          byRowKey.set(rk, row);
+        }
+
+        const colVal = ck || "(blank)";
+        // attach each metric as col-specific
+        layout.vals.forEach(v=>{
+          if (v.kind === "agg"){
+            const label = `${v.agg.toUpperCase()}(${v.field}) | ${colDim}=${colVal}`;
+            let value;
+            if (v.agg === "sum") value = st.sum[v.field] ?? 0;
+            else if (v.agg === "avg") value = st.avg[v.field] ?? 0;
+            else if (v.agg === "min") value = st.min[v.field] ?? 0;
+            else if (v.agg === "max") value = st.max[v.field] ?? 0;
+            else if (v.agg === "count") value = st.count[v.field] ?? 0;
+            else value = st.sum[v.field] ?? 0;
+            row[label] = value;
+          } else {
+            const k = kpiMap[v.id];
+            if (!k) return;
+            const label = `${k.label} | ${colDim}=${colVal}`;
+            let value = k.compute(st);
+            row[label] = (k.format === "pct") ? (value * 100) : value;
+          }
+        });
+      }
+
+      for (const row of byRowKey.values()) out.push(row);
+
+    } else {
+      for (const st of groups.values()){
+        const row = {...st.dim};
+
+        // compute each requested measure
+        layout.vals.forEach(v=>{
+          if (v.kind === "agg"){
+            const label = `${v.agg.toUpperCase()}(${v.field})`;
+            let value;
+            if (v.agg === "sum") value = st.sum[v.field] ?? 0;
+            else if (v.agg === "avg") value = st.avg[v.field] ?? 0;
+            else if (v.agg === "min") value = st.min[v.field] ?? 0;
+            else if (v.agg === "max") value = st.max[v.field] ?? 0;
+            else if (v.agg === "count") value = st.count[v.field] ?? 0;
+            else value = st.sum[v.field] ?? 0;
+            row[label] = value;
+          } else {
+            const k = kpiMap[v.id];
+            if (!k) return;
+            const label = k.label;
+            let value = k.compute(st);
+            row[label] = (k.format === "pct") ? (value * 100) : value;
+          }
+        });
+
+        out.push(row);
+      }
+    }
+
+    return out;
+  }
+
+  function formatCell(v, col){
+    // If looks like pct column
+    if (typeof v === "number" && /rate/i.test(col)){
+      return v.toFixed(2) + "%";
+    }
+    if (typeof v === "number"){
+      // keep readable
+      if (Math.abs(v) >= 1000 && Number.isInteger(v)) return v.toLocaleString();
+      return (Math.round(v*1000)/1000).toString();
+    }
+    return safeString(v);
+  }
+
+  function sortAndLimit(rows){
+    const sortKey = $("sortBy").value;
+    const dir = $("sortDir").value;
+    const top = parseInt($("topN").value,10);
+
+    let out = rows.slice();
+
+    if (sortKey){
+      out.sort((a,b)=>{
+        const va = a[sortKey];
+        const vb = b[sortKey];
+
+        const na = (typeof va === "number") ? va : toNum(va);
+        const nb = (typeof vb === "number") ? vb : toNum(vb);
+
+        let cmp = 0;
+        if (na != null && nb != null){
+          cmp = na - nb;
+        } else {
+          cmp = safeString(va).localeCompare(safeString(vb));
+        }
+        return dir === "asc" ? cmp : -cmp;
+      });
+    }
+
+    if (top && top > 0) out = out.slice(0, top);
+    return out;
+  }
+
+  function renderOutput(rows){
+    // columns union (stable-ish)
+    const colSet = new Set();
+    rows.forEach(r=>Object.keys(r).forEach(k=>colSet.add(k)));
+    const cols = Array.from(colSet);
+
+    // order: dims first then measures
+    const dimCols = [];
+    const measCols = [];
+    for (const c of cols){
+      if (layout.rows.includes(c) || c === layout.col) dimCols.push(c);
+      else measCols.push(c);
+    }
+    const ordered = dimCols.concat(measCols.sort((a,b)=>a.localeCompare(b)));
+
+    // head
+    const head = $("outHead");
+    head.innerHTML = "";
+    ordered.forEach(c=>{
+      const th = document.createElement("th");
+      th.textContent = c;
+      head.appendChild(th);
+    });
+
+    // body
+    const body = $("outBody");
+    body.innerHTML = "";
+    rows.forEach(r=>{
+      const tr = document.createElement("tr");
+      ordered.forEach(c=>{
+        const td = document.createElement("td");
+        td.textContent = formatCell(r[c], c);
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+
+    LAST_RESULT = rows;
+    LAST_COLS = ordered;
+    $("resultMeta").textContent = `${rows.length.toLocaleString()} rows • ${ordered.length} cols`;
+  }
+
+  // -----------------------------
+  // Run Report
+  // -----------------------------
+  async function runReport(){
+    try{
+      const table = $("sbTable").value.trim();
+      if (!SB) throw new Error("Not connected. Click Connect & Load Schema first.");
+      if (!table) throw new Error("Missing table name.");
+
+      if (!layout.rows.length){
+        throw new Error("Add at least one field in Rows (group by).");
+      }
+      if (!layout.vals.length){
+        throw new Error("Add at least one metric in Values.");
+      }
+
+      // needed cols = dims + agg fields + kpi deps + filter fields
+      const kpiMap = Object.fromEntries(KPI_METRICS.map(k=>[k.id,k]));
+      const dims = layout.rows.concat(layout.col ? [layout.col] : []);
+      const aggFields = layout.vals.filter(v=>v.kind==="agg").map(v=>v.field);
+      const kpiDeps = layout.vals.filter(v=>v.kind==="kpi").flatMap(v=>{
+        const k = kpiMap[v.id];
+        return k ? k.deps : [];
+      });
+      const filterFields = layout.filters.map(f=>f.field);
+
+      const neededCols = uniq(dims.concat(aggFields).concat(kpiDeps).concat(filterFields))
+        .filter(Boolean);
+
+      const maxFetch = parseInt($("maxFetch").value, 10) || 20000;
+
+      $("runStatus").textContent = `Fetching + aggregating…`;
+      setProgress(0);
+
+      const rawRows = await fetchRowsForReport(neededCols, maxFetch);
+      setProgress(40);
+
+      if (!rawRows.length){
+        $("runStatus").textContent = "No rows returned (filters may be too strict, or RLS blocks read).";
+        renderOutput([]);
+        setProgress(100);
+        return;
+      }
+
+      $("runStatus").textContent = `Building pivot from ${rawRows.length.toLocaleString()} rows…`;
+      const pivot = buildPivot(rawRows);
+      setProgress(75);
+
+      const finalRows = sortAndLimit(pivot);
+      setProgress(90);
+
+      renderOutput(finalRows);
+      setProgress(100);
+
+      $("runStatus").textContent =
+`Done ✅
+Fetched: ${rawRows.length.toLocaleString()} rows
+Result: ${finalRows.length.toLocaleString()} rows
+Dims: ${layout.rows.length}${layout.col ? " + 1 column pivot" : ""}
+Values: ${layout.vals.length}`;
+
+    } catch (e){
+      setProgress(0);
+      $("runStatus").textContent = `Error:\n${e.message || e}`;
+    }
+  }
+
+  // -----------------------------
+  // Save / Load Layout (localStorage)
+  // -----------------------------
+  const LS_KEY = "sb_report_builder_layouts_v1";
+
+  function getSavedLayouts(){
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); }
+    catch { return []; }
+  }
+  function setSavedLayouts(arr){
+    localStorage.setItem(LS_KEY, JSON.stringify(arr));
+  }
+
+  function saveLayout(){
+    const name = prompt("Save layout name:");
+    if (!name) return;
+
+    const all = getSavedLayouts();
+    const payload = {
+      name,
+      saved_at: new Date().toISOString(),
+      sbUrl: $("sbUrl").value.trim(),
+      sbTable: $("sbTable").value.trim(),
+      layout: JSON.parse(JSON.stringify(layout))
+    };
+
+    const idx = all.findIndex(x => x.name === name);
+    if (idx !== -1) all[idx] = payload;
+    else all.push(payload);
+
+    setSavedLayouts(all);
+    $("runStatus").textContent = `Saved layout: ${name}`;
+  }
+
+  function loadLayoutPicker(){
+    const all = getSavedLayouts();
+    if (!all.length){
+      alert("No saved layouts yet.");
+      return;
+    }
+
+    const names = all.map(x=>x.name).sort((a,b)=>a.localeCompare(b));
+    const pick = prompt("Type a layout name to load:\n\n" + names.join("\n"));
+    if (!pick) return;
+
+    const item = all.find(x=>x.name === pick);
+    if (!item){
+      alert("Not found.");
+      return;
+    }
+
+    // restore
+    layout.rows = item.layout.rows || [];
+    layout.col = item.layout.col || null;
+    layout.vals = item.layout.vals || [];
+    layout.filters = item.layout.filters || [];
+
+    // restore connection hints
+    if (item.sbUrl) $("sbUrl").value = item.sbUrl;
+    if (item.sbTable) $("sbTable").value = item.sbTable;
+
+    syncRenderBuilder();
+    $("runStatus").textContent = `Loaded layout: ${item.name}\n(Connect again if needed.)`;
+  }
+
+  function clearLayout(){
+    layout.rows = [];
+    layout.col = null;
+    layout.vals = [];
+    layout.filters = [];
+    syncRenderBuilder();
+    renderOutput([]);
+    $("runStatus").textContent = "Layout cleared.";
+    setProgress(0);
+  }
+
+  // -----------------------------
+  // Export
+  // -----------------------------
+  function exportCSV(){
+    if (!LAST_RESULT.length){
+      alert("No results to export. Run a report first.");
+      return;
+    }
+    const csv = toCSV(LAST_RESULT.map(r=>{
+      const out = {};
+      for (const c of LAST_COLS){
+        const v = r[c];
+        out[c] = (Array.isArray(v) || isPlainObject(v)) ? safeString(v) : v;
+      }
+      return out;
+    }), LAST_COLS);
+    downloadText("report_export.csv", csv, "text/csv");
+  }
+  function exportJSON(){
+    if (!LAST_RESULT.length){
+      alert("No results to export. Run a report first.");
+      return;
+    }
+    downloadText("report_export.json", JSON.stringify(LAST_RESULT, null, 2), "application/json");
+  }
+
+  // -----------------------------
+  // Events
+  // -----------------------------
+  $("btnConnect").addEventListener("click", connectAndLoadSchema);
+  $("btnSuggest").addEventListener("click", suggestStarterLayout);
+
+  $("fieldSearch").addEventListener("input", renderFields);
+  $("fieldMode").addEventListener("change", renderFields);
+
+  $("btnRun").addEventListener("click", runReport);
+  $("btnSave").addEventListener("click", saveLayout);
+  $("btnLoadSaved").addEventListener("click", loadLayoutPicker);
+  $("btnClear").addEventListener("click", clearLayout);
+
+  $("btnCSV").addEventListener("click", exportCSV);
+  $("btnJSON").addEventListener("click", exportJSON);
+
+  // init
+  setPill("neutral","Not connected");
+  $("schemaText").textContent = "No schema";
+  syncRenderBuilder();
+  renderOutput([]);
+</script>
+</body>
+</html>

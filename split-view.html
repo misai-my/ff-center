@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Split View</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+      --line: rgba(255,255,255,.08);
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+
+      --header-h:72px;
+      --divider-w:10px;
+      --min-pane:240px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family: Roboto, system-ui, -apple-system, Segoe UI, Arial;
+      color:var(--ink);
+      background:
+        radial-gradient(900px 500px at 18% 12%, rgba(77,211,255,.15), transparent 60%),
+        radial-gradient(700px 420px at 85% 18%, rgba(255,189,89,.12), transparent 60%),
+        radial-gradient(900px 620px at 50% 110%, rgba(255,119,51,.10), transparent 60%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
+      overflow:hidden;
+    }
+
+    body::before, body::after{
+      content:"";
+      position:fixed;
+      inset:auto auto 0 0;
+      width:520px; height:520px;
+      border-radius:50%;
+      border:10px solid rgba(77,211,255,.14);
+      transform: translate(-45%, -35%);
+      pointer-events:none;
+    }
+    body::after{
+      inset: -120px 0 auto auto;
+      width:420px; height:420px;
+      border:10px solid rgba(77,211,255,.10);
+      transform: translate(38%, 0%);
+    }
+
+    /* Full-bleed layout */
+    .app{
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding: 12px 0 0 0;
+      margin:0;
+      max-width:none;
+    }
+
+    /* Topbar */
+    .topbar{
+      height:var(--header-h);
+      margin: 0 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex:0 0 auto;
+    }
+
+    .title{display:flex; flex-direction:column; min-width:0; gap:2px;}
+    .title h1{
+      margin:0;
+      font-family: Orbitron, sans-serif;
+      font-size: 1.05rem;
+      letter-spacing:.6px;
+      color: var(--brand);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-shadow: 0 0 18px rgba(255,189,89,.14);
+    }
+    .title small{
+      color: var(--muted);
+      font-weight:700;
+      font-size:.78rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .actions{display:flex; align-items:center; gap:10px; flex:0 0 auto}
+    .btn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+      color: rgba(244,246,255,.88);
+      cursor:pointer;
+      font-weight:900;
+      font-size:.82rem;
+      transition:.2s ease;
+      white-space:nowrap;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height: 42px;
+      gap:8px;
+    }
+    .btn:hover{
+      background: rgba(0,0,0,.28);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+      border-color: rgba(77,211,255,.22);
+      transform: translateY(-1px);
+    }
+    .btn:active{transform: translateY(0px);}
+
+    .btn.brand{
+      background: linear-gradient(135deg, rgba(255,189,89,.18), rgba(255,119,51,.10));
+      border-color: rgba(255,189,89,.20);
+      color: rgba(244,246,255,.94);
+    }
+    .btn.brand:hover{
+      box-shadow: 0 0 0 3px rgba(255,189,89,.12);
+      border-color: rgba(255,189,89,.28);
+    }
+
+    /* Tabs (mobile only) */
+    .tabs{
+      display:none; /* shown on mobile */
+      align-items:center;
+      gap:8px;
+      padding: 6px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.10);
+      min-width: 0;
+      flex: 1 1 auto;
+      justify-content:center;
+    }
+    .tab{
+      border:0;
+      cursor:pointer;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(244,246,255,.82);
+      font-weight: 900;
+      font-size: .82rem;
+      transition: .18s ease;
+      white-space:nowrap;
+    }
+    .tab.active{
+      background: linear-gradient(135deg, rgba(77,211,255,.16), rgba(255,189,89,.14));
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(244,246,255,.95);
+      box-shadow: 0 0 0 3px rgba(77,211,255,.10);
+    }
+
+    /* Workspace */
+    .workspace{
+      flex:1;
+      min-height:0;
+      width:100%;
+      border-top: 1px solid rgba(255,255,255,.06);
+      background: var(--panel2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+      display:flex;
+      border-radius: 0;
+      border-left: 0;
+      border-right: 0;
+      border-bottom: 0;
+      position:relative;
+    }
+
+    iframe{
+      height:100%;
+      border:0;
+      background: transparent;
+      width:100%;
+    }
+    .left{flex:0 0 50%}
+    .right{flex:0 0 50%}
+
+    .divider{
+      width:var(--divider-w);
+      cursor:col-resize;
+      position:relative;
+      background:
+        linear-gradient(180deg, rgba(255,189,89,.75), rgba(77,211,255,.55));
+      box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.06);
+      flex:0 0 var(--divider-w);
+    }
+    .divider::before{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      width:28px; height:62px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+    .divider::after{
+      content:"";
+      position:absolute;
+      left:50%; top:50%;
+      width:10px; height:34px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      box-shadow:
+        0 -10px 0 rgba(255,255,255,.08),
+        0  10px 0 rgba(255,255,255,.08);
+      opacity:.95;
+    }
+    .divider.dragging{filter:brightness(1.12)}
+
+    /* ✅ MOBILE MODE: Tabs (single pane visible, no divider) */
+    @media (max-width: 700px){
+      :root{ --header-h: 56px; }
+
+      .app{ gap:10px; padding-top:10px; }
+      .topbar{
+        margin: 0 10px;
+        padding: 10px 10px;
+        gap:10px;
+      }
+
+      /* make it feel less crowded */
+      .title{display:none;}             /* hide big title */
+      .tabs{display:flex;}              /* show tabs */
+      .btn{padding: 9px 10px; height:40px; border-radius: 12px;}
+      .btn .txt{display:none;}          /* icon-only buttons */
+
+      /* kill blur on some phones for performance */
+      .topbar{backdrop-filter:none; -webkit-backdrop-filter:none;}
+      .workspace{backdrop-filter:none; -webkit-backdrop-filter:none;}
+
+      /* single-pane layout */
+      .workspace{display:block;}
+      iframe{
+        position:absolute;
+        inset:0;
+        width:100%;
+        height:100%;
+      }
+      .divider{display:none;}
+      /* panes hidden via .show-left/.show-right */
+      .left{display:none;}
+      .right{display:none;}
+      .workspace.show-left  .left{display:block;}
+      .workspace.show-right .right{display:block;}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="title">
+        <h1>Split View</h1>
+        <small>Characters & Pets</small>
+      </div>
+
+      <!-- Mobile tabs -->
+      <div class="tabs" id="tabs">
+        <button class="tab" type="button" data-pane="left">Characters</button>
+        <button class="tab" type="button" data-pane="right">Pets</button>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="home.html" title="Back">
+          <span aria-hidden="true">←</span>
+          <span class="txt">Back to Dashboard</span>
+        </a>
+        <button class="btn brand" id="resetSplitBtn" type="button" title="Reset">
+          <span aria-hidden="true">⟲</span>
+          <span class="txt">Reset Split</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="workspace" id="workspace">
+      <iframe class="left"  id="paneLeft"  src="character.html" title="Characters"></iframe>
+      <div class="divider"  id="divider"   title="Drag to resize (double-click to reset)"></div>
+      <iframe class="right" id="paneRight" src="pet.html"       title="Pets"></iframe>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const divider = document.getElementById('divider');
+      const work    = document.getElementById('workspace');
+      const left    = document.getElementById('paneLeft');
+      const right   = document.getElementById('paneRight');
+      const reset   = document.getElementById('resetSplitBtn');
+
+      const tabsWrap = document.getElementById('tabs');
+      const tabs = tabsWrap ? Array.from(tabsWrap.querySelectorAll('.tab')) : [];
+
+      const DIV_W = parseInt(getComputedStyle(divider).width, 10) || 10;
+      const MIN   = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--min-pane'), 10) || 240;
+
+      const storeRatioKey = 'ff_split_ratio_v2';
+      const storePaneKey  = 'ff_split_mobile_pane_v1';
+
+      const mqMobile = window.matchMedia('(max-width: 700px)');
+      let isDragging = false;
+      let leftRatio  = parseFloat(localStorage.getItem(storeRatioKey) || '0.50');
+
+      function isMobile(){ return mqMobile.matches; }
+
+      function applyWidthsByRatio(ratio){
+        if (isMobile()) return; // ✅ mobile is tab mode (no split)
+        const rect = work.getBoundingClientRect();
+        const total = rect.width;
+
+        const leftW  = Math.max(MIN, Math.min(total - DIV_W - MIN, Math.round(total * ratio)));
+        const rightW = total - DIV_W - leftW;
+
+        left.style.flex  = `0 0 ${leftW}px`;
+        right.style.flex = `0 0 ${rightW}px`;
+      }
+
+      function startDrag(e){
+        if (isMobile()) return;
+        isDragging = true;
+        divider.classList.add('dragging');
+        divider.setPointerCapture?.(e.pointerId);
+      }
+
+      function onDrag(e){
+        if(!isDragging || isMobile()) return;
+        const rect = work.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        x = Math.max(MIN, Math.min(x, rect.width - DIV_W - MIN));
+        leftRatio = x / rect.width;
+        applyWidthsByRatio(leftRatio);
+      }
+
+      function stopDrag(){
+        if(!isDragging) return;
+        isDragging = false;
+        divider.classList.remove('dragging');
+        localStorage.setItem(storeRatioKey, String(leftRatio));
+      }
+
+      function resetSplit(){
+        if (isMobile()){
+          setMobilePane('left', true);
+          return;
+        }
+        leftRatio = 0.50;
+        applyWidthsByRatio(leftRatio);
+        localStorage.setItem(storeRatioKey, String(leftRatio));
+      }
+
+      // ✅ Mobile tabs
+      function setMobilePane(pane, save){
+        if (!isMobile()) return;
+
+        work.classList.remove('show-left','show-right');
+        work.classList.add(pane === 'right' ? 'show-right' : 'show-left');
+
+        tabs.forEach(t => t.classList.toggle('active', t.dataset.pane === pane));
+        if (save) localStorage.setItem(storePaneKey, pane);
+      }
+
+      function initMobilePane(){
+        if (!isMobile()) return;
+        const saved = localStorage.getItem(storePaneKey) || 'left';
+        setMobilePane(saved, false);
+      }
+
+      // Events
+      divider.addEventListener('pointerdown', startDrag);
+      window.addEventListener('pointermove', onDrag);
+      window.addEventListener('pointerup', stopDrag);
+      window.addEventListener('pointercancel', stopDrag);
+
+      reset.addEventListener('click', resetSplit);
+      divider.addEventListener('dblclick', resetSplit);
+
+      tabs.forEach(t => {
+        t.addEventListener('click', () => setMobilePane(t.dataset.pane, true));
+      });
+
+      function onResize(){
+        if (isMobile()){
+          initMobilePane();
+        } else {
+          // restore split sizing
+          work.classList.remove('show-left','show-right');
+          applyWidthsByRatio(leftRatio);
+        }
+      }
+
+      mqMobile.addEventListener?.('change', onResize);
+      window.addEventListener('resize', onResize);
+
+      // Init
+      onResize();
+      applyWidthsByRatio(leftRatio);
+    })();
+  </script>
+
+</body>
+</html>

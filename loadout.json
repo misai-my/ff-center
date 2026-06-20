@@ -1,0 +1,524 @@
+[
+  {
+    "id": "enhance_hammer",
+    "name": "Enhance Hammer",
+    "category": "Loadout",
+    "image_url": "https://i.imgur.com/gClc4RN.png",
+    "loadout_id": "500000008",
+    "description": {
+      "br": "Enhance your or your teammates' weapon on the panel.\n\n- Current BR enhancement cost: 400 FF Coins per enhancement.\n- Weapons can be enhanced through the panel for either your own or a teammate's weapon.\n- All attachments on an enhanced weapon are upgraded to the maximum level, with one attachment further boosted to the highest red-tier.\n- Enhanced attachments are permanently fixed to the weapon and cannot be removed.\n\nPatch note: OB51 launched this at 600 FF Coins, then OB52 reduced the enhancement cost from 600 to 400 FF Coins.",
+      "cs": "Earn tokens via eliminations and enhance weapons / gloo walls during purchase phase.\n\n- A hammer token is granted for every two eliminations.\n- Tokens can be used during the purchase phase to enhance weapons in the CS Store, with the effect shared across the team.\n- Hammer tokens can also be spent to enhance Gloo Walls for your team to carry up to 6 Gloo Walls."
+    },
+    "description_ms": {
+      "br": "Tingkatkan senjata anda atau rakan sepasukan melalui panel.\n\n- Kos peningkatan BR semasa: 400 Syiling FF untuk setiap peningkatan.\n- Senjata boleh ditingkatkan melalui panel untuk senjata anda sendiri atau rakan sepasukan.\n- Semua aksesori pada senjata yang ditingkatkan dinaik taraf ke tahap maksimum, dengan satu aksesori dipertingkatkan lagi ke tahap tertinggi (gred merah).\n- Aksesori yang telah ditingkatkan akan kekal pada senjata dan tidak boleh ditanggalkan.\n\nNota patch: OB51 bermula pada 600 Syiling FF, kemudian OB52 menurunkan kos peningkatan daripada 600 kepada 400 Syiling FF.",
+      "cs": "Dapatkan token melalui eliminasi dan tingkatkan senjata / Gloo Wall semasa fasa pembelian.\n\n- Token tukul diberikan bagi setiap dua eliminasi.\n- Token boleh digunakan semasa fasa pembelian untuk meningkatkan senjata di Kedai CS, dan kesannya dikongsi bersama pasukan.\n- Token tukul juga boleh digunakan untuk meningkatkan Gloo Wall supaya pasukan anda boleh membawa sehingga 6 Gloo Wall."
+    },
+    "cost": {
+      "br": {
+        "currency": "FF Coins",
+        "items": [
+          {
+            "id": "weapon_enhancement",
+            "name": "Weapon Enhancement",
+            "cost": 400,
+            "previous_cost": 600,
+            "changed_in": "OB52",
+            "note": "Cost is per enhancement."
+          }
+        ]
+      },
+      "cs": {
+        "currency": "Hammer Token",
+        "items": [
+          {
+            "id": "hammer_token",
+            "name": "Hammer Token",
+            "cost": 0,
+            "earn_rule": "1 token per 2 eliminations",
+            "note": "Used during purchase phase for team weapon or Gloo Wall enhancement."
+          }
+        ]
+      }
+    },
+    "patch_history": [
+      {
+        "version": "OB51",
+        "change": "Introduced as one of the four reworked loadouts; BR enhancement cost was 600 FF Coins."
+      },
+      {
+        "version": "OB52",
+        "change": "BR enhancement cost reduced from 600 to 400 FF Coins."
+      }
+    ]
+  },
+  {
+    "id": "super_leg_pocket",
+    "name": "Super Leg Pocket",
+    "category": "Loadout",
+    "image_url": "https://i.imgur.com/hVW6fWi.png",
+    "loadout_id": "500000003",
+    "description": {
+      "br": "Start with extra utility items and inventory advantages.\n\n- Receive bonfire, additional backpack space, extra armor, and other items at the start of the match.",
+      "cs": "Start each match with key items and extra protection.\n\n- Receive bonfire, katana, extra armor, and other items at the start of the match."
+    },
+    "description_ms": {
+      "br": "Mulakan dengan item utiliti tambahan dan kelebihan inventori.\n\n- Terima unggun api, ruang beg tambahan, perisai tambahan, dan item lain pada permulaan perlawanan.",
+      "cs": "Mulakan setiap perlawanan dengan item penting dan perlindungan tambahan.\n\n- Terima unggun api, katana, perisai tambahan, dan item lain pada permulaan perlawanan."
+    },
+    "cost": {
+      "br": {
+        "currency": "FF Coins",
+        "items": [],
+        "note": "No direct purchase cost listed in official patch notes; this loadout grants starting utility."
+      },
+      "cs": {
+        "currency": "CS Cash",
+        "items": [],
+        "note": "No direct purchase cost listed in official patch notes; this loadout grants starting utility."
+      }
+    }
+  },
+  {
+    "id": "tactical_market",
+    "name": "Tactical Market",
+    "category": "Loadout",
+    "image_url": "https://i.imgur.com/OBnERWB.png",
+    "fallback_image_url": "https://i.imgur.com/OBnERWB.png",
+    "loadout_id": "500000004",
+    "tagline": "Make the battlefield your playground!",
+    "short_description": "Access utility tools and tactical gadgets through an anytime market in BR, and deploy gadgets through a tactical panel in CS.",
+    "description": {
+      "br": "Access the tactical market anytime, anywhere.\n\nCurrent OB53 BR notes:\n- Removed Hit List and Arsenal Key.\n- Monster Truck Drop can only be purchased within the first 600s of the match.\n- Dinoculars price changed from 200 FF Coins to 100 FF Coins.\n- Launch Pads now have unlimited use; price increased to 1400 FF Coins.\n- Removed active skill cards.\n- UAV-Lite is now single-use and has purple rarity; purchase limit 2.\n- Added Heal UAV-Lite; purchase limit 2.\n\nOriginal OB51 note:\n- Tactical Market originally included Info Box, Arsenal Key, Hit List, Tactical Gadgets, Monster Truck, and Bolt Maker.\n- Bolt Maker could create a 30s Lightning Zone that randomly strikes enemies once per second for 60 damage. Teammates are immune.",
+      "cs": "Get a tactical panel each round and deploy a chosen gadget.\n\nCurrent OB53 CS notes:\n- Added an in-match Tactical Market button during the battle phase.\n- Tap to deploy the default or last-used gadget at your current location.\n- Hold to open the selection wheel and drag to the chosen gadget to deploy it immediately.\n- Tactical Market can be used while moving.\n- Gadget durations now start after the preparation phase.\n- UAV-Lites were removed from the Tactical Market.\n- Jammer devices were added as anti-scan utility.\n\nCore gadgets:\n- Super Bonfire: Heals teammates within 8m over time and provides combat boosts.\n- Smoke Vortex: Generates a swirling smoke field that blocks enemy vision.\n- Cyber Barricade: Deploys large barriers for cover."
+    },
+    "description_ms": {
+      "br": "Akses Tactical Market bila-bila masa, di mana-mana sahaja.\n\nNota BR OB53 semasa:\n- Hit List dan Arsenal Key telah dibuang.\n- Monster Truck Drop hanya boleh dibeli dalam 600s pertama perlawanan.\n- Harga Dinoculars berubah daripada 200 kepada 100 Syiling FF.\n- Launch Pad kini boleh digunakan tanpa had; harga meningkat kepada 1400 Syiling FF.\n- Kad skill aktif telah dibuang.\n- UAV-Lite kini sekali guna, mempunyai rarity ungu, dan had pembelian 2.\n- Heal UAV-Lite ditambah dengan had pembelian 2.\n\nNota asal OB51:\n- Tactical Market asalnya termasuk Info Box, Arsenal Key, Hit List, Tactical Gadgets, Monster Truck, dan Bolt Maker.\n- Bolt Maker boleh mencipta Lightning Zone selama 30s yang menyambar musuh secara rawak sekali setiap saat untuk 60 damage. Rakan sepasukan kebal.",
+      "cs": "Dapatkan panel taktikal setiap pusingan dan letakkan gajet pilihan.\n\nNota CS OB53 semasa:\n- Butang Tactical Market dalam perlawanan ditambah semasa fasa battle.\n- Tekan untuk letakkan gajet default atau gajet terakhir digunakan di lokasi semasa.\n- Tahan untuk buka roda pilihan dan seret ke gajet pilihan untuk letak segera.\n- Tactical Market boleh digunakan sambil bergerak.\n- Tempoh aktif gajet kini bermula selepas fasa persediaan.\n- UAV-Lite dibuang daripada Tactical Market.\n- Jammer ditambah sebagai utiliti anti-scan.\n\nGajet utama:\n- Super Bonfire: Menyembuhkan rakan sepasukan dalam jarak 8m dari masa ke masa dan memberi boost pertempuran.\n- Smoke Vortex: Menghasilkan medan asap berpusing yang menghalang penglihatan musuh.\n- Cyber Barricade: Meletakkan penghadang besar sebagai perlindungan."
+    },
+    "cost": {
+      "br": {
+        "currency": "FF Coins",
+        "items": [
+          {
+            "id": "Dinoculars",
+            "name": "Dinoculars",
+            "cost": 100,
+            "previous_cost": 200,
+            "changed_in": "OB53",
+            "image_url": "assets/tactical_market/dinoculars.png"
+          },
+          {
+            "id": "launch_pad",
+            "name": "Launch Pad",
+            "cost": 1400,
+            "previous_cost": 800,
+            "changed_in": "OB53",
+            "usage": "Unlimited use",
+            "cooldown": "300s",
+            "image_url": "assets/tactical_market/launch_pad.png"
+          },
+          {
+            "id": "monster_truck_drop",
+            "name": "Monster Truck Drop",
+            "cost": null,
+            "previous_cost_ob52": 400,
+            "availability": "Only purchasable within the first 600s of the match.",
+            "image_url": "assets/tactical_market/monster_truck_drop.png"
+          },
+          {
+            "id": "uav_lite",
+            "name": "UAV-Lite",
+            "cost": null,
+            "purchase_limit": 2,
+            "rarity": "Purple",
+            "usage": "Single-use",
+            "changed_in": "OB53",
+            "image_url": "assets/tactical_market/uav_lite.png"
+          },
+          {
+            "id": "heal_uav_lite",
+            "name": "Heal UAV-Lite",
+            "cost": null,
+            "purchase_limit": 2,
+            "added_in": "OB53",
+            "image_url": "assets/tactical_market/heal_uav_lite.png"
+          }
+        ],
+        "removed_items": [
+          {
+            "id": "hit_list",
+            "name": "Hit List",
+            "removed_in": "OB53",
+            "previous_cost_ob52": 200,
+            "previous_purchase_limit": 5,
+            "image_url": "assets/tactical_market/hit_list.png"
+          },
+          {
+            "id": "arsenal_key",
+            "name": "Arsenal Key",
+            "removed_in": "OB53",
+            "image_url": "assets/tactical_market/arsenal_key.png"
+          },
+          {
+            "id": "active_skill_cards",
+            "name": "Active Skill Cards",
+            "removed_in": "OB53",
+            "image_url": "assets/tactical_market/active_skill_cards.png"
+          }
+        ],
+        "historical_items_ob52": [
+          {
+            "id": "gloo_uav_lite",
+            "name": "Gloo UAV-Lite",
+            "cost_ob52": 800,
+            "previous_cost": 400,
+            "image_url": "assets/tactical_market/gloo_uav_lite.png"
+          },
+          {
+            "id": "info_box",
+            "name": "Info Box",
+            "cost_ob52": 100,
+            "previous_cost": 300,
+            "individual_purchase_limit": 2,
+            "image_url": "assets/tactical_market/info_box.png"
+          },
+          {
+            "id": "supply_box",
+            "name": "Supply Box",
+            "cost_ob52": 300,
+            "previous_cost": 600,
+            "purchase_limit": 5,
+            "image_url": "assets/tactical_market/supply_box.png"
+          },
+          {
+            "id": "ammo",
+            "name": "Ammo - All Types",
+            "cost_ob52": 100,
+            "previous_cost": 200,
+            "image_url": "assets/tactical_market/ammo.png"
+          },
+          {
+            "id": "clu_skill_card",
+            "name": "Clu Skill Card",
+            "cost_ob52": 800,
+            "previous_cost": 1200,
+            "purchase_limit": 5,
+            "image_url": "assets/tactical_market/clu_skill_card.png"
+          },
+          {
+            "id": "homer_skill_card",
+            "name": "Homer Skill Card",
+            "cost_ob52": 800,
+            "previous_cost": 1200,
+            "purchase_limit": 5,
+            "image_url": "assets/tactical_market/homer_skill_card.png"
+          }
+        ]
+      },
+      "cs": {
+        "currency": "CS Cash",
+        "items": [
+          {
+            "id": "super_bonfire",
+            "name": "Super Bonfire",
+            "cost": null,
+            "effect": "Heals teammates within 8m over time and provides combat boosts.",
+            "balance_note": "OB53 reduced Tactical Market Super Bonfire speed boost in CS from 10% to 5%, and the speed/rate-of-fire boosts dissipate more quickly after leaving the bonfire area.",
+            "image_url": "assets/tactical_market/super_bonfire.png"
+          },
+          {
+            "id": "smoke_vortex",
+            "name": "Smoke Vortex",
+            "cost": null,
+            "duration": "40s",
+            "effect": "Generates a swirling smoke field that blocks enemy vision.",
+            "changed_in": "OB52",
+            "image_url": "assets/tactical_market/smoke_vortex.png"
+          },
+          {
+            "id": "cyber_barricade",
+            "name": "Cyber Barricade",
+            "cost": null,
+            "effect": "Deploys large barriers for cover.",
+            "image_url": "assets/tactical_market/cyber_barricade.png"
+          },
+          {
+            "id": "jammer",
+            "name": "Jammer",
+            "cost": null,
+            "added_in": "OB53",
+            "effect": "Anti-scan utility added after UAV-Lites were removed from CS Tactical Market.",
+            "image_url": "assets/tactical_market/jammer.png"
+          }
+        ],
+        "removed_items": [
+          {
+            "id": "uav_lite",
+            "name": "UAV-Lite",
+            "removed_in": "OB53",
+            "reason": "Scanning in CS was considered too powerful and reduced tactical uncertainty.",
+            "image_url": "assets/tactical_market/uav_lite.png"
+          }
+        ]
+      }
+    },
+    "gadgets": [
+      {
+        "id": "super_bonfire",
+        "name": "Super Bonfire",
+        "mode": "cs",
+        "image_url": "assets/tactical_market/super_bonfire.png",
+        "effect": "Heals teammates within 8m over time and provides combat boosts.",
+        "notes": "OB53 reduced the speed boost from 10% to 5%."
+      },
+      {
+        "id": "smoke_vortex",
+        "name": "Smoke Vortex",
+        "mode": "cs",
+        "image_url": "assets/tactical_market/smoke_vortex.png",
+        "effect": "Creates a swirling smoke field that blocks enemy vision.",
+        "duration": "40s"
+      },
+      {
+        "id": "cyber_barricade",
+        "name": "Cyber Barricade",
+        "mode": "cs",
+        "image_url": "assets/tactical_market/cyber_barricade.png",
+        "effect": "Deploys large barricades for cover."
+      },
+      {
+        "id": "bolt_maker",
+        "name": "Bolt Maker",
+        "mode": "br",
+        "image_url": "assets/tactical_market/bolt_maker.png",
+        "availability": "OB51 original Tactical Market item.",
+        "limit": "Up to 5 per match",
+        "available_until": "600s after match start",
+        "effect": "Creates a 30s Lightning Zone. Lightning strikes randomly once per second and deals 60 damage to enemies. Teammates are immune."
+      },
+      {
+        "id": "jammer",
+        "name": "Jammer",
+        "mode": "cs",
+        "image_url": "assets/tactical_market/jammer.png",
+        "added_in": "OB53",
+        "effect": "Anti-scan gadget added to replace UAV-Lite pressure in CS Tactical Market."
+      }
+    ],
+    "images": {
+      "main_icon": "assets/loadouts/tactical_market.png",
+      "fallback_main_icon": "https://i.imgur.com/OBnERWB.png",
+      "official_loadout_system_image": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg",
+      "official_cs_improved_loadout_image": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/20264/0b4a1faa98d337705d45733891ba1d24.jpeg"
+    },
+    "patch_history": [
+      {
+        "version": "OB51",
+        "change": "Tactical Market introduced as one of the four new loadouts. BR version included Info Box, Arsenal Key, Hit List, Tactical Gadgets, Monster Truck, and Bolt Maker. CS version introduced Super Bonfire, Smoke Vortex, and Cyber Barricade."
+      },
+      {
+        "version": "OB52",
+        "change": "Major price adjustments for Tactical Market items. Smoke Vortex duration reduced to 40s."
+      },
+      {
+        "version": "OB53",
+        "change": "Removed Hit List, Arsenal Key, and active skill cards. Added Heal UAV-Lite. Launch Pads became unlimited-use at 1400 FF Coins. CS received one-tap/hold-to-wheel in-match deployment, moving deployment, duration timing after prep phase, UAV-Lite removal, and Jammer addition."
+      }
+    ]
+  },
+  {
+    "id": "team_booster",
+    "name": "Team Booster",
+    "category": "Loadout",
+    "image_url": "https://i.imgur.com/RAG1acC.png",
+    "loadout_id": "500000005",
+    "description": {
+      "br": "Equip up to 3 unique team boosts and swap anytime.\n\n- You'll have up to 3 boost slots to equip any 3 out of 6 available boosts.\n- Each boost can only be selected once per team and is applied to all teammates.\n- Current slot costs: Slot 1 is free at match start; Slot 2 costs 300 FF Coins; Slot 3 costs 600 FF Coins.\n- You can swap boosts at any time during the match, and unlocked slots remain active after you're revived.\n\nCurrent BR boost values after OB52:\n- HP/EP Recovery: Restore 2 EP and 1 HP every second.\n- Speed Up: Move 4% faster after not firing or not taking damage for 4s.\n- Extra Heal: Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.\n- Out-Zone Buff: When outside the Safe Zone, EP conversion rate +100% and move 12% faster.\n- Gloo Wall: Increase Gloo Wall's HP by 100.\n- Armor: Restore 3% armor durability every second.",
+      "cs": "Helper Bot revives teammates remotely + Secret Bazaar team buffs in CS Store.\n\n- Get a Helper Bot per round.\n- When a teammate is knocked down within 16m, you can release the bot to help them up remotely.\n- The Helper Bot can be destroyed if shot.\n- The Helper Bot takes 7.5s to help up a teammate, reduced to 4s with Thiva's skill.\n- The Secret Bazaar section is available in the CS Store, offering team buffs for purchase."
+    },
+    "description_ms": {
+      "br": "Lengkapkan sehingga 3 boost pasukan unik dan tukar bila-bila masa.\n\n- Anda mempunyai sehingga 3 slot boost untuk melengkapkan mana-mana 3 daripada 6 boost yang tersedia.\n- Setiap boost hanya boleh dipilih sekali setiap pasukan dan digunakan kepada semua rakan sepasukan.\n- Kos slot semasa: Slot 1 percuma pada permulaan perlawanan; Slot 2 berharga 300 Syiling FF; Slot 3 berharga 600 Syiling FF.\n- Anda boleh menukar boost pada bila-bila masa semasa perlawanan, dan slot yang dibuka kekal aktif selepas anda dihidupkan semula.\n\nNilai boost BR semasa selepas OB52:\n- HP/EP Recovery: Pulihkan 2 EP dan 1 HP setiap saat.\n- Speed Up: Bergerak 4% lebih laju selepas tidak menembak atau tidak menerima damage selama 4s.\n- Extra Heal: Terima 10% lebih banyak penyembuhan. Kesan hilang 2s selepas menerima damage di luar zon.\n- Out-Zone Buff: Semasa di luar Safe Zone, kadar penukaran EP +100% dan bergerak 12% lebih laju.\n- Gloo Wall: Tingkatkan HP Gloo Wall sebanyak 100.\n- Armor: Pulihkan 3% ketahanan armor setiap saat.",
+      "cs": "Helper Bot menghidupkan rakan sepasukan dari jauh + Secret Bazaar buff pasukan di Kedai CS.\n\n- Dapatkan Helper Bot setiap pusingan.\n- Jika rakan sepasukan tumbang dalam jarak 16m, anda boleh lepaskan bot untuk membantu mereka bangun dari jauh.\n- Helper Bot boleh dimusnahkan jika ditembak.\n- Helper Bot mengambil masa 7.5s untuk membantu rakan sepasukan bangun, dikurangkan kepada 4s dengan skill Thiva.\n- Seksyen Secret Bazaar tersedia di Kedai CS untuk membeli buff pasukan."
+    },
+    "cost": {
+      "br": {
+        "currency": "FF Coins",
+        "slot_unlocks": [
+          {
+            "slot": 1,
+            "name": "Boost Slot 1",
+            "cost": 0,
+            "cost_text": "Free",
+            "unlock": "Automatically unlocked at match start."
+          },
+          {
+            "slot": 2,
+            "name": "Boost Slot 2",
+            "cost": 300,
+            "previous_cost": 400,
+            "changed_in": "OB52"
+          },
+          {
+            "slot": 3,
+            "name": "Boost Slot 3",
+            "cost": 600,
+            "previous_cost": 800,
+            "changed_in": "OB52"
+          }
+        ],
+        "boost_selection_cost": 0,
+        "note": "The cost is for unlocking extra boost slots. Selecting/swapping a boost has no separate official cost listed."
+      },
+      "cs": {
+        "currency": "CS Cash",
+        "items": [
+          {
+            "id": "helper_bot",
+            "name": "Helper Bot",
+            "cost": 0,
+            "cost_text": "Granted per round",
+            "note": "Can revive a knocked teammate remotely if they are within 16m."
+          },
+          {
+            "id": "secret_bazaar",
+            "name": "Secret Bazaar Team Buffs",
+            "cost": null,
+            "cost_text": "Varies / not listed",
+            "note": "Official notes confirm the Secret Bazaar offers team buffs for purchase, but do not list every buff price."
+          }
+        ]
+      }
+    },
+    "boosters": [
+      {
+        "id": "hp_ep_recovery",
+        "name": "HP/EP Recovery",
+        "short_name": "Recover",
+        "mode": "br",
+        "icon_key": "recover",
+        "icon_label": "HP",
+        "icon_emoji": "❤",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "Restore 2 EP and 1 HP every second.",
+        "effect_ms": "Pulihkan 2 EP dan 1 HP setiap saat.",
+        "effect_ob51": "Restore 2 EP and 1 HP every second.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "speed_up",
+        "name": "Speed Up",
+        "short_name": "Speed Up",
+        "mode": "br",
+        "icon_key": "speed",
+        "icon_label": "SPD",
+        "icon_emoji": "➤",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "Move 4% faster after not firing or not taking damage for 4s.",
+        "effect_ms": "Bergerak 4% lebih laju selepas tidak menembak atau tidak menerima damage selama 4s.",
+        "effect_ob51": "Move 7% faster after not firing or not taking damage for 4s.",
+        "changed_in": "OB52",
+        "change_note": "Out-of-combat sprint speed buff reduced from 7% to 4%.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "extra_heal",
+        "name": "Extra Heal",
+        "short_name": "Extra Heal",
+        "mode": "br",
+        "icon_key": "extra_heal",
+        "icon_label": "+",
+        "icon_emoji": "✚",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
+        "effect_ms": "Terima 10% lebih banyak penyembuhan. Kesan hilang 2s selepas menerima damage di luar zon.",
+        "effect_ob51": "Receive 10% more healing. The effect disappears 2s after taking out-of-zone damage.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "out_zone_buff",
+        "name": "Out-Zone Buff",
+        "short_name": "Out-Zone",
+        "mode": "br",
+        "icon_key": "out_zone",
+        "icon_label": "ZONE",
+        "icon_emoji": "◎",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "When outside the Safe Zone, EP conversion rate +100% and move 12% faster.",
+        "effect_ms": "Semasa di luar Safe Zone, kadar penukaran EP +100% dan bergerak 12% lebih laju.",
+        "effect_ob51": "When outside the Safe Zone, EP conversion rate +200% and move 7% faster.",
+        "changed_in": "OB52",
+        "change_note": "EP conversion changed from +200% to +100%; movement speed changed from +7% to +12%.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "gloo_wall",
+        "name": "Gloo Wall",
+        "short_name": "Gloo Wall",
+        "mode": "br",
+        "icon_key": "gloo_wall",
+        "icon_label": "GW",
+        "icon_emoji": "▰",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "Increase Gloo Wall's HP by 100.",
+        "effect_ms": "Tingkatkan HP Gloo Wall sebanyak 100.",
+        "effect_ob51": "Increase Gloo Wall's HP by 100.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "armor",
+        "name": "Armor",
+        "short_name": "Armor",
+        "mode": "br",
+        "icon_key": "armor",
+        "icon_label": "ARM",
+        "icon_emoji": "◆",
+        "cost": 0,
+        "currency": "FF Coins",
+        "effect": "Restore 3% armor durability every second.",
+        "effect_ms": "Pulihkan 3% ketahanan armor setiap saat.",
+        "effect_ob51": "Restore 3% armor durability every second.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      },
+      {
+        "id": "helper_bot",
+        "name": "Helper Bot",
+        "short_name": "Helper Bot",
+        "mode": "cs",
+        "icon_key": "helper_bot",
+        "icon_label": "BOT",
+        "icon_emoji": "⚙",
+        "cost": 0,
+        "currency": "CS Cash",
+        "cost_text": "Granted per round",
+        "effect": "Remote revive bot for knocked teammates within 16m. Revive takes 7.5s, or 4s with Thiva's skill.",
+        "effect_ms": "Bot bantuan untuk menghidupkan rakan sepasukan dari jauh dalam jarak 16m. Proses mengambil 7.5s, atau 4s dengan skill Thiva.",
+        "logo_note": "Use official cropped icon if available; UI includes a built-in fallback logo."
+      }
+    ],
+    "logo_sources": {
+      "main_loadout_image": "https://i.imgur.com/RAG1acC.png",
+      "official_patch_image_contains_loadout_logo": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg",
+      "standalone_booster_icons_status": "Standalone official booster icon files were not publicly available in the checked sources; this JSON uses icon_key/icon_label fallbacks for UI rendering.",
+      "official_loadout_system_image": "https://dl.dir.freefiremobile.com/common/web_event/official2.ff.garena.all/202510/d6bca55b3cdd6bfae9db30ed8aa11bec.jpeg"
+    },
+    "patch_history": [
+      {
+        "version": "OB51",
+        "change": "Team Booster introduced. BR slot costs were Slot 1 free, Slot 2 400 FF Coins, Slot 3 800 FF Coins."
+      },
+      {
+        "version": "OB52",
+        "change": "Team Booster Slot 2 reduced to 300 FF Coins and Slot 3 reduced to 600 FF Coins. Speed Up reduced from 7% to 4%. Out-Zone changed from +200% EP conversion / +7% speed to +100% EP conversion / +12% speed."
+      },
+      {
+        "version": "OB53",
+        "change": "Quick Messages added prompts when selecting a team buff or deploying Helper Bot; Helper Bot display/progress was optimized."
+      }
+    ]
+  }
+]

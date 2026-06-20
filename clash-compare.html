@@ -1,0 +1,2130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <!-- Browser tab / app icons -->
+  <link rel="icon" href="favicon.ico?v=20260620" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="favicon.png?v=20260620" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=20260620" />
+  <link rel="manifest" href="site.webmanifest?v=20260620" />
+  <meta name="theme-color" content="#ffbd59" />
+<meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clash Squad — Team Compare</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/js/app-config.js"></script>
+
+  <style>
+    :root{
+      --bg:#07090f;
+      --bg2:#0b1020;
+
+      --panel: rgba(20, 26, 38, .72);
+      --panel2: rgba(14, 18, 28, .70);
+
+      --line: rgba(255,255,255,.08);
+      --line2: rgba(255,255,255,.06);
+
+      --ink:#f4f6ff;
+      --muted:#aab1c5;
+
+      --brand:#ffbd59;
+      --brand2:#ff7733;
+      --accent:#4dd3ff;
+
+      --good:#71d083;
+      --bad:#ff6b6b;
+
+      --radius:16px;
+      --radius-lg:22px;
+      --shadow: 0 22px 70px rgba(0,0,0,.55);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 18% 12%, rgba(77,211,255,.14), transparent 60%),
+        radial-gradient(900px 650px at 80% 28%, rgba(255,189,89,.12), transparent 55%),
+        radial-gradient(900px 700px at 70% 85%, rgba(255,119,51,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg) 0%, #060815 60%, #050611 100%);
+      overflow-x:hidden;
+    }
+
+    .muted{color:var(--muted);font-size:.92rem}
+    .mono{font-variant-numeric:tabular-nums}
+    .tight{line-height:1.25}
+    .right{text-align:right}
+
+    /* ===== Topbar ===== */
+    header.topbar{
+      position:sticky;
+      top:0;
+      z-index:30;
+      padding:10px 12px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(5,7,12,.82), rgba(5,7,12,.55));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .topbar-inner{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      max-width:1240px;
+      margin:0 auto;
+    }
+    .titleWrap{
+      min-width:0;
+      flex:1;
+      padding:0 4px;
+    }
+    .titleMain{
+      font-weight:1000;
+      font-size:1rem;
+      color:var(--brand);
+      letter-spacing:.2px;
+      line-height:1.15;
+    }
+    .titleSub{
+      margin-top:3px;
+      font-size:.82rem;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .userArea{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+    .userPill{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      max-width:280px;
+      min-width:0;
+    }
+    .userDot{
+      width:10px;height:10px;border-radius:99px;
+      background:linear-gradient(180deg, var(--accent), rgba(77,211,255,.4));
+      box-shadow:0 0 0 3px rgba(77,211,255,.12);
+      flex:0 0 auto;
+    }
+    #user-info{
+      font-size:.92rem;
+      color:var(--brand);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      min-width:0;
+    }
+
+    /* ===== Buttons ===== */
+    .btn{
+      border:0;
+      cursor:pointer;
+      font-weight:900;
+      border-radius:14px;
+      padding:10px 12px;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      user-select:none;
+      white-space:nowrap;
+      font-size:.92rem;
+    }
+    .btn-primary{
+      background:linear-gradient(180deg, rgba(255,189,89,1), rgba(255,119,51,.92));
+      color:#1a140a;
+      box-shadow:0 10px 30px rgba(255,189,89,.12);
+    }
+    .btn-primary:hover{filter:saturate(1.05) brightness(1.02)}
+    .btn-ghost{
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      color:var(--ink);
+    }
+    .btn-ghost:hover{
+      border-color:rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+    }
+
+    /* ===== Layout ===== */
+    .shell{max-width:1240px;margin:18px auto 60px;padding:0 12px}
+
+    .hero{
+      position:relative;
+      padding:18px 18px 16px;
+      border-radius:var(--radius-lg);
+      border:1px solid var(--line);
+      background:
+        radial-gradient(900px 380px at 14% 30%, rgba(77,211,255,.16), transparent 55%),
+        radial-gradient(700px 300px at 70% 25%, rgba(255,189,89,.12), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-bottom:14px;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:-2px;
+      background: linear-gradient(90deg, rgba(255,189,89,.0), rgba(255,189,89,.22), rgba(255,189,89,.0));
+      opacity:.16;
+      transform:skewY(-6deg) translateY(-60px);
+      pointer-events:none;
+    }
+    .hero h1{
+      margin:0;
+      font-size:1rem;
+      letter-spacing:.2px;
+      color:var(--brand);
+      position:relative;
+      z-index:1;
+    }
+    .hero .sub{
+      margin-top:6px;
+      position:relative;
+      z-index:1;
+      line-height:1.35;
+    }
+
+    .block{
+      margin-top:14px;
+      padding:14px;
+      border-radius:var(--radius);
+      border:1px solid var(--line);
+      background:rgba(20,26,38,.60);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:0 18px 55px rgba(0,0,0,.45);
+    }
+    .block h2{
+      margin:0 0 10px 0;
+      color:var(--brand);
+      font-size:1rem;
+      letter-spacing:.2px;
+    }
+
+    .bar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      margin:0;
+    }
+    .controls label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 10px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--muted);
+      font-weight:800;
+      font-size:.9rem;
+    }
+    .controls select,
+    .controls input[type="text"],
+    .controls input[type="number"]{
+      background:rgba(10,12,20,.55);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--brand);
+      border-radius:12px;
+      padding:8px 10px;
+      outline:none;
+      font-weight:900;
+    }
+    .controls select:focus,
+    .controls input:focus{
+      border-color:rgba(77,211,255,.35);
+      box-shadow:0 0 0 3px rgba(77,211,255,.12);
+    }
+
+    .grid2{display:grid;grid-template-columns:repeat(2,minmax(320px,1fr));gap:12px}
+    .card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
+    }
+    .card h3{
+      margin:0 0 8px 0;
+      color:var(--brand2);
+      font-size:1.02rem;
+    }
+
+    .kpis{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+    .kpi{
+      background:rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;
+      padding:7px 9px;
+      font-size:.8rem;
+      color:rgba(244,246,255,.90);
+    }
+
+    /* ===== Tables ===== */
+    .tableWrap{
+      width:100%;
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.12);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    thead th{
+      position:sticky;
+      top:0;
+      z-index:2;
+      text-align:left;
+      padding:10px 10px;
+      background:linear-gradient(180deg, rgba(8,10,16,.78), rgba(8,10,16,.60));
+      border-bottom:1px solid var(--line);
+      color:rgba(244,246,255,.90);
+      font-weight:900;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      vertical-align:top;
+      color:rgba(244,246,255,.92);
+    }
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+
+    .pill{
+      display:inline-block;
+      padding:3px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      margin:2px;
+      font-size:.85rem;
+      color:rgba(244,246,255,.86);
+    }
+    .pill small{opacity:.8;font-size:.8em;margin-left:4px}
+
+    .icons{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+    .icons img{
+      width:24px;height:24px;border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      object-fit:cover;
+    }
+
+    .wl{
+      font-weight:1000;
+      padding:4px 10px;
+      border-radius:999px;
+      display:inline-block;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.03);
+    }
+    .wl.W{color:var(--good); border-color:rgba(113,208,131,.25); background:rgba(113,208,131,.08)}
+    .wl.L{color:var(--bad);  border-color:rgba(255,107,107,.25); background:rgba(255,107,107,.08)}
+
+    /* Active Skill Impact */
+    .delta-pos{color:var(--good);font-weight:900}
+    .delta-neg{color:var(--bad);font-weight:900}
+    .opp-logos{display:inline-flex;gap:4px;align-items:center;margin-left:6px;vertical-align:middle}
+    .opp-logos img{
+      width:18px;height:18px;border-radius:6px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      object-fit:cover;
+    }
+    .opp-logos .logo-wrap{position:relative;display:inline-block}
+    .opp-logos .cnt{
+      position:absolute;right:-6px;bottom:-6px;
+      background:rgba(8,10,16,.95);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:6px;
+      padding:0 3px;
+      font-size:10px;
+      line-height:1.2;
+      color:#cfd6e8;
+    }
+
+    /* AI Prompt box */
+    .ai-actions{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+    .ai-text{
+      width:100%;
+      min-height:220px;
+      background:rgba(8,10,16,.78);
+      color:#eaefff;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size:.85rem;
+      white-space:pre-wrap;
+      outline:none;
+    }
+
+    /* Accordions */
+    details.accordion{
+      background:rgba(20,26,38,.60);
+      border:1px solid var(--line);
+      border-radius:16px;
+      margin-top:14px;
+      overflow:hidden;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:0 18px 55px rgba(0,0,0,.45);
+    }
+    details.accordion > summary{
+      list-style:none;
+      cursor:pointer;
+      padding:13px 14px;
+      color:var(--brand);
+      font-weight:900;
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      user-select:none;
+      outline:none;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      border-bottom:1px solid var(--line);
+    }
+    details.accordion > summary::-webkit-details-marker{display:none}
+    details.accordion > summary::after{
+      content:'▾';
+      margin-left:auto;
+      transition:transform .18s ease;
+      opacity:.9;
+    }
+    details.accordion[open] > summary::after{transform:rotate(-180deg)}
+    details.accordion .accordion-body{padding:14px}
+
+    /* ===== Match card ===== */
+    .matchCard{
+      display:grid;
+      grid-template-columns:280px 1fr;
+      gap:12px;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      margin-bottom:10px;
+    }
+    .mInfo{display:flex;flex-direction:column;gap:6px}
+    .mRow{display:flex;gap:10px;align-items:center}
+    .mKey{
+      width:86px;
+      color:var(--muted);
+      font-size:.86rem;
+      font-weight:700;
+    }
+    .mVal{font-size:.95rem;line-height:1.15}
+    .banBox{display:flex;gap:8px;align-items:center}
+    .banBox img{
+      width:22px;height:22px;border-radius:8px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      object-fit:cover;
+    }
+
+    .mPlayers{display:flex;flex-direction:column;gap:8px;align-content:start}
+
+    .pBadge{
+      display:grid;
+      grid-template-columns:44px 1fr auto;
+      gap:10px;
+      align-items:center;
+      background:rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:7px 9px;
+      min-height:54px;
+    }
+    .pAct{
+      width:44px;height:44px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      object-fit:cover;
+      background:rgba(0,0,0,.18);
+    }
+    .pMeta{min-width:0}
+    .pName{
+      font-size:12px;
+      font-weight:1000;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pHero{
+      font-size:11px;
+      color:rgba(244,246,255,.82);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pPet{
+      margin-top:2px;
+      font-size:10px;
+      color:rgba(170,177,197,.88);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pPass{display:flex;gap:6px;align-items:center}
+    .pPass img{
+      width:16px;height:16px;border-radius:5px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      object-fit:cover;
+    }
+
+    /* Pair buttons */
+    .pairbar{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .pairbtn{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color:rgba(244,246,255,.88);
+      border-radius:999px;
+      padding:7px 11px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .pairbtn:hover{
+      border-color:rgba(255,189,89,.35);
+      background:rgba(255,189,89,.08);
+    }
+    .pairbtn strong{color:var(--brand2)}
+
+    .caption{margin:6px 0 8px}
+
+    @media (max-width: 980px){
+      .matchCard{grid-template-columns:1fr}
+    }
+
+    @media (max-width: 860px){
+      .grid2{grid-template-columns:1fr}
+    }
+
+    @media (max-width: 640px){
+      .shell{padding:0 10px; margin-top:12px}
+      header.topbar{padding:10px}
+      .topbar-inner{gap:8px}
+      .userPill{max-width:170px}
+      .titleSub{display:none}
+      .matchCard{padding:10px}
+      .controls label{width:100%;justify-content:space-between}
+      .controls label select{min-width:140px}
+      .bar{align-items:stretch}
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="btn btn-ghost" href="home.html">← Back</a>
+
+    <div class="titleWrap">
+      <div class="titleMain">Clash Squad — Team Compare</div>
+      <div class="titleSub">Compare team trends, skills, maps, bans, combos, and opponent performance.</div>
+    </div>
+
+    <div class="userArea">
+      <div class="userPill">
+        <span class="userDot"></span>
+        <span id="user-info">Checking login…</span>
+      </div>
+      <button class="btn btn-primary" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <section class="hero">
+    <h1>Team Compare Dashboard</h1>
+    <div class="sub muted">
+      Analyze two Clash Squad teams side by side using match history, skill usage, map win rates, active impact, passive trios, pet skill trends, ban impact, and opponent series.
+    </div>
+  </section>
+
+  <div class="block">
+    <div class="bar">
+      <div class="controls">
+        <label>Map
+          <select id="fMap">
+            <option value="__ALL__">All maps</option>
+            <option value="Bermuda">Bermuda</option>
+            <option value="Kalahari">Kalahari</option>
+            <option value="Purgatory">Purgatory</option>
+            <option value="Alpine">Alpine</option>
+            <option value="Nexterra">Nexterra</option>
+            <option value="Solara">Solara</option>
+          </select>
+        </label>
+        <label>Tournament <select id="fTourn"></select></label>
+        <label>Outcome
+          <select id="fWL">
+            <option value="__ALL__">All</option>
+            <option value="W">Wins only</option>
+            <option value="L">Losses only</option>
+          </select>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- PICK TEAMS -->
+  <details class="accordion" open>
+    <summary>Pick two teams</summary>
+    <div class="accordion-body">
+      <div class="controls">
+        <label>Team A <select id="cmpTeamA"></select></label>
+        <label>Team B <select id="cmpTeamB"></select></label>
+        <button class="btn btn-primary" id="cmpSwap" title="Swap A/B">Swap</button>
+      </div>
+
+      <div class="pairbar">
+        <span class="muted">Quick pairs:</span>
+        <button class="pairbtn" data-pair="BURIRAM|WAG"><strong>BRU</strong> vs <strong>WAG</strong></button>
+        <button class="pairbtn" data-pair="FALCONS|P ESPORTS"><strong>FLCN</strong> vs <strong>PE</strong></button>
+        <button class="pairbtn" data-pair="AG|HEAVY"><strong>AG</strong> vs <strong>HEV</strong></button>
+        <button class="pairbtn" data-pair="EVOS DIVINE|RRQ KAZU"><strong>EVOS</strong> vs <strong>RRQ</strong></button>
+      </div>
+
+      <div class="caption muted" id="meta">—</div>
+    </div>
+  </details>
+
+  <!-- OVERVIEW -->
+  <div class="block">
+    <h2>Overview KPIs</h2>
+    <div class="grid2">
+      <div class="card" id="kpiA"><h3>A</h3>Loading…</div>
+      <div class="card" id="kpiB"><h3>B</h3>Loading…</div>
+    </div>
+  </div>
+
+  <!-- MATCHES -->
+  <details class="accordion">
+    <summary>Matches (Active + 3× Passive + Pet per player)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelMatchesA">Team A</h3><div id="matchesA">Loading…</div></div>
+        <div class="card"><h3 id="labelMatchesB">Team B</h3><div id="matchesB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- SKILLS -->
+  <details class="accordion">
+    <summary>Skills (Top 10 by Rate)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelBansA">Team A — Bans</h3><div id="bansA">Loading…</div></div>
+        <div class="card"><h3 id="labelBansB">Team B — Bans</h3><div id="bansB">Loading…</div></div>
+        <div class="card"><h3 id="labelActiveA">Team A — Active</h3><div id="activeA">Loading…</div></div>
+        <div class="card"><h3 id="labelActiveB">Team B — Active</h3><div id="activeB">Loading…</div></div>
+        <div class="card"><h3 id="labelPassiveA">Team A — Passive</h3><div id="passiveA">Loading…</div></div>
+        <div class="card"><h3 id="labelPassiveB">Team B — Passive</h3><div id="passiveB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- TEAM × MAP -->
+  <details class="accordion">
+    <summary>Team × Map Win Rate</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelTMA">Team A</h3><div id="tmA">Loading…</div></div>
+        <div class="card"><h3 id="labelTMB">Team B</h3><div id="tmB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- PER-SKILL — ACTIVE -->
+  <details class="accordion">
+    <summary>Per-Skill — Active</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelPSA_Act">Team A</h3><div id="psAAct">Loading…</div></div>
+        <div class="card"><h3 id="labelPSB_Act">Team B</h3><div id="psBAct">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ACTIVE SKILL IMPACT -->
+  <details class="accordion">
+    <summary>Active Skill Impact (Win/Loss)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelImpactA">Team A</h3><div id="impactA">Loading…</div></div>
+        <div class="card"><h3 id="labelImpactB">Team B</h3><div id="impactB">Loading…</div></div>
+      </div>
+      <div class="caption muted tight">
+        Δ vs team baseline win% shows how much the skill raises (green) or lowers (red) win chance when picked.
+      </div>
+    </div>
+  </details>
+
+  <!-- PER-SKILL — PASSIVE -->
+  <details class="accordion">
+    <summary>Per-Skill — Passive</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelPSA_Pas">Team A</h3><div id="psAPas">Loading…</div></div>
+        <div class="card"><h3 id="labelPSB_Pas">Team B</h3><div id="psBPas">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- PER-SKILL — PET -->
+  <details class="accordion">
+    <summary>Per-Skill — Pet</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelPSA_Pet">Team A</h3><div id="psAPet">Loading…</div></div>
+        <div class="card"><h3 id="labelPSB_Pet">Team B</h3><div id="psBPet">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- COMBOS & PAIRS -->
+  <details class="accordion">
+    <summary>Combos & Pairs (Top 5)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelCombosA">Team A — 4× Active</h3><div id="combosA">Loading…</div></div>
+        <div class="card"><h3 id="labelCombosB">Team B — 4× Active</h3><div id="combosB">Loading…</div></div>
+        <div class="card"><h3 id="labelPairsA">Team A — 2× Active</h3><div id="pairsA">Loading…</div></div>
+        <div class="card"><h3 id="labelPairsB">Team B — 2× Active</h3><div id="pairsB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- PASSIVE TRIOS -->
+  <details class="accordion">
+    <summary>Passive Trios (Top 5 overall)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelTriosA">Team A</h3><div id="triosA">Loading…</div></div>
+        <div class="card"><h3 id="labelTriosB">Team B</h3><div id="triosB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- BAN IMPACT -->
+  <details class="accordion">
+    <summary>Ban Impact (Top 10 by Δ Win %)</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelBIA">Team A</h3><div id="biA">Loading…</div></div>
+        <div class="card"><h3 id="labelBIB">Team B</h3><div id="biB">Loading…</div></div>
+      </div>
+      <div class="caption muted">Outcome is forced to All for Ban Impact to avoid bias.</div>
+    </div>
+  </details>
+
+  <!-- OPPONENT SERIES -->
+  <details class="accordion">
+    <summary>Performance by Opponent</summary>
+    <div class="accordion-body">
+      <div class="grid2">
+        <div class="card"><h3 id="labelOppSeriesA">Team A</h3><div id="oppSeriesA">Loading…</div></div>
+        <div class="card"><h3 id="labelOppSeriesB">Team B</h3><div id="oppSeriesB">Loading…</div></div>
+      </div>
+    </div>
+  </details>
+
+  <!-- AI ANALYSIS PROMPT -->
+  <details class="accordion">
+    <summary>AI Analysis Prompt</summary>
+    <div class="accordion-body">
+      <div class="ai-actions">
+        <button class="btn btn-primary" id="copyPromptBtn">Copy prompt</button>
+        <span class="muted">Copies a structured prompt + current data snapshot for ChatGPT.</span>
+      </div>
+      <textarea id="aiPrompt" class="ai-text" readonly>Loading…</textarea>
+    </div>
+  </details>
+
+</div>
+
+<script>
+/* ========= Supabase init + auth ========= */
+const client = supabase.createClient(
+  (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_URL) || 'https://ooutjrewmwsixghbouxi.supabase.co',
+  (window.FF_CONFIG && window.FF_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg'
+);
+
+(async () => {
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) { window.location.href = "index.html"; return; }
+  const ui = document.getElementById('user-info');
+  if (ui && session.user?.email) ui.textContent = `Logged in as: ${session.user.email}`;
+})();
+
+document.getElementById('logoutBtn').onclick = async () => {
+  await client.auth.signOut();
+  window.location.href = "index.html";
+};
+
+/* ========= Utilities ========= */
+const PLACEHOLDER = 'https://imgur.com/AdvPwAO.png';
+const el = (id) => document.getElementById(id);
+const fmtPct = (x) => isFinite(x) ? (x * 100).toFixed(1) + '%' : '—';
+const pct = (num, den) => den ? fmtPct(num / den) : '—';
+const uniq = (arr) => [...new Set(arr)];
+
+function parseState(val){
+  if (!val) return {};
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch(e){ return {}; }
+}
+
+function safe(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    '"':'&quot;',
+    "'":'&#39;'
+  }[c]));
+}
+
+function normalizeSkillEntry(entry){
+  if (!entry) return { name:'', img:PLACEHOLDER };
+  if (typeof entry === 'string') return { name: entry.trim(), img: PLACEHOLDER };
+  return {
+    name: entry.name || entry.skill_name || entry.pet_name || entry.pet || entry.title || '',
+    img: entry.image_url || entry.img || entry.icon || entry.pet_image || entry.image || PLACEHOLDER
+  };
+}
+
+function extractPetsArray(state){
+  if (Array.isArray(state?.pets)) return state.pets;
+  if (Array.isArray(state?.petSkills)) return state.petSkills;
+  if (Array.isArray(state?.pet_skill)) return state.pet_skill;
+  if (Array.isArray(state?.petskills)) return state.petskills;
+  if (Array.isArray(state?.pet)) return state.pet;
+  return [];
+}
+
+/* ========= Filters init ========= */
+function initFilters(){
+  el('fMap').value = '__ALL__';
+  el('fWL').value = '__ALL__';
+  el('fTourn').innerHTML = `<option value="__ALL__">All tournaments</option>`;
+}
+initFilters();
+
+/* ========= State ========= */
+let RAW_RECORDS = [];
+let FIRST_LOAD_TOURN = true;
+let TEAM_LOGO = {};
+let LATEST_EXPORT = null;
+
+/* ========= Fetch ========= */
+async function fetchRecords({ map = el('fMap').value, tourn = el('fTourn').value || '__ALL__' } = {}){
+  let q = client
+    .from('draft_records')
+    .select('id, match_date, game_number, team_left, team_right, team_left_score, team_right_score, map, tournament_name, state');
+
+  if (map !== '__ALL__') q = q.eq('map', map);
+  if (tourn !== '__ALL__') q = q.eq('tournament_name', tourn);
+
+  q = q.order('match_date', { ascending:false }).order('id', { ascending:false });
+
+  const { data, error } = await q;
+  if (error){
+    console.error(error);
+    alert('Failed to load records: ' + error.message);
+    return [];
+  }
+  return data || [];
+}
+
+async function fetchTeamLogos(){
+  const { data, error } = await client.from('team_logos').select('*');
+  if (error){
+    console.warn('team_logos fetch error:', error.message);
+    TEAM_LOGO = {};
+    return;
+  }
+  const map = {};
+  (data || []).forEach(r => {
+    const name = r.team || r.team_name || r.TEAM || r.name || '';
+    const url  = r.image_url || r.image_link || r['Image Link'] || r.link || '';
+    if (name && url) map[String(name).trim()] = url;
+  });
+  TEAM_LOGO = map;
+}
+
+function populateTeamDropdowns(records){
+  const teams = [...new Set(records.flatMap(r => [r.team_left, r.team_right]).filter(Boolean))].sort();
+  const A = el('cmpTeamA');
+  const B = el('cmpTeamB');
+  const prevA = A.value;
+  const prevB = B.value;
+
+  const opts = teams.map(t => `<option value="${t}">${t}</option>`).join('');
+  A.innerHTML = opts;
+  B.innerHTML = opts;
+
+  A.value = teams.includes(prevA) ? prevA : (teams[0] || '');
+  B.value = teams.includes(prevB) ? prevB : (teams[1] || teams[0] || '');
+}
+
+async function populateTournamentDropdown(records){
+  const dd = el('fTourn');
+  const prior = dd.value || '__ALL__';
+
+  const tourns = new Set();
+  let latest = null;
+
+  records.forEach(r => {
+    const tn = r.tournament_name;
+    if (!tn) return;
+    tourns.add(tn);
+    if (!latest || String(r.match_date) > String(latest.date)) {
+      latest = { name: tn, date: r.match_date };
+    }
+  });
+
+  dd.innerHTML =
+    `<option value="__ALL__">All tournaments</option>` +
+    [...tourns].sort().map(t => `<option value="${t}">${t}</option>`).join('');
+
+  const validValues = [...dd.options].map(o => o.value);
+
+  if (FIRST_LOAD_TOURN && latest && (prior === '__ALL__' || !prior)) {
+    dd.value = latest.name;
+    FIRST_LOAD_TOURN = false;
+  } else {
+    dd.value = validValues.includes(prior) ? prior : '__ALL__';
+  }
+}
+
+/* ========= Transform ========= */
+function explodeRecordToRows(rec){
+  const s = parseState(rec.state);
+  const picks    = Array.isArray(s.picks) ? s.picks : [];
+  const passives = Array.isArray(s.passives) ? s.passives : [];
+  const bans     = Array.isArray(s.bans) ? s.bans : [];
+  const names    = Array.isArray(s.playerCards) ? s.playerCards : [];
+  const pets     = extractPetsArray(s);
+
+  const leftWin  = (rec.team_left_score ?? 0) > (rec.team_right_score ?? 0);
+  const rightWin = (rec.team_right_score ?? 0) > (rec.team_left_score ?? 0);
+
+  function sideRow(side){
+    const isL = side === 'L';
+    const team = isL ? rec.team_left : rec.team_right;
+    const opp  = isL ? rec.team_right : rec.team_left;
+    const ts   = isL ? (rec.team_left_score ?? 0) : (rec.team_right_score ?? 0);
+    const os   = isL ? (rec.team_right_score ?? 0) : (rec.team_left_score ?? 0);
+    const res  = (isL ? leftWin : rightWin) ? 'W' : 'L';
+    const banObj = bans[isL ? 0 : 1] || {};
+    const ban    = banObj?.name || '';
+    const banImg = banObj?.image_url || PLACEHOLDER;
+
+    const idx = isL ? [0,1,2,3] : [7,6,5,4];
+
+    const actives = idx.map((i, k) => {
+      const player = (names[i] && String(names[i]).trim()) ? names[i].trim() : `P${k+1}`;
+      const heroObj = (picks[i] && typeof picks[i] === 'object') ? picks[i] : null;
+      return {
+        player,
+        hero: heroObj?.name || '',
+        heroImg: heroObj?.image_url || PLACEHOLDER
+      };
+    });
+
+    const passiveLines = idx.map((i, k) => {
+      const player = (names[i] && String(names[i]).trim()) ? names[i].trim() : `P${k+1}`;
+      const trioRaw = Array.isArray(passives[i]) ? passives[i] : [];
+      const trioObjs = trioRaw.filter(Boolean).map(ps => ({
+        name: ps?.name || '',
+        img: ps?.image_url || PLACEHOLDER
+      }));
+      while (trioObjs.length < 3) trioObjs.push({ name:'', img: PLACEHOLDER });
+      return { player, trio: trioObjs.slice(0, 3) };
+    });
+
+    const petLines = idx.map((i, k) => {
+      const player = (names[i] && String(names[i]).trim()) ? names[i].trim() : `P${k+1}`;
+      const petObj = normalizeSkillEntry(pets[i]);
+      return { player, pet: petObj };
+    });
+
+    return {
+      rec_id: rec.id,
+      tournament: rec.tournament_name || '—',
+      match_date: rec.match_date,
+      game_number: rec.game_number ?? 0,
+      map: rec.map,
+      team,
+      opponent: opp,
+      team_score: ts,
+      opp_score: os,
+      result: res,
+      banName: ban,
+      banImg,
+      actives,
+      passives: passiveLines,
+      pets: petLines
+    };
+  }
+
+  return [sideRow('L'), sideRow('R')];
+}
+
+function applyWL(rows){
+  const wl = el('fWL').value;
+  if (wl === '__ALL__') return rows;
+  return rows.filter(r => r.result === wl);
+}
+
+function rowsForTeam(team){
+  const rows = RAW_RECORDS.flatMap(explodeRecordToRows).filter(r => r.team === team);
+  return applyWL(rows);
+}
+
+/* ========= Aggregations / Data helpers ========= */
+function buildTeamBucket(rows, teamName, kind){
+  const B = { name: teamName, matches:0, wins:0, skills:new Map() };
+
+  rows.forEach(r => {
+    B.matches += 1;
+    if (r.result === 'W') B.wins += 1;
+
+    if (kind === 'active'){
+      r.actives.forEach(a => {
+        const nm = a.hero;
+        if (!nm) return;
+        const S = B.skills.get(nm) || { occ:0, appear:0, appearWins:0 };
+        S.occ += 1;
+        S.appear += 1;
+        if (r.result === 'W') S.appearWins += 1;
+        B.skills.set(nm, S);
+      });
+    } else if (kind === 'passive'){
+      r.passives.forEach(p => {
+        (p.trio || []).forEach(x => {
+          const nm = x?.name || '';
+          if (!nm) return;
+          const S = B.skills.get(nm) || { occ:0, appear:0, appearWins:0 };
+          S.occ += 1;
+          S.appear += 1;
+          if (r.result === 'W') S.appearWins += 1;
+          B.skills.set(nm, S);
+        });
+      });
+    } else if (kind === 'pet'){
+      r.pets.forEach(p => {
+        const nm = p?.pet?.name || '';
+        if (!nm) return;
+        const S = B.skills.get(nm) || { occ:0, appear:0, appearWins:0 };
+        S.occ += 1;
+        S.appear += 1;
+        if (r.result === 'W') S.appearWins += 1;
+        B.skills.set(nm, S);
+      });
+    } else {
+      const nm = r.banName;
+      if (!nm) return;
+      const S = B.skills.get(nm) || { occ:0, appear:0, appearWins:0 };
+      S.occ += 1;
+      S.appear += 1;
+      if (r.result === 'W') S.appearWins += 1;
+      B.skills.set(nm, S);
+    }
+  });
+
+  return B;
+}
+
+function topSkillsData(bucket, limit=10){
+  if (!bucket || !bucket.matches) return [];
+  return [...bucket.skills.entries()].map(([name, s]) => ({
+    skill: name,
+    count: s.occ,
+    appear: s.appear,
+    pick_rate: bucket.matches ? s.appear / bucket.matches : 0,
+    win_rate: s.appear ? s.appearWins / s.appear : 0
+  }))
+  .sort((a, b) => b.pick_rate - a.pick_rate || a.skill.localeCompare(b.skill))
+  .slice(0, limit);
+}
+
+function topSkillsTable(bucket, kind, limit=10){
+  const skills = topSkillsData(bucket, limit);
+  const rateLabel = (kind === 'ban') ? 'Ban Rate' : 'Pick Rate';
+  if (!skills.length) return `<div class="muted">No ${kind} data.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Skill</th><th class="right">Count</th><th class="right">${rateLabel}</th><th class="right">Win Rate</th></tr></thead>
+        <tbody>
+          ${skills.map(s => `
+            <tr>
+              <td>${s.skill}</td>
+              <td class="right">${s.count}</td>
+              <td class="right">${fmtPct(s.pick_rate)}</td>
+              <td class="right">${fmtPct(s.win_rate)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function teamMapStatsData(rows){
+  const agg = new Map();
+  rows.forEach(r => {
+    const m = r.map || '—';
+    if (!agg.has(m)) agg.set(m, { map:m, matches:0, wins:0 });
+    const A = agg.get(m);
+    A.matches += 1;
+    if (r.result === 'W') A.wins += 1;
+  });
+  return [...agg.values()]
+    .map(x => ({ ...x, winpct: x.matches ? x.wins / x.matches : 0 }))
+    .sort((a,b) => b.matches - a.matches || b.winpct - a.winpct || a.map.localeCompare(b.map));
+}
+
+function teamMapStats(rows){
+  const list = teamMapStatsData(rows);
+  if (!list.length) return `<div class="muted">No team×map rows.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Map</th><th class="right">Matches</th><th class="right">Wins</th><th class="right">Win %</th></tr></thead>
+        <tbody>
+          ${list.map(r => `
+            <tr>
+              <td>${r.map}</td>
+              <td class="right">${r.matches}</td>
+              <td class="right">${r.wins}</td>
+              <td class="right">${fmtPct(r.winpct)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* ===== Active compressed data with players ===== */
+function perSkillActiveCompressedData(rows, limit=12){
+  if (!rows.length) return [];
+
+  const map = new Map();
+  rows.forEach(r => {
+    r.actives.forEach(a => {
+      if (!a.hero) return;
+
+      const skillName  = a.hero;
+      const playerName = (a.player && String(a.player).trim()) || '';
+
+      const obj = map.get(skillName) || { p:0, w:0, players:new Map() };
+      obj.p += 1;
+      if (r.result === 'W') obj.w += 1;
+
+      if (playerName){
+        obj.players.set(playerName, (obj.players.get(playerName) || 0) + 1);
+      }
+      map.set(skillName, obj);
+    });
+  });
+
+  const den = rows.length * 4;
+
+  return [...map.entries()].map(([name, v]) => {
+    const playerList = [...v.players.entries()]
+      .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+    return {
+      skill: name,
+      picks: v.p,
+      wins: v.w,
+      win_rate: v.p ? v.w / v.p : null,
+      pick_rate: den ? v.p / den : 0,
+      players: playerList
+    };
+  })
+  .sort((a,b) => b.pick_rate - a.pick_rate || (b.win_rate || 0) - (a.win_rate || 0) || a.skill.localeCompare(b.skill))
+  .slice(0, limit);
+}
+
+function perSkillActiveCompressed(rows, limit=12){
+  const list = perSkillActiveCompressedData(rows, limit);
+  if (!list.length) return `<div class="muted">No active skills.</div>`;
+
+  return `<div class="tableWrap"><table>
+    <thead>
+      <tr>
+        <th>Skill</th>
+        <th class="right">Picks</th>
+        <th class="right">Wins</th>
+        <th class="right">Win %</th>
+        <th class="right">Pick %</th>
+        <th>Players</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${list.map(r => {
+        const playersCell = (r.players && r.players.length)
+          ? r.players.slice(0, 4).map(([name, count]) => `${name}${count > 1 ? ` (${count})` : ''}`).join(', ')
+          : '—';
+
+        return `<tr>
+          <td>${r.skill}</td>
+          <td class="right">${r.picks}</td>
+          <td class="right">${r.wins}</td>
+          <td class="right">${r.win_rate===null ? '—' : fmtPct(r.win_rate)}</td>
+          <td class="right">${fmtPct(r.pick_rate)}</td>
+          <td>${playersCell}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function perSkillPassiveCompressedData(rows, limit=12){
+  if (!rows.length) return [];
+  const map = new Map();
+
+  rows.forEach(r => {
+    r.passives.forEach(p => {
+      (p.trio || []).forEach(ps => {
+        if (!ps?.name) return;
+        const obj = map.get(ps.name) || { p:0, w:0 };
+        obj.p += 1;
+        if (r.result === 'W') obj.w += 1;
+        map.set(ps.name, obj);
+      });
+    });
+  });
+
+  const den = rows.length * 12;
+
+  return [...map.entries()].map(([name, v]) => ({
+    skill: name,
+    picks: v.p,
+    wins: v.w,
+    win_rate: v.p ? v.w / v.p : null,
+    pick_rate: den ? v.p / den : 0
+  }))
+  .sort((a,b) => b.pick_rate - a.pick_rate || (b.win_rate || 0) - (a.win_rate || 0) || a.skill.localeCompare(b.skill))
+  .slice(0, limit);
+}
+
+function perSkillPassiveCompressed(rows, limit=12){
+  const list = perSkillPassiveCompressedData(rows, limit);
+  if (!list.length) return `<div class="muted">No passive skills.</div>`;
+  return `<div class="tableWrap"><table>
+    <thead><tr><th>Skill</th><th class="right">Picks</th><th class="right">Wins</th><th class="right">Win %</th><th class="right">Pick %</th></tr></thead>
+    <tbody>
+      ${list.map(r => `<tr>
+        <td>${r.skill}</td>
+        <td class="right">${r.picks}</td>
+        <td class="right">${r.wins}</td>
+        <td class="right">${r.win_rate===null ? '—' : fmtPct(r.win_rate)}</td>
+        <td class="right">${fmtPct(r.pick_rate)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function perSkillPetCompressedData(rows, limit=12){
+  if (!rows.length) return [];
+  const map = new Map();
+
+  rows.forEach(r => {
+    (r.pets || []).forEach(p => {
+      const nm = p?.pet?.name || '';
+      if (!nm) return;
+      const obj = map.get(nm) || { p:0, w:0, players:new Map() };
+      obj.p += 1;
+      if (r.result === 'W') obj.w += 1;
+      if (p.player) obj.players.set(p.player, (obj.players.get(p.player) || 0) + 1);
+      map.set(nm, obj);
+    });
+  });
+
+  const den = rows.length * 4;
+
+  return [...map.entries()].map(([name, v]) => ({
+    skill: name,
+    picks: v.p,
+    wins: v.w,
+    win_rate: v.p ? v.w / v.p : null,
+    pick_rate: den ? v.p / den : 0,
+    players: [...v.players.entries()].sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]))
+  }))
+  .sort((a,b) => b.pick_rate - a.pick_rate || (b.win_rate || 0) - (a.win_rate || 0) || a.skill.localeCompare(b.skill))
+  .slice(0, limit);
+}
+
+function perSkillPetCompressed(rows, limit=12){
+  const list = perSkillPetCompressedData(rows, limit);
+  if (!list.length) return `<div class="muted">No pet skills.</div>`;
+  return `<div class="tableWrap"><table>
+    <thead><tr><th>Skill</th><th class="right">Picks</th><th class="right">Wins</th><th class="right">Win %</th><th class="right">Pick %</th><th>Players</th></tr></thead>
+    <tbody>
+      ${list.map(r => `<tr>
+        <td>${r.skill}</td>
+        <td class="right">${r.picks}</td>
+        <td class="right">${r.wins}</td>
+        <td class="right">${r.win_rate===null ? '—' : fmtPct(r.win_rate)}</td>
+        <td class="right">${fmtPct(r.pick_rate)}</td>
+        <td>${r.players.length ? r.players.slice(0,4).map(([name,count]) => `${name}${count>1 ? ` (${count})` : ''}`).join(', ') : '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+/* Active Skill Impact */
+function activeSkillImpactData(rows, limit=12){
+  if (!rows.length) return [];
+  const matches = rows.length;
+  const winsOverall = rows.filter(r => r.result === 'W').length;
+  const baseline = matches ? winsOverall / matches : 0;
+
+  const map = new Map();
+  rows.forEach(r => {
+    r.actives.forEach(a => {
+      if (!a.hero) return;
+      const o = map.get(a.hero) || { p:0, w:0, lossOpp:new Map() };
+      o.p += 1;
+      if (r.result === 'W') o.w += 1;
+      if (r.result === 'L'){
+        const c = o.lossOpp.get(r.opponent) || 0;
+        o.lossOpp.set(r.opponent, c + 1);
+      }
+      map.set(a.hero, o);
+    });
+  });
+
+  return [...map.entries()].map(([name, v]) => {
+    const winRate = v.p ? v.w / v.p : 0;
+    const lossRate = v.p ? 1 - winRate : 0;
+    const delta = winRate - baseline;
+    const losses_by_opponent = [...v.lossOpp.entries()]
+      .sort((a,b) => b[1] - a[1])
+      .map(([opp, count]) => ({ opponent:opp, count, logo: TEAM_LOGO[opp] || null }))
+      .slice(0,3);
+
+    return {
+      skill: name,
+      picks: v.p,
+      win_rate: winRate,
+      loss_rate: lossRate,
+      delta_vs_team: delta,
+      losses_by_opponent
+    };
+  })
+  .sort((a,b) => b.delta_vs_team - a.delta_vs_team || b.picks - a.picks || a.skill.localeCompare(b.skill))
+  .slice(0, limit);
+}
+
+function activeSkillImpactTable(rows, limit=12){
+  const list = activeSkillImpactData(rows, limit);
+  if (!list.length) return `<div class="muted">No active skills.</div>`;
+
+  const logoSpan = (lossOppList) => {
+    const entries = (lossOppList || []).slice(0,3);
+    if (!entries.length) return '';
+    const imgs = entries.map(({opponent, count, logo}) => {
+      const src = logo || PLACEHOLDER;
+      const badge = count > 1 ? `<span class="cnt">×${count}</span>` : '';
+      return `<span class="logo-wrap" title="${opponent} ×${count}">
+                <img src="${src}" alt="${opponent}">
+                ${badge}
+              </span>`;
+    }).join('');
+    return `<span class="opp-logos">${imgs}</span>`;
+  };
+
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Skill</th>
+            <th class="right">Picks</th>
+            <th class="right">Win %</th>
+            <th class="right">Loss %</th>
+            <th class="right">Δ vs team</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(r => {
+            const dClass = r.delta_vs_team > 0 ? 'delta-pos' : (r.delta_vs_team < 0 ? 'delta-neg' : '');
+            const dText = (r.delta_vs_team >= 0 ? '+' : '') + fmtPct(r.delta_vs_team);
+            return `<tr>
+              <td>${r.skill}</td>
+              <td class="right mono">${r.picks}</td>
+              <td class="right mono">${fmtPct(r.win_rate)}</td>
+              <td class="right mono">${fmtPct(r.loss_rate)} ${logoSpan(r.losses_by_opponent)}</td>
+              <td class="right mono ${dClass}">${dText}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* Combos, Pairs, Trios */
+function buildCombos(rows){
+  const combos = new Map();
+  rows.forEach(r => {
+    const heroes = r.actives.map(a => a.hero).filter(Boolean);
+    if (heroes.length !== 4) return;
+    const key = [...heroes].sort((x,y) => x.localeCompare(y)).join('|');
+    if (!combos.has(key)) combos.set(key, { heroes:[...new Set(heroes)].sort((x,y)=>x.localeCompare(y)), picks:0, wins:0 });
+    const C = combos.get(key);
+    C.picks += 1;
+    if (r.result === 'W') C.wins += 1;
+  });
+  return [...combos.values()].map(c => ({ ...c, winpct: c.picks ? c.wins / c.picks : 0 }));
+}
+
+function buildPairs(rows){
+  const pairs = new Map();
+  rows.forEach(r => {
+    const names = r.actives.map(a => a.hero).filter(Boolean);
+    for (let i=0; i<names.length; i++){
+      for (let j=i+1; j<names.length; j++){
+        const [A,B] = [names[i], names[j]].sort((x,y)=>x.localeCompare(y));
+        const key = A + '|' + B;
+        if (!pairs.has(key)) pairs.set(key, { heroes:[A,B], picks:0, wins:0 });
+        const P = pairs.get(key);
+        P.picks += 1;
+        if (r.result === 'W') P.wins += 1;
+      }
+    }
+  });
+  return [...pairs.values()].map(p => ({ ...p, winpct: p.picks ? p.wins / p.picks : 0 }));
+}
+
+function tableCombos(list, title, limit=5){
+  const rows = [...list]
+    .sort((a,b) => b.picks - a.picks || b.winpct - a.winpct || a.heroes.join(',').localeCompare(b.heroes.join(',')))
+    .slice(0, limit);
+
+  if (!rows.length) return `<div class="muted">No ${title}.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>${title}</th><th class="right">Picks</th><th class="right">Wins</th><th class="right">Win %</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${r.heroes.join(' · ')}</td>
+              <td class="right">${r.picks}</td>
+              <td class="right">${r.wins}</td>
+              <td class="right">${fmtPct(r.winpct)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function buildTrios(rows){
+  const tri = new Map();
+  rows.forEach(r => {
+    r.passives.forEach(p => {
+      const names = (p.trio || []).map(x => x?.name).filter(Boolean);
+      if (names.length !== 3) return;
+      const key = [...names].sort((x,y)=>x.localeCompare(y)).join('|');
+      if (!tri.has(key)) tri.set(key, { names:[...names].sort((a,b)=>a.localeCompare(b)), picks:0, wins:0 });
+      const T = tri.get(key);
+      T.picks += 1;
+      if (r.result === 'W') T.wins += 1;
+    });
+  });
+  return [...tri.values()].map(t => ({ ...t, winpct: t.picks ? t.wins / t.picks : 0 }));
+}
+
+function tableTrios(list, limit=5){
+  const rows = [...list]
+    .sort((a,b) => b.picks - a.picks || b.winpct - a.winpct || a.names.join(',').localeCompare(b.names.join(',')))
+    .slice(0, limit);
+
+  if (!rows.length) return `<div class="muted">No passive trios.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead><tr><th>Trio</th><th class="right">Picks</th><th class="right">Wins</th><th class="right">Win %</th></tr></thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td>${r.names.join(' · ')}</td>
+              <td class="right">${r.picks}</td>
+              <td class="right">${r.wins}</td>
+              <td class="right">${fmtPct(r.winpct)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* Ban Impact */
+function rowsForTeamIgnoringWL(team){
+  const mapSel = el('fMap').value;
+  const tournSel = el('fTourn').value || '__ALL__';
+
+  const allRows = RAW_RECORDS.flatMap(explodeRecordToRows).filter(r => r.team === team);
+  let rows = allRows;
+
+  if (mapSel !== '__ALL__') rows = rows.filter(r => r.map === mapSel);
+  if (tournSel !== '__ALL__') {
+    rows = rows.filter(r => {
+      const rec = RAW_RECORDS.find(x => x.id === r.rec_id);
+      return rec?.tournament_name === tournSel;
+    });
+  }
+
+  return rows;
+}
+
+function banImpactData(rows, limit=10){
+  const skills = new Map();
+
+  rows.forEach(r => {
+    const banned = r.banName || '';
+    if (banned){
+      if (!skills.has(banned)) skills.set(banned, { name:banned, ban:{n:0,w:0}, noban:{n:0,w:0} });
+      const S = skills.get(banned);
+      S.ban.n += 1;
+      if (r.result === 'W') S.ban.w += 1;
+    }
+  });
+
+  const rowsBySkill = Object.fromEntries([...skills.keys()].map(k => [k, {n:0,w:0}]));
+
+  rows.forEach(r => {
+    const win = r.result === 'W' ? 1 : 0;
+    for (const k in rowsBySkill){
+      if ((r.banName || '') !== k){
+        rowsBySkill[k].n += 1;
+        rowsBySkill[k].w += win;
+      }
+    }
+  });
+
+  for (const [name, S] of skills.entries()){
+    S.noban = rowsBySkill[name] || {n:0,w:0};
+  }
+
+  return [...skills.values()].map(S => {
+    const bN = S.ban.n, bW = S.ban.w, nN = S.noban.n, nW = S.noban.w;
+    const winBan = bN ? bW / bN : 0;
+    const winNot = nN ? nW / nN : 0;
+    return {
+      skill: S.name,
+      banned: bN,
+      win_rate_banned: winBan,
+      other: nN,
+      win_rate_not_banned: winNot,
+      delta: winBan - winNot
+    };
+  })
+  .filter(r => r.banned >= 1)
+  .sort((a,b) => b.delta - a.delta || b.banned - a.banned)
+  .slice(0, limit);
+}
+
+function banImpactTable(rows, limit=10){
+  const list = banImpactData(rows, limit);
+  if (!list.length) return `<div class="muted">No ban data.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Skill</th>
+            <th class="right">Banned</th>
+            <th class="right">Win % (banned)</th>
+            <th class="right">Other</th>
+            <th class="right">Win % (not banned)</th>
+            <th class="right">Δ Win %</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(r => `
+            <tr>
+              <td>${r.skill}</td>
+              <td class="right">${r.banned}</td>
+              <td class="right">${fmtPct(r.win_rate_banned)}</td>
+              <td class="right">${r.other}</td>
+              <td class="right">${fmtPct(r.win_rate_not_banned)}</td>
+              <td class="right" style="font-weight:900">${fmtPct(r.delta)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* Opponent Series */
+function buildOpponentSeriesRows(rows){
+  if (!rows.length) return [];
+
+  const keyOf = (r) => {
+    const d = new Date(r.match_date);
+    const day = d.toISOString().slice(0,10);
+    return `${r.tournament}|${r.opponent}|${day}`;
+  };
+
+  const series = new Map();
+
+  rows.forEach(r => {
+    const k = keyOf(r);
+    if (!series.has(k)){
+      series.set(k, { opponent:r.opponent, tournament:r.tournament || '—', date:new Date(r.match_date), games:[] });
+    }
+    series.get(k).games.push({
+      game_number: r.game_number ?? 0,
+      map: r.map,
+      mapScore: `${r.team_score}-${r.opp_score}`,
+      result: r.result,
+      banName: r.banName,
+      banImg: r.banImg || PLACEHOLDER
+    });
+  });
+
+  const flat = [];
+  for (const s of series.values()){
+    s.games.sort((a,b) => (a.game_number) - (b.game_number));
+    const w = s.games.filter(g => g.result === 'W').length;
+    const l = s.games.length - w;
+    const seriesScore = `${w}-${l}`;
+
+    s.games.forEach(g => {
+      flat.push({
+        opponent: s.opponent,
+        seriesScore,
+        map: g.map,
+        mapScore: g.mapScore,
+        result: g.result,
+        banName: g.banName,
+        banImg: g.banImg,
+        date: s.date
+      });
+    });
+  }
+
+  return flat.sort((a,b) => b.date - a.date);
+}
+
+function opponentSeriesTable(rows, limit=30){
+  const list = buildOpponentSeriesRows(rows).slice(0, limit);
+  if (!list.length) return `<div class="muted">No opponent series for selection.</div>`;
+  return `
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Opponent</th>
+            <th class="right">Series</th>
+            <th>Map</th>
+            <th class="right">Map score</th>
+            <th class="right">Res</th>
+            <th>Banned skills</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map(r => `
+            <tr>
+              <td>${r.opponent}</td>
+              <td class="right mono">${r.seriesScore}</td>
+              <td>${r.map || '—'}</td>
+              <td class="right mono">${r.mapScore || '—'}</td>
+              <td class="right"><span class="wl ${r.result}">${r.result}</span></td>
+              <td>
+                <div class="icons">
+                  <img src="${r.banImg || PLACEHOLDER}" alt="${safe(r.banName || '')}" title="${safe(r.banName || '')}">
+                  <span class="muted tight">${safe(r.banName || '—')}</span>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* KPIs */
+function kpiCard(bucket, kindActive, kindPassive, kindPet, kindBan){
+  if (!bucket || !bucket.matches) return `<div class="muted">No data for selection.</div>`;
+
+  const subjA = [...kindActive.skills.values()].reduce((a,s)=>(a.appear += s.appear, a), {appear:0});
+  const subjP = [...kindPassive.skills.values()].reduce((a,s)=>(a.appear += s.appear, a), {appear:0});
+  const subjPet = [...kindPet.skills.values()].reduce((a,s)=>(a.appear += s.appear, a), {appear:0});
+  const subjB = [...kindBan.skills.values()].reduce((a,s)=>(a.appear += s.appear, a), {appear:0});
+
+  return `
+    <div class="kpis">
+      <div class="kpi">Matches <strong>${bucket.matches}</strong></div>
+      <div class="kpi">Wins <strong>${bucket.wins}</strong> <span class="muted">(${pct(bucket.wins,bucket.matches)})</span></div>
+      <div class="kpi">Active picks <strong>${subjA.appear}</strong> <span class="muted">(${pct(subjA.appear,bucket.matches)})</span></div>
+      <div class="kpi">Passive picks <strong>${subjP.appear}</strong> <span class="muted">(${pct(subjP.appear,bucket.matches)})</span></div>
+      <div class="kpi">Pet picks <strong>${subjPet.appear}</strong> <span class="muted">(${pct(subjPet.appear,bucket.matches)})</span></div>
+      <div class="kpi">Bans <strong>${subjB.appear}</strong> <span class="muted">(${pct(subjB.appear,bucket.matches)})</span></div>
+    </div>`;
+}
+
+/* AI Prompt Build + Copy */
+function stripLinksDeep(x){
+  if (Array.isArray(x)) return x.map(stripLinksDeep);
+  if (x && typeof x === 'object'){
+    const out = {};
+    for (const [k, v] of Object.entries(x)){
+      if (['logo','banImg','heroImg','img','image','image_url','imageUrl','imageLink','link','url'].includes(k)) continue;
+      if (typeof v === 'string' && /^https?:\/\//i.test(v)) continue;
+      out[k] = stripLinksDeep(v);
+    }
+    return out;
+  }
+  return x;
+}
+
+function buildAIPrompt(exportObj){
+  const meta = exportObj.meta;
+  const header = `You are an esports analyst. Analyze the following JSON snapshot comparing two Clash Squad teams.
+
+Context:
+- Teams: ${meta.teamA} vs ${meta.teamB}
+- Filters: ${meta.mapLabel}, ${meta.tournamentLabel}, ${meta.wlLabel}
+
+Instructions:
+1) Summarize overall performance for each team (matches, wins, win%).
+2) Highlight strongest/weakest maps (use win% and volume).
+3) Analyze Active Skill Impact (Win/Loss) — call out skills with the largest positive/negative Δ vs team baseline.
+4) Mention pet skill tendencies and whether they align with the team’s active/passive identity.
+5) Note top combos/pairs and passive trios; comment on reliability (win% + picks).
+6) Identify impactful bans (largest Δ win% vs not banned).
+7) Surface opponent-series patterns (sweeps, close scores, repeat bans).
+8) Finish with top 3 actionable recommendations.
+
+Use only the provided data. Be concise but specific.`;
+
+  return header + "\n\nJSON:\n" + JSON.stringify(exportObj, null, 2);
+}
+
+async function copyTextToClipboard(text){
+  try{
+    if (navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  }catch{}
+
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch{}
+  ta.remove();
+  return ok;
+}
+
+/* Matches rendering */
+function playerBadge(active, trio, petLine){
+  const ico = (ps) => `<img src="${ps.img || PLACEHOLDER}" alt="${safe(ps.name || '')}" title="${safe(ps.name || '')}">`;
+  const p0 = trio?.[0] || {};
+  const p1 = trio?.[1] || {};
+  const p2 = trio?.[2] || {};
+  const pet = petLine?.pet || { name:'', img:PLACEHOLDER };
+  const aName = safe(active.hero || '');
+  const pName = safe(active.player || '');
+  const petName = safe(pet.name || '');
+  const petIcon = pet.name ? `<img src="${pet.img || PLACEHOLDER}" alt="${petName}" title="Pet: ${petName}">` : '';
+
+  return `
+    <div class="pBadge" title="${pName}${aName ? (' — ' + aName) : ''}${petName ? (' — Pet: ' + petName) : ''}">
+      <img class="pAct" src="${active.heroImg || PLACEHOLDER}" alt="${aName}">
+      <div class="pMeta">
+        <div class="pName">${pName}</div>
+        <div class="pHero">${aName || '—'}</div>
+        <div class="pPet">${petName ? `Pet: ${petName}` : ''}</div>
+      </div>
+      <div class="pPass">${ico(p0)}${ico(p1)}${ico(p2)}${petIcon}</div>
+    </div>`;
+}
+
+function matchCard(r){
+  const score = `${r.team_score} - ${r.opp_score}`;
+  const g = r.game_number ? `Game ${r.game_number}` : '—';
+  const players = r.actives.map((a, i) => playerBadge(a, (r.passives[i] || {}).trio, r.pets[i])).join('');
+
+  return `
+    <div class="matchCard">
+      <div class="mInfo">
+        <div class="mRow"><div class="mKey">Date</div><div class="mVal mono">${String(r.match_date || '').slice(0,10)}</div></div>
+        <div class="mRow"><div class="mKey">Game</div><div class="mVal">${g}</div></div>
+        <div class="mRow"><div class="mKey">Map</div><div class="mVal">${r.map || '—'}</div></div>
+        <div class="mRow"><div class="mKey">Team</div><div class="mVal">${r.team || '—'}<div class="muted" style="line-height:1.1">vs ${r.opponent || '—'}</div></div></div>
+        <div class="mRow"><div class="mKey">Score</div><div class="mVal mono">${score}</div></div>
+        <div class="mRow"><div class="mKey">Result</div><div class="mVal"><span class="wl ${r.result}">${r.result}</span></div></div>
+        <div class="mRow"><div class="mKey">Ban</div><div class="mVal banBox"><img src="${r.banImg || PLACEHOLDER}" alt="${safe(r.banName || '')}" title="${safe(r.banName || '')}"><span class="muted">${safe(r.banName || '—')}</span></div></div>
+      </div>
+      <div class="mPlayers">
+        ${players}
+      </div>
+    </div>`;
+}
+
+function matchesCards(rows){
+  if (!rows.length) return `<div class="muted">No matches for selection.</div>`;
+  const sorted = [...rows].sort((a,b) => {
+    const da = new Date(a.match_date), db = new Date(b.match_date);
+    return db - da || (a.game_number || 0) - (b.game_number || 0) || a.rec_id - b.rec_id;
+  });
+  return sorted.map(matchCard).join('');
+}
+
+/* Render */
+function renderAll(){
+  const a = el('cmpTeamA').value;
+  const b = el('cmpTeamB').value;
+
+  if (!a || !b || a === b){
+    el('meta').textContent = 'Pick two different teams.';
+    [
+      'kpiA','kpiB','activeA','activeB','passiveA','passiveB','bansA','bansB',
+      'tmA','tmB','psAAct','psBAct','impactA','impactB','psAPas','psBPas',
+      'psAPet','psBPet','combosA','combosB','pairsA','pairsB','triosA','triosB',
+      'biA','biB','oppSeriesA','oppSeriesB','matchesA','matchesB'
+    ].forEach(id => {
+      if (el(id)) el(id).innerHTML = '<div class="muted">—</div>';
+    });
+    const ta = el('aiPrompt');
+    if (ta) ta.value = 'Pick two different teams.';
+    return;
+  }
+
+  const mapLabel   = (el('fMap').value === '__ALL__') ? 'All maps' : el('fMap').value;
+  const tournLabel = (el('fTourn').value === '__ALL__') ? 'All tournaments' : el('fTourn').value;
+  const wlLabel    = (el('fWL').value === '__ALL__') ? 'All outcomes' : (el('fWL').value === 'W' ? 'Wins only' : 'Losses only');
+  el('meta').textContent = `${a} vs ${b} • ${mapLabel} • ${tournLabel} • ${wlLabel}`;
+
+  const rowsA = rowsForTeam(a);
+  const rowsB = rowsForTeam(b);
+
+  const bA = buildTeamBucket(rowsA, a, 'active');
+  const bP_A = buildTeamBucket(rowsA, a, 'passive');
+  const bPet_A = buildTeamBucket(rowsA, a, 'pet');
+  const bBan_A = buildTeamBucket(rowsA, a, 'ban');
+
+  const bB = buildTeamBucket(rowsB, b, 'active');
+  const bP_B = buildTeamBucket(rowsB, b, 'passive');
+  const bPet_B = buildTeamBucket(rowsB, b, 'pet');
+  const bBan_B = buildTeamBucket(rowsB, b, 'ban');
+
+  el('kpiA').innerHTML = `<h3>${a}</h3>${kpiCard(bA, bA, bP_A, bPet_A, bBan_A)}`;
+  el('kpiB').innerHTML = `<h3>${b}</h3>${kpiCard(bB, bB, bP_B, bPet_B, bBan_B)}`;
+
+  el('labelMatchesA').textContent = a;
+  el('labelMatchesB').textContent = b;
+  el('matchesA').innerHTML = matchesCards(rowsA);
+  el('matchesB').innerHTML = matchesCards(rowsB);
+
+  el('labelActiveA').textContent = `${a} — Active`;
+  el('labelActiveB').textContent = `${b} — Active`;
+  el('activeA').innerHTML = topSkillsTable(bA, 'active', 10);
+  el('activeB').innerHTML = topSkillsTable(bB, 'active', 10);
+
+  el('labelPassiveA').textContent = `${a} — Passive`;
+  el('labelPassiveB').textContent = `${b} — Passive`;
+  el('passiveA').innerHTML = topSkillsTable(bP_A, 'passive', 10);
+  el('passiveB').innerHTML = topSkillsTable(bP_B, 'passive', 10);
+
+  el('labelBansA').textContent = `${a} — Bans`;
+  el('labelBansB').textContent = `${b} — Bans`;
+  el('bansA').innerHTML = topSkillsTable(bBan_A, 'ban', 10);
+  el('bansB').innerHTML = topSkillsTable(bBan_B, 'ban', 10);
+
+  el('labelTMA').textContent = a;
+  el('labelTMB').textContent = b;
+  el('tmA').innerHTML = teamMapStats(rowsA);
+  el('tmB').innerHTML = teamMapStats(rowsB);
+
+  el('labelPSA_Act').textContent = a;
+  el('labelPSB_Act').textContent = b;
+  el('psAAct').innerHTML = perSkillActiveCompressed(rowsA, 12);
+  el('psBAct').innerHTML = perSkillActiveCompressed(rowsB, 12);
+
+  el('labelImpactA').textContent = a;
+  el('labelImpactB').textContent = b;
+  el('impactA').innerHTML = activeSkillImpactTable(rowsA, 12);
+  el('impactB').innerHTML = activeSkillImpactTable(rowsB, 12);
+
+  el('labelPSA_Pas').textContent = a;
+  el('labelPSB_Pas').textContent = b;
+  el('psAPas').innerHTML = perSkillPassiveCompressed(rowsA, 12);
+  el('psBPas').innerHTML = perSkillPassiveCompressed(rowsB, 12);
+
+  el('labelPSA_Pet').textContent = a;
+  el('labelPSB_Pet').textContent = b;
+  el('psAPet').innerHTML = perSkillPetCompressed(rowsA, 12);
+  el('psBPet').innerHTML = perSkillPetCompressed(rowsB, 12);
+
+  el('labelCombosA').textContent = `${a} — 4× Active`;
+  el('labelCombosB').textContent = `${b} — 4× Active`;
+  el('combosA').innerHTML = tableCombos(buildCombos(rowsA), 'Combo', 5);
+  el('combosB').innerHTML = tableCombos(buildCombos(rowsB), 'Combo', 5);
+
+  el('labelPairsA').textContent = `${a} — 2× Active`;
+  el('labelPairsB').textContent = `${b} — 2× Active`;
+  el('pairsA').innerHTML = tableCombos(buildPairs(rowsA), 'Pair', 5);
+  el('pairsB').innerHTML = tableCombos(buildPairs(rowsB), 'Pair', 5);
+
+  el('labelTriosA').textContent = a;
+  el('labelTriosB').textContent = b;
+  const triA = buildTrios(rowsA);
+  const triB = buildTrios(rowsB);
+  el('triosA').innerHTML = tableTrios(triA, 5);
+  el('triosB').innerHTML = tableTrios(triB, 5);
+
+  el('labelBIA').textContent = a;
+  el('labelBIB').textContent = b;
+  const biA_rows = rowsForTeamIgnoringWL(a);
+  const biB_rows = rowsForTeamIgnoringWL(b);
+  el('biA').innerHTML = banImpactTable(biA_rows, 10);
+  el('biB').innerHTML = banImpactTable(biB_rows, 10);
+
+  el('labelOppSeriesA').textContent = a;
+  el('labelOppSeriesB').textContent = b;
+  el('oppSeriesA').innerHTML = opponentSeriesTable(rowsA, 30);
+  el('oppSeriesB').innerHTML = opponentSeriesTable(rowsB, 30);
+
+  const meta = {
+    teamA: a,
+    teamB: b,
+    mapLabel,
+    tournamentLabel: tournLabel,
+    wlLabel
+  };
+
+  const exportObj = {
+    meta,
+    teamA:{
+      kpis:{ matches:bA.matches, wins:bA.wins, win_rate: bA.matches ? bA.wins / bA.matches : 0 },
+      team_map: teamMapStatsData(rowsA),
+      active_skill_impact: activeSkillImpactData(rowsA, 12),
+      per_skill_active: perSkillActiveCompressedData(rowsA, 12),
+      per_skill_passive: perSkillPassiveCompressedData(rowsA, 12),
+      per_skill_pet: perSkillPetCompressedData(rowsA, 12),
+      top_active_by_rate: topSkillsData(bA, 10),
+      top_passive_by_rate: topSkillsData(bP_A, 10),
+      top_pet_by_rate: topSkillsData(bPet_A, 10),
+      top_bans_by_rate: topSkillsData(bBan_A, 10),
+      combos: buildCombos(rowsA).sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      pairs: buildPairs(rowsA).sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      passive_trios: triA.sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      ban_impact: banImpactData(biA_rows, 10),
+      opponent_series: buildOpponentSeriesRows(rowsA).slice(0,30)
+    },
+    teamB:{
+      kpis:{ matches:bB.matches, wins:bB.wins, win_rate: bB.matches ? bB.wins / bB.matches : 0 },
+      team_map: teamMapStatsData(rowsB),
+      active_skill_impact: activeSkillImpactData(rowsB, 12),
+      per_skill_active: perSkillActiveCompressedData(rowsB, 12),
+      per_skill_passive: perSkillPassiveCompressedData(rowsB, 12),
+      per_skill_pet: perSkillPetCompressedData(rowsB, 12),
+      top_active_by_rate: topSkillsData(bB, 10),
+      top_passive_by_rate: topSkillsData(bP_B, 10),
+      top_pet_by_rate: topSkillsData(bPet_B, 10),
+      top_bans_by_rate: topSkillsData(bBan_B, 10),
+      combos: buildCombos(rowsB).sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      pairs: buildPairs(rowsB).sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      passive_trios: triB.sort((a,b)=> b.picks-a.picks || b.winpct-a.winpct).slice(0,5),
+      ban_impact: banImpactData(biB_rows, 10),
+      opponent_series: buildOpponentSeriesRows(rowsB).slice(0,30)
+    }
+  };
+
+  const exportClean = stripLinksDeep(exportObj);
+  LATEST_EXPORT = exportClean;
+  el('aiPrompt').value = buildAIPrompt(exportClean);
+}
+
+/* Refresh flow */
+async function refresh(){
+  const currentMap = el('fMap').value;
+
+  await fetchTeamLogos();
+
+  const tournamentSource = await fetchRecords({
+    map: currentMap,
+    tourn: '__ALL__'
+  });
+
+  await populateTournamentDropdown(tournamentSource);
+
+  RAW_RECORDS = await fetchRecords({
+    map: currentMap,
+    tourn: el('fTourn').value || '__ALL__'
+  });
+
+  populateTeamDropdowns(RAW_RECORDS);
+  renderAll();
+}
+
+/* Quick helpers */
+function setSelectToTeam(selectEl, name){
+  if (!selectEl) return false;
+  const opts = [...selectEl.options];
+  const target = String(name || '').trim().toLowerCase();
+
+  const match = opts.find(o => o.value === name)
+    || opts.find(o => (o.text || '').trim().toLowerCase() === target);
+
+  if (match){
+    selectEl.value = match.value;
+    return true;
+  }
+  return false;
+}
+
+async function widenFiltersAndReload(){
+  el('fTourn').value = '__ALL__';
+  el('fMap').value = '__ALL__';
+  el('fWL').value = '__ALL__';
+  await refresh();
+}
+
+async function quickPick(team){
+  const target = el('quickTarget')?.value || 'A';
+  const selectEl = target === 'A' ? el('cmpTeamA') : el('cmpTeamB');
+
+  if (setSelectToTeam(selectEl, team)){
+    renderAll();
+    return;
+  }
+
+  await widenFiltersAndReload();
+
+  if (setSelectToTeam(selectEl, team)){
+    renderAll();
+    return;
+  }
+
+  alert(`No matches found for "${team}" in the current database.`);
+}
+
+async function quickPair(aTeam, bTeam){
+  const A = el('cmpTeamA');
+  const B = el('cmpTeamB');
+
+  let okA = setSelectToTeam(A, aTeam);
+  let okB = setSelectToTeam(B, bTeam);
+
+  if (!okA || !okB){
+    await widenFiltersAndReload();
+    okA = setSelectToTeam(A, aTeam);
+    okB = setSelectToTeam(B, bTeam);
+  }
+
+  if (okA && okB){
+    renderAll();
+    return;
+  }
+
+  const miss = [];
+  if (!okA) miss.push(aTeam);
+  if (!okB) miss.push(bTeam);
+  alert(`Could not find: ${miss.join(', ')}`);
+}
+
+/* Events */
+['fMap', 'fTourn'].forEach(id => {
+  el(id).addEventListener('change', refresh);
+});
+
+['fWL', 'cmpTeamA', 'cmpTeamB'].forEach(id => {
+  el(id).addEventListener('change', renderAll);
+});
+
+el('cmpSwap').addEventListener('click', () => {
+  const A = el('cmpTeamA');
+  const B = el('cmpTeamB');
+  const t = A.value;
+  A.value = B.value;
+  B.value = t;
+  renderAll();
+});
+
+el('copyPromptBtn').addEventListener('click', async () => {
+  const ta = el('aiPrompt');
+  const ok = await copyTextToClipboard(ta.value || '');
+  const btn = el('copyPromptBtn');
+  const orig = btn.textContent;
+  btn.textContent = ok ? 'Copied!' : 'Copy failed';
+  setTimeout(() => btn.textContent = orig, 1200);
+});
+
+document.addEventListener('click', (e) => {
+  const chip = e.target.closest('.chipbtn[data-team]');
+  if (chip){
+    quickPick(chip.dataset.team);
+    return;
+  }
+
+  const pair = e.target.closest('.pairbtn[data-pair]');
+  if (pair){
+    const [a,b] = pair.dataset.pair.split('|');
+    quickPair(a, b);
+  }
+});
+
+/* First load */
+refresh();
+</script>
+</body>
+</html>
