@@ -1,0 +1,89 @@
+{
+  "id": "hayato",
+  "name": "Hayato",
+  "method": "breakline-consistent-slice-v2",
+  "source": "f3d989cb-5e1b-50d2-acf0-72434605d2e9.png",
+  "notes": "Top row extended downward to prevent feet cutoff; bottom last slot normalized to standard slot width.",
+  "frames": [
+    {
+      "name": "01_idle_1",
+      "file": "01_idle_1.png",
+      "size": {
+        "width": 311,
+        "height": 297
+      }
+    },
+    {
+      "name": "02_idle_2",
+      "file": "02_idle_2.png",
+      "size": {
+        "width": 314,
+        "height": 297
+      }
+    },
+    {
+      "name": "03_run_1",
+      "file": "03_run_1.png",
+      "size": {
+        "width": 314,
+        "height": 297
+      }
+    },
+    {
+      "name": "04_run_2",
+      "file": "04_run_2.png",
+      "size": {
+        "width": 283,
+        "height": 297
+      }
+    },
+    {
+      "name": "05_run_3",
+      "file": "05_run_3.png",
+      "size": {
+        "width": 284,
+        "height": 297
+      }
+    },
+    {
+      "name": "06_run_4",
+      "file": "06_run_4.png",
+      "size": {
+        "width": 274,
+        "height": 297
+      }
+    },
+    {
+      "name": "07_shoot_1",
+      "file": "07_shoot_1.png",
+      "size": {
+        "width": 359,
+        "height": 270
+      }
+    },
+    {
+      "name": "08_shoot_2",
+      "file": "08_shoot_2.png",
+      "size": {
+        "width": 355,
+        "height": 270
+      }
+    },
+    {
+      "name": "09_hit_react",
+      "file": "09_hit_react.png",
+      "size": {
+        "width": 372,
+        "height": 270
+      }
+    },
+    {
+      "name": "10_deploy_gloo_wall",
+      "file": "10_deploy_gloo_wall.png",
+      "size": {
+        "width": 355,
+        "height": 270
+      }
+    }
+  ]
+}

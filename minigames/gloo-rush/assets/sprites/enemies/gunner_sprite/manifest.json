@@ -1,0 +1,107 @@
+{
+  "id": "gunner",
+  "name": "Gunner",
+  "method": "normalized consistent canvas without stretching; cleaned border artifacts",
+  "canvas_size": {
+    "width": 365,
+    "height": 332
+  },
+  "frames": [
+    {
+      "name": "01_idle_1",
+      "file": "01_idle_1.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 84,
+        "y": 44
+      }
+    },
+    {
+      "name": "02_idle_2",
+      "file": "02_idle_2.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 86,
+        "y": 46
+      }
+    },
+    {
+      "name": "03_run_1",
+      "file": "03_run_1.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 54,
+        "y": 59
+      }
+    },
+    {
+      "name": "04_run_2",
+      "file": "04_run_2.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 55,
+        "y": 62
+      }
+    },
+    {
+      "name": "05_run_3",
+      "file": "05_run_3.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 49,
+        "y": 62
+      }
+    },
+    {
+      "name": "06_shoot",
+      "file": "06_shoot.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 13,
+        "y": 68
+      }
+    },
+    {
+      "name": "07_hit_react",
+      "file": "07_hit_react.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 78,
+        "y": 54
+      }
+    },
+    {
+      "name": "08_knockout",
+      "file": "08_knockout.png",
+      "size": {
+        "width": 365,
+        "height": 332
+      },
+      "placement": {
+        "x": 30,
+        "y": 216
+      }
+    }
+  ]
+}

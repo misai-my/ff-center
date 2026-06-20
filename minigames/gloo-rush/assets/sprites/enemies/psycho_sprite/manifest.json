@@ -1,0 +1,107 @@
+{
+  "id": "psycho",
+  "name": "Psycho",
+  "method": "normalized consistent canvas without stretching; cleaned border artifacts",
+  "canvas_size": {
+    "width": 370,
+    "height": 342
+  },
+  "frames": [
+    {
+      "name": "01_idle_1",
+      "file": "01_idle_1.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 79,
+        "y": 49
+      }
+    },
+    {
+      "name": "02_idle_2",
+      "file": "02_idle_2.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 39,
+        "y": 51
+      }
+    },
+    {
+      "name": "03_run_1",
+      "file": "03_run_1.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 59,
+        "y": 74
+      }
+    },
+    {
+      "name": "04_run_2",
+      "file": "04_run_2.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 74,
+        "y": 67
+      }
+    },
+    {
+      "name": "05_run_3",
+      "file": "05_run_3.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 54,
+        "y": 34
+      }
+    },
+    {
+      "name": "06_melee_strike",
+      "file": "06_melee_strike.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 9,
+        "y": 33
+      }
+    },
+    {
+      "name": "07_hit_react",
+      "file": "07_hit_react.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 56,
+        "y": 51
+      }
+    },
+    {
+      "name": "08_knockout",
+      "file": "08_knockout.png",
+      "size": {
+        "width": 370,
+        "height": 342
+      },
+      "placement": {
+        "x": 22,
+        "y": 153
+      }
+    }
+  ]
+}

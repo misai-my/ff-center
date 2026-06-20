@@ -1,0 +1,162 @@
+{
+  "id": "orion",
+  "name": "Orion",
+  "version": "v2_no_titles_normalized",
+  "method": "cropped bottom title area; kept original transparency/colors; normalized frames to one canvas",
+  "canvas": {
+    "width": 384,
+    "height": 300
+  },
+  "frames": [
+    {
+      "file": "01_idle_1.png",
+      "source_size": {
+        "width": 302,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 219,
+        "height": 264
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "02_idle_2.png",
+      "source_size": {
+        "width": 312,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 218,
+        "height": 264
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "03_run_1.png",
+      "source_size": {
+        "width": 322,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 245,
+        "height": 262
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "04_run_2.png",
+      "source_size": {
+        "width": 301,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 272,
+        "height": 270
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "05_run_3.png",
+      "source_size": {
+        "width": 284,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 216,
+        "height": 261
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "06_run_4.png",
+      "source_size": {
+        "width": 313,
+        "height": 356
+      },
+      "sprite_size_after_crop": {
+        "width": 231,
+        "height": 263
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "07_shoot_1.png",
+      "source_size": {
+        "width": 364,
+        "height": 361
+      },
+      "sprite_size_after_crop": {
+        "width": 292,
+        "height": 252
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "08_shoot_2.png",
+      "source_size": {
+        "width": 370,
+        "height": 361
+      },
+      "sprite_size_after_crop": {
+        "width": 282,
+        "height": 252
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "09_hit_react.png",
+      "source_size": {
+        "width": 369,
+        "height": 361
+      },
+      "sprite_size_after_crop": {
+        "width": 221,
+        "height": 254
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    },
+    {
+      "file": "10_deploy_gloo_wall.png",
+      "source_size": {
+        "width": 739,
+        "height": 361
+      },
+      "sprite_size_after_crop": {
+        "width": 295,
+        "height": 270
+      },
+      "output_size": {
+        "width": 384,
+        "height": 300
+      }
+    }
+  ]
+}

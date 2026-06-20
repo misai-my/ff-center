@@ -1,0 +1,78 @@
+{
+  "id": "kelly",
+  "name": "Kelly",
+  "source": "kelly_sprite_sheet_transparent.png",
+  "method": "breakline-consistent-v3",
+  "frames": [
+    {
+      "file": "01_idle_1.png",
+      "size": {
+        "width": 269,
+        "height": 312
+      }
+    },
+    {
+      "file": "02_idle_2.png",
+      "size": {
+        "width": 277,
+        "height": 312
+      }
+    },
+    {
+      "file": "03_run_1.png",
+      "size": {
+        "width": 340,
+        "height": 312
+      }
+    },
+    {
+      "file": "04_run_2.png",
+      "size": {
+        "width": 288,
+        "height": 312
+      }
+    },
+    {
+      "file": "05_run_3.png",
+      "size": {
+        "width": 307,
+        "height": 312
+      }
+    },
+    {
+      "file": "06_run_4.png",
+      "size": {
+        "width": 317,
+        "height": 312
+      }
+    },
+    {
+      "file": "07_shoot_1.png",
+      "size": {
+        "width": 370,
+        "height": 312
+      }
+    },
+    {
+      "file": "08_shoot_2.png",
+      "size": {
+        "width": 386,
+        "height": 312
+      }
+    },
+    {
+      "file": "09_hit_react.png",
+      "size": {
+        "width": 348,
+        "height": 312
+      }
+    },
+    {
+      "file": "10_deploy_gloo_wall.png",
+      "size": {
+        "width": 348,
+        "height": 312
+      }
+    }
+  ]
+}
