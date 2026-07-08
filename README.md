@@ -2,6 +2,10 @@
 
 Standalone repository build of the Free Fire Data Center. The dashboard UI and application behavior are preserved, while the reference JSON files and available image assets are bundled in this repository.
 
+## Historical Supabase source
+
+The dashboard can switch between Live Supabase and Historical Supabase. If Historical is selected without a public anon key, the dashboard now falls back to Live Supabase instead of showing a fatal init error. Configure the safe public key in `assets/js/data-source-config.js` or set `localStorage.ffdc_historical_anon_key`. Do not put a `service_role` key in a public frontend.
+
 ## Repository contents
 
 ```text
@@ -300,3 +304,49 @@ This package includes `minigames/card-arena/` as a standalone Free Fire Card Are
 - AI opponent name now uses the active character and map, e.g. `Dimitri - NexTerra`.
 - Pet skills now trigger a pet overlay attack animation.
 - Critical hits now trigger a longer attacking animation and CRIT popup.
+
+## Historical Supabase data source
+
+This build includes a second dashboard data source for historical team-level BR results.
+
+Use the **Database** dropdown in the Filters accordion to switch between:
+
+- Live Supabase
+- Historical Supabase
+
+Historical project URL is configured as:
+
+```text
+https://gkugecflfddkpitlrmws.supabase.co
+```
+
+Default historical table:
+
+```text
+public.historical_team_results
+```
+
+Setup notes are in:
+
+```text
+docs/HISTORICAL_SUPABASE_SOURCE.md
+supabase/07_historical_team_results.sql
+```
+
+Security note: do not publish a Supabase `service_role` key in this static package. Add a public anon key in `assets/js/data-source-config.js` instead.
+
+
+## Historical Supabase compatibility update
+
+The dashboard now has a team-level historical compatibility mode for the Historical Supabase source. When `db=historical` is active, the table fields `team`, `group`, `stage`, `day`, `match`, `map`, `booyah`, `placement`, `elimination`, `drop`, `damage`, `total`, `played`, `top3`, `tag`, `week`, `tournament`, `year`, and `season` are normalized into the dashboard schema.
+
+Compatible areas:
+- Overall — Team Summary
+- Filters and latest-context reset
+- Team Selection
+- Team Overview KPIs
+- Team Match Log
+- Latest Historical Match Summary
+- Tournament progression/qualification logic when configured
+
+Player-level sections now show an explicit notice in Historical mode because the historical table does not include player rows, skills, pets, loadouts, weapon usage, or kill-feed events.

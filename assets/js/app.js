@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-08-historical-source-v1';
+const EWC_QUALIFICATION_BUILD = '2026-07-08-historical-compat-v3';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -113,6 +113,38 @@ let ACTIVE_DATA_CLIENT = supabase.createClient(
 function isHistoricalMode(){ return ACTIVE_DATA_SOURCE_MODE === 'historical'; }
 function activeDataSourceLabel(){ return ACTIVE_DATA_SOURCE?.label || ACTIVE_DATA_SOURCE_MODE || 'Live Supabase'; }
 function activeDataSourceIsConfigured(){ return !isHistoricalMode() || !!ACTIVE_DATA_SOURCE.anonKey; }
+function isHistoricalTeamLevelMode(){ return isHistoricalMode() && (ACTIVE_DATA_SOURCE?.type === 'team_match_history' || true); }
+
+function showDataSourceNotice(message, tone = 'warn'){
+  try{
+    const hint = el('filterHint');
+    if(hint){
+      hint.dataset.sourceNotice = message;
+      hint.textContent = message;
+      hint.style.color = tone === 'error' ? '#ffb0b0' : '#ffbd59';
+      hint.style.fontWeight = '900';
+    }
+    console.warn(message);
+  }catch(_e){ console.warn(message); }
+}
+
+function switchToLiveDataSourceBecauseHistoricalKeyMissing(){
+  const message = 'Historical Supabase is not loaded because no PUBLIC anon key is configured. Falling back to Live Supabase. Add the anon key in assets/js/data-source-config.js or localStorage.ffdc_historical_anon_key, then switch to Historical again.';
+  ACTIVE_DATA_SOURCE_MODE = 'live';
+  try{ localStorage.setItem(FFDC_DATA_SOURCE_STORAGE_KEY, 'live'); }catch(_e){}
+  ACTIVE_DATA_SOURCE = getActiveDataSourceConfig();
+  ACTIVE_DATA_CLIENT = supabase.createClient(
+    ACTIVE_DATA_SOURCE.url,
+    ACTIVE_DATA_SOURCE.anonKey || SUPABASE_ANON_KEY,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+  );
+  TABLE = ACTIVE_DATA_SOURCE.table || 'ff_player_stats_raw';
+  MAP_TABLE = ACTIVE_DATA_SOURCE.mapTable || 'match_api';
+  const select = el('dataSourceMode');
+  if(select) select.value = 'live';
+  showDataSourceNotice(message, 'warn');
+  return message;
+}
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -1916,6 +1948,7 @@ function normalizeHistoricalTeamRows(rows){
     const drop = firstPresent(row, ['drop','Drop']);
     const played = firstPresent(row, ['played','Played']);
     const top3 = firstPresent(row, ['top3','Top3','top_3']);
+    const total = firstPresent(row, ['total','Total','total_score','totalScore']);
     const source = firstPresent(row, ['data_source','source']) || 'Historical Supabase';
     const mode = firstPresent(row, ['Mode','mode']) || 'BR';
     const id = firstPresent(row, ['id','ID']);
@@ -1952,8 +1985,10 @@ function normalizeHistoricalTeamRows(rows){
       damage,
       played,
       top3,
+      total,
+      total_score: total,
       data_source: source,
-      historical_total: firstPresent(row, ['total','Total'])
+      historical_total: total
     };
   });
 }
@@ -2021,9 +2056,10 @@ function injectDatabaseSourceControl(){
   if(hint){
     const keyRole = decodeJwtPayload(ACTIVE_DATA_SOURCE.anonKey)?.role || (ACTIVE_DATA_SOURCE.anonKey ? 'provided' : 'missing');
     const note = isHistoricalMode()
-      ? `Database: Historical Supabase • table: ${TABLE || 'auto-detect'} • key: ${keyRole}`
+      ? `Database: Historical Supabase • table: ${TABLE || 'auto-detect'} • key: ${keyRole}${keyRole === 'missing' ? ' • will fall back to Live until configured' : ''}`
       : 'Database: Live Supabase';
     hint.dataset.sourceHint = note;
+    if(keyRole === 'missing') hint.textContent = note;
   }
 }
 
@@ -2122,7 +2158,7 @@ async function fetchRowsWithSelect(selectList){
 
 async function fetchAllRows(){
   if(!activeDataSourceIsConfigured()){
-    throw new Error('Historical Supabase key is not configured. Add a PUBLIC anon key in assets/js/data-source-config.js, or set localStorage.ffdc_historical_anon_key. Do not use a service_role key in a public frontend.');
+    switchToLiveDataSourceBecauseHistoricalKeyMissing();
   }
 
   const availableCols = await loadAvailableColumns();
@@ -2547,6 +2583,61 @@ function liveFeedLatestRows(){
     if(order > bestOrder) bestOrder = order;
   }
   return rows.filter(r => matchOrderValueForRow(r) === bestOrder);
+}
+
+function renderHistoricalLatestMatchSummary(rows, options = {}){
+  const box = el('liveFeedBox');
+  if(!box) return;
+  const silentRefresh = !!options.silentRefresh;
+  const first = rows[0] || {};
+  const tournament = norm(getVal(first, KEYS.tournament));
+  const stage = norm(getVal(first, KEYS.stage));
+  const week = norm(getVal(first, KEYS.week));
+  const day = norm(getVal(first, KEYS.day));
+  const matchNo = norm(getVal(first, KEYS.matchNo));
+  const map = norm(first?.Map || first?.map);
+  const label = [tournament, stage, week ? `Week ${week}` : '', day ? `Day ${day}` : '', matchNo ? `Match ${matchNo}` : '', map].filter(Boolean).join(' • ') || 'Latest historical match';
+  const teams = teamMatchAgg(rows).map(r => ({
+    team:r.team,
+    booyah:r.booyah,
+    rankScore:r.ranking_score || 0,
+    elims:r.elims || 0,
+    total:matchTotalScoreValue(r),
+    damage:r.damage || 0,
+    drop:r.drop || '',
+    top3:r.top3 || 0
+  })).sort((a,b)=> (b.total-a.total) || (b.booyah-a.booyah) || (b.elims-a.elims) || a.team.localeCompare(b.team));
+  teams.forEach((t,i)=>t.position=i+1);
+  setText('liveFeedHint', `${label} • Historical team-level summary`);
+  box.className = '';
+  const html = `
+    <div class="live-feed-toolbar">
+      <div class="live-feed-heading">
+        <div class="live-feed-title">Latest Historical Match Summary</div>
+        <div class="live-feed-sub">${escHtml(label)}</div>
+        <div class="live-feed-order-note">Historical source is team-level, so player live-feed, skill, pet, and weapon rows are not shown.</div>
+      </div>
+    </div>
+    <div class="live-feed-grid historical-live-grid">
+      ${teams.map(t=>`<article class="live-feed-card historical-live-card">
+        <div class="live-feed-card-top">
+          <button class="live-feed-team live-feed-team-open" type="button" onclick="selectTeam('${escHtml(t.team)}', false)" title="Open ${escHtml(t.team)} profile">${teamLogoHtml(t.team, getTeamProfile(t.team), 'live-feed-card-team-logo')}<b>${escHtml(t.team)}</b></button>
+          <div class="live-feed-rank">#${fmtNum(t.position)}</div>
+        </div>
+        <div class="live-feed-score-row">
+          <div class="live-feed-score"><span>Total</span><b>${fmtNum(t.total)}</b></div>
+          <div class="live-feed-score"><span>Place</span><b>${fmtNum(t.rankScore)}</b></div>
+          <div class="live-feed-score"><span>Elims</span><b>${fmtNum(t.elims)}</b></div>
+          <div class="live-feed-score"><span>DMG</span><b>${fmtNum(t.damage)}</b></div>
+        </div>
+        <div class="live-feed-status-row">
+          ${t.booyah ? '<span class="live-feed-status booyah">👑 Booyah</span>' : ''}
+          ${t.top3 ? '<span class="live-feed-status alive">Top 3</span>' : ''}
+          ${t.drop ? `<span class="live-feed-status">Drop: ${escHtml(t.drop)}</span>` : ''}
+        </div>
+      </article>`).join('')}
+    </div>`;
+  setStableHTML(box, html, `historical-live::${label}::${teams.map(t=>`${t.team}:${t.total}:${t.drop}`).join('|')}`, silentRefresh);
 }
 function liveFeedRowEliminated(row, teamCode, killIndex = null){
   const elimName = norm(row?.eliminated_team_name).toUpperCase();
@@ -3477,6 +3568,11 @@ function renderLiveFeed(options = {}){
     return;
   }
 
+  if(isHistoricalMode()){
+    renderHistoricalLatestMatchSummary(rows, options);
+    return;
+  }
+
   const teams = buildLiveFeedTeams(rows);
   window.LIVE_FEED_TEAMS_CACHE = teams;
 
@@ -3890,7 +3986,7 @@ function teamMatchAgg(rows){
       match_no: norm(getVal(r, KEYS.matchNo)),
       match_id: norm(getVal(r, KEYS.matchId)),
       booyah:0, elims:0, damage:0, assists:0, headshots:0,
-      ranking_score:0, killing_score:0, kill_count:0
+      ranking_score:0, killing_score:0, kill_count:0, historical_total:null, drop:'', top3:0
     });
     const o = m.get(key);
     o.match_order = Math.max(o.match_order || 0, matchOrder);
@@ -3905,6 +4001,11 @@ function teamMatchAgg(rows){
     const rs = toNum(getVal(r, KEYS.rankingScore)); if(rs != null) o.ranking_score = Math.max(o.ranking_score, rs);
     const ks = toNum(getVal(r, KEYS.killingScore)); if(ks != null) o.killing_score = Math.max(o.killing_score, ks);
     const kc = toNum(getVal(r, KEYS.killCount)); if(kc != null) o.kill_count = Math.max(o.kill_count, kc);
+    const ht = toNum(r?.historical_total ?? r?.total_score ?? r?.total);
+    if(ht != null) o.historical_total = Math.max(Number(o.historical_total ?? -Infinity), ht);
+    const drop = norm(r?.drop ?? r?.Drop);
+    if(drop && !o.drop) o.drop = drop;
+    if(toBool(r?.top3 ?? r?.Top3 ?? r?.top_3)) o.top3 = 1;
   }
   return [...m.values()];
 }
@@ -3932,6 +4033,20 @@ function sortOverallRows(rows, sortKey, dir){
   return rows;
 }
 
+
+function matchTotalScoreValue(match){
+  const ht = Number(match?.historical_total);
+  if(Number.isFinite(ht)) return ht;
+  return Number(match?.elims || 0) + Number(match?.ranking_score || 0);
+}
+function rowTotalScoreValue(row){
+  const ht = toNum(row?.historical_total ?? row?.total_score ?? row?.total);
+  if(ht != null) return ht;
+  return n(getVal(row, KEYS.kills)) + n(getVal(row, KEYS.rankingScore));
+}
+function unavailableHistoricalHtml(title='Not available in Historical mode', detail='The selected source is team-level historical match data. It does not include player-level skills, pets, loadouts, weapons, or live kill-feed rows.'){
+  return `<div class="historical-compat-note"><strong>${escHtml(title)}</strong><span>${escHtml(detail)}</span></div>`;
+}
 function buildOverallRowsFromTeamMatches(teamMatches){
   const g = groupBy(teamMatches, r => r.team);
   const rows = [];
@@ -3944,7 +4059,9 @@ function buildOverallRowsFromTeamMatches(teamMatches){
     const ranking_score = list.reduce((a,b)=>a+(b.ranking_score||0),0);
     const finalMatch = list.slice().sort((a,b)=>(b.match_order||0)-(a.match_order||0))[0] || null;
     const final_ranking_score = finalMatch ? n(finalMatch.ranking_score) : 0;
-    const total_score = elims + ranking_score;
+    const historicalTotal = list.reduce((a,b)=>a+(Number.isFinite(Number(b.historical_total)) ? Number(b.historical_total) : 0),0);
+    const hasHistoricalTotal = list.some(b => Number.isFinite(Number(b.historical_total)));
+    const total_score = hasHistoricalTotal ? historicalTotal : (elims + ranking_score);
 
     rows.push({
       team, matches, booyahs, elims, damage, ranking_score, total_score, final_ranking_score,
@@ -5554,6 +5671,10 @@ function buildAutoPlayerComparisonRows() {
 function renderPlayerComparison() {
   const box = el('playerCompareBox');
   if (!box) return;
+  if(isHistoricalMode()){
+    box.innerHTML = unavailableHistoricalHtml('Player comparison unavailable', 'Historical mode can compare team standings and match logs, but not player role matchups.');
+    return;
+  }
 
   const compareTeam = norm(el('teamCompareSelect')?.value).toUpperCase();
 
@@ -5604,6 +5725,11 @@ function renderComparisonPanel(){
 }
 
 function renderRosterCards(teamRows){
+  if(isHistoricalMode()){
+    el('rosterCards').innerHTML = unavailableHistoricalHtml('Roster cards unavailable', 'Historical mode cannot build player cards because the source does not contain player-level rows.');
+    renderPlayerComparison();
+    return;
+  }
   const teamStats = getTeamMatchStats(teamRows);
   const rows = (LAST_PLAYER_SUMMARY_ROWS || []).slice().sort((a,b)=>
     roleOrderValue(a.role)-roleOrderValue(b.role) ||
@@ -5651,7 +5777,7 @@ function ruleBasedInsightData(teamCode, teamRows){
     momentum:{label:momentum, summary:`Recent form is ${fmtNum(stats.recentAvg,1)} pts/m compared to ${fmtNum(stats.avgPoints,1)} overall pts/m.`, evidence:[`Last 3 avg: ${fmtNum(stats.recentAvg,1)}`, `Overall avg: ${fmtNum(stats.avgPoints,1)}`]},
     winCondition:{label: elimShare > .55 ? 'Convert fights into placement' : 'Increase fight pressure', summary: elimShare > .55 ? 'They are finding eliminations, but need cleaner late-game survival to maximize score.' : 'They need more elimination pressure to support their placement points.', evidence:[`${fmtNum(stats.totalPoints)} total pts`, `${fmtNum(stats.elims)} elims`, `${fmtNum(stats.rankPoints)} rank pts`]},
     riskFactor:{label:risk, summary:'The biggest concern is the part of their scoring profile that can disappear quickly when lobby pressure increases.', evidence:[`${fmtNum(stats.booyahs)} Booyahs`, `${fmtNum(stats.count)} matches`]},
-    keyPlayerWatch:{player:topPlayer?.player || 'Insufficient data', label:topPlayer ? playerImpactTag(topPlayer, stats) : 'Insufficient data', summary:topPlayer ? `${topPlayer.player} leads the watch list with ${fmtNum(topPlayer.damage)} damage and ${fmtNum(topPlayer.kills)} elims in this scope.` : 'No player rows are available.', evidence:topPlayer ? [`${fmtNum(topPlayer.damage)} damage`, `${fmtNum(topPlayer.kills)} elims`, `${fmtNum(topPlayer.dmg_pm,0)} damage/m`] : []},
+    keyPlayerWatch:{player:topPlayer?.player || (isHistoricalMode() ? 'Team-level only' : 'Insufficient data'), label:topPlayer ? playerImpactTag(topPlayer, stats) : (isHistoricalMode() ? 'Historical source' : 'Insufficient data'), summary:topPlayer ? `${topPlayer.player} leads the watch list with ${fmtNum(topPlayer.damage)} damage and ${fmtNum(topPlayer.kills)} elims in this scope.` : (isHistoricalMode() ? 'Historical mode uses team-level match rows; player watch data is not available from this source.' : 'No player rows are available.'), evidence:topPlayer ? [`${fmtNum(topPlayer.damage)} damage`, `${fmtNum(topPlayer.kills)} elims`, `${fmtNum(topPlayer.dmg_pm,0)} damage/m`] : []},
     broadcastNote:`${teamCode} enters this scope with ${fmtNum(stats.totalPoints)} points across ${fmtNum(stats.count)} matches; the story is whether they can keep their scoring split balanced under EWC pressure.`
   };
 }
@@ -5793,9 +5919,15 @@ function renderTeamKpis(teamRows){
   const elims=tm.reduce((a,b)=>a+(b.elims||0),0);
   const damage=tm.reduce((a,b)=>a+(b.damage||0),0);
   const ranking=tm.reduce((a,b)=>a+(b.ranking_score||0),0);
-  const totalScore = elims + ranking;
+  const historicalTotal = tm.reduce((a,b)=>a+(Number.isFinite(Number(b.historical_total)) ? Number(b.historical_total) : 0),0);
+  const hasHistoricalTotal = tm.some(b => Number.isFinite(Number(b.historical_total)));
+  const totalScore = hasHistoricalTotal ? historicalTotal : (elims + ranking);
 
   el('teamKpis').innerHTML = matches ? `<div class="kpis"><div class="kpi">Matches <strong>${matches}</strong></div><div class="kpi">Total Score <strong>${totalScore}</strong></div><div class="kpi">Booyahs <strong>${booyahs}</strong> <span class="muted">(${fmtPct(matches?booyahs/matches:0)})</span></div><div class="kpi">Elims <strong>${elims}</strong> <span class="muted">(${(elims/matches).toFixed(1)}/m)</span></div><div class="kpi">Rank Score <strong>${ranking}</strong> <span class="muted">(${(ranking/matches).toFixed(1)}/m)</span></div><div class="kpi">Damage <strong>${damage}</strong> <span class="muted">(${(damage/matches).toFixed(0)}/m)</span></div></div>` : '<div class="muted">No team rows in this scope.</div>';
+  if(isHistoricalMode()){
+    el('teamLoadoutSnap').innerHTML = unavailableHistoricalHtml('Skill/loadout data unavailable', 'Historical source rows are team-match summaries only; the table has no active skills, passives, pets, or loadouts.');
+    return;
+  }
   const usageSnap = getLoadoutUsageSummary(teamRows);
   const snapItem = (kind, item, compact=false) => item ? visualItemHtml(kind, item, compact) : '<span class="skill-empty">—</span>';
   const snapItems = (kind, items, compact=false, limit=3) => (items && items.length)
@@ -5810,6 +5942,11 @@ function renderTeamKpis(teamRows){
     </div>`;
 }
 function renderPlayersTable(teamRows){
+  if(isHistoricalMode()){
+    LAST_PLAYER_SUMMARY_ROWS = [];
+    el('tblPlayers').innerHTML = unavailableHistoricalHtml('Player table unavailable', 'The historical table format is team-level. It has team, map, placement, eliminations, drop, damage, total, top3, and tournament fields, but no player rows.');
+    return;
+  }
   const out = buildPlayerSummaryRows(teamRows);
   LAST_PLAYER_SUMMARY_ROWS = out;
 
@@ -5842,6 +5979,13 @@ function renderPlayersTable(teamRows){
 }
 
 function renderTeamUsageTables(teamRows){
+  if(isHistoricalMode()){
+    const note = unavailableHistoricalHtml('Skill usage unavailable', 'Historical source rows do not include active skill, passive skill, pet, or loadout fields.');
+    el('tblActive').innerHTML = note;
+    el('tblPassive').innerHTML = note;
+    el('tblPet').innerHTML = note;
+    return;
+  }
   const act=new Map(), pas=new Map(), pet=new Map();
   for(const r of teamRows){ const alabel = getActiveSkillLabel(r); if(alabel) act.set(alabel,(act.get(alabel)||0)+1); for(const pid of getPassiveSkillIds(r)){ const label=mapSkillFromId(pid,`ID ${pid}`); pas.set(label,(pas.get(label)||0)+1); } const pl=getPetLabel(r); if(pl) pet.set(pl,(pet.get(pl)||0)+1); }
   el('tblActive').innerHTML = renderSimpleTable(listTopCounts(act,20).map((o,i)=>({rank:i+1,skill:o.name,picks:o.picks})), [{label:'#',key:'rank',right:true},{label:'Active Skill',key:'skill'},{label:'Picks',key:'picks',right:true}]); applyColumnHeatmap('tblActive',['picks']);
@@ -5896,14 +6040,14 @@ function renderTeamStory(teamRows){
   const first = matches[0];
   const totalElims = matches.reduce((a,b)=>a+(b.elims||0),0);
   const totalRank = matches.reduce((a,b)=>a+(b.ranking_score||0),0);
-  const totalScore = totalElims + totalRank;
-  const bestTotal = matches.slice().sort((a,b)=>(((b.elims||0)+(b.ranking_score||0))-((a.elims||0)+(a.ranking_score||0))))[0];
+  const totalScore = matches.reduce((a,b)=>a+matchTotalScoreValue(b),0);
+  const bestTotal = matches.slice().sort((a,b)=>(matchTotalScoreValue(b)-matchTotalScoreValue(a)))[0];
   const bestRank = matches.slice().sort((a,b)=>(b.ranking_score||0)-(a.ranking_score||0))[0];
   const bestElim = matches.slice().sort((a,b)=>(b.elims||0)-(a.elims||0))[0];
   const bestDmg = matches.slice().sort((a,b)=>(b.damage||0)-(a.damage||0))[0];
 
   const bestStatSource = (m) => m ? `D${escHtml(m.day || '—')} M${escHtml(m.match_no || '—')}` : '—';
-  const bestTotalValue = (m) => m ? (n(m.elims) + n(m.ranking_score)) : 0;
+  const bestTotalValue = (m) => m ? matchTotalScoreValue(m) : 0;
   const story = matches.length ? `
     <div class="kpis">
       <div class="kpi">Opening Match <strong>D${escHtml(first?.day || '—')} M${escHtml(first?.match_no || '—')}</strong></div>
@@ -5927,8 +6071,10 @@ function renderTeamStory(teamRows){
     booyah:r.booyah ? '👑' : '',
     elims:r.elims,
     rankScore:r.ranking_score,
-    total:(r.elims||0)+(r.ranking_score||0),
+    total:matchTotalScoreValue(r),
     damage:r.damage,
+    drop:r.drop || '—',
+    top3:r.top3 ? 'YES' : '',
     assists:r.assists,
     headshots:r.headshots
   })), [
@@ -5940,8 +6086,7 @@ function renderTeamStory(teamRows){
     {label:'PLC',key:'rankScore',right:true},
     {label:'TOT',key:'total',right:true},
     {label:'DMG',key:'damage',right:true},
-    {label:'AST',key:'assists',right:true},
-    {label:'HS',key:'headshots',right:true}
+    ...(isHistoricalMode() ? [{label:'Drop',key:'drop'},{label:'Top 3',key:'top3'}] : [{label:'AST',key:'assists',right:true},{label:'HS',key:'headshots',right:true}])
   ]);
   applyColumnHeatmap('teamMatchLog',['elims','rankScore','total','damage','assists','headshots']);
 }
