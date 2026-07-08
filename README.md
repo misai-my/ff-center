@@ -323,7 +323,7 @@ https://gkugecflfddkpitlrmws.supabase.co
 Default historical table:
 
 ```text
-public.historical_team_results
+public.ffbr_data
 ```
 
 Setup notes are in:
@@ -331,6 +331,7 @@ Setup notes are in:
 ```text
 docs/HISTORICAL_SUPABASE_SOURCE.md
 supabase/07_historical_team_results.sql
+supabase/08_ffbr_data.sql
 ```
 
 Security note: do not publish a Supabase `service_role` key in this static package. Add a public anon key in `assets/js/data-source-config.js` instead.
@@ -338,7 +339,7 @@ Security note: do not publish a Supabase `service_role` key in this static packa
 
 ## Historical Supabase compatibility update
 
-The dashboard now has a team-level historical compatibility mode for the Historical Supabase source. When `db=historical` is active, the table fields `team`, `group`, `stage`, `day`, `match`, `map`, `booyah`, `placement`, `elimination`, `drop`, `damage`, `total`, `played`, `top3`, `tag`, `week`, `tournament`, `year`, and `season` are normalized into the dashboard schema.
+The dashboard now has a team-level historical compatibility mode for the Historical Supabase source. The default historical table is `public.ffbr_data`. When `db=historical` is active, the table fields `team`, `group`, `stage`, `day`, `match`, `map`, `booyah`, `placement`, `elimination`, `drop`, `damage`, `total`, `played`, `top3`, `tag`, `week`, `tournament`, `year`, and `season` are normalized into the dashboard schema.
 
 Compatible areas:
 - Overall — Team Summary
@@ -350,3 +351,25 @@ Compatible areas:
 - Tournament progression/qualification logic when configured
 
 Player-level sections now show an explicit notice in Historical mode because the historical table does not include player rows, skills, pets, loadouts, weapon usage, or kill-feed events.
+
+
+## ffbr_data historical source update
+
+This build sets **Historical Supabase** to use:
+
+```text
+public.ffbr_data
+```
+
+The attached sample format is normalized automatically. The dashboard maps:
+
+- `team` / `tag` into team identity
+- `group`, `stage`, `year`, `season`, `week`, `day`, `match`, `map` into filters and match scope
+- `placement`, `elimination`, `booyah`, `top3`, `damage`, `drop`, `played`, `total` into standings, KPIs, match logs, and latest match summaries
+
+Historical mode now allows up to 50,000 rows per browser load so sample-sized historical tables can load fully.
+
+### Historical selection behavior
+
+When Historical Supabase is selected but no safe public anon key is configured, the dashboard now keeps the selector on **Historical Supabase (ffbr_data)** and shows a setup warning instead of silently switching back to Live Supabase. Add the public anon key in `assets/js/data-source-config.js` or set `localStorage.ffdc_historical_anon_key`, then reload.
+

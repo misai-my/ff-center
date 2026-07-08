@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-08-historical-compat-v3';
+const EWC_QUALIFICATION_BUILD = '2026-07-08-ffbr-selection-fix-v1';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -8,6 +8,17 @@ const AI_INSIGHTS_CACHE_KEY = 'ewc_ai_insights_cache_v2';
 const FFDC_DATA_SOURCE_STORAGE_KEY = 'ffdc_database_mode';
 const FFDC_HISTORICAL_TABLE_STORAGE_KEY = 'ffdc_historical_table';
 const FFDC_HISTORICAL_KEY_STORAGE_KEY = 'ffdc_historical_anon_key';
+const FFDC_HISTORICAL_DEFAULT_TABLE = 'ffbr_data';
+const FFDC_LEGACY_HISTORICAL_TABLES = new Set([
+  'historical_team_results',
+  'ff_historical_team_results',
+  'ff_historical_data',
+  'ffws_historical_data',
+  'ewc_qualifier_data',
+  'historical_data',
+  'ff_match_results',
+  'ff_player_stats_raw'
+]);
 
 const FFDC_BUILTIN_DATA_SOURCES = {
   live: {
@@ -21,11 +32,12 @@ const FFDC_BUILTIN_DATA_SOURCES = {
   },
   historical: {
     id: 'historical',
-    label: 'Historical Supabase',
+    label: 'Historical Supabase (ffbr_data)',
     url: 'https://gkugecflfddkpitlrmws.supabase.co',
     anonKey: '',
-    table: 'historical_team_results',
+    table: FFDC_HISTORICAL_DEFAULT_TABLE,
     tableCandidates: [
+      FFDC_HISTORICAL_DEFAULT_TABLE,
       'historical_team_results',
       'ff_historical_team_results',
       'ff_historical_data',
@@ -87,14 +99,40 @@ function readHistoricalKeyFromRuntime(){
   return (localStorage.getItem(FFDC_HISTORICAL_KEY_STORAGE_KEY) || '').trim();
 }
 
+function historicalTableFromUrl(){
+  const params = new URLSearchParams(window.location.search || '');
+  return (params.get('historicalTable') || params.get('historyTable') || params.get('table') || '').trim();
+}
+
+function normalizeHistoricalTablePreference(value){
+  const table = (value == null ? '' : String(value).trim());
+  if(!table) return '';
+  const tableKey = table.toLowerCase();
+  if(tableKey === 'ffbr_data') return 'ffbr_data';
+  // Older builds stored historical_team_results in localStorage. The current
+  // historical project table is ffbr_data, so ignore legacy auto-detected names
+  // unless the user explicitly passes a table= query parameter.
+  if(FFDC_LEGACY_HISTORICAL_TABLES.has(tableKey)) return '';
+  return table;
+}
+
 function getActiveDataSourceConfig(){
   const base = FFDC_DATA_SOURCES[ACTIVE_DATA_SOURCE_MODE] || FFDC_DATA_SOURCES.live;
   const cfg = { ...base };
   if(cfg.id === 'historical'){
     const runtimeKey = readHistoricalKeyFromRuntime();
     if(runtimeKey) cfg.anonKey = runtimeKey;
-    const storedTable = (localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '').trim();
-    if(storedTable) cfg.table = storedTable;
+    const tableFromUrl = historicalTableFromUrl();
+    if(tableFromUrl){
+      cfg.table = tableFromUrl;
+      localStorage.setItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY, tableFromUrl);
+    }else{
+      const storedTable = normalizeHistoricalTablePreference(localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '');
+      cfg.table = storedTable || cfg.table || FFDC_HISTORICAL_DEFAULT_TABLE;
+      if(cfg.table === FFDC_HISTORICAL_DEFAULT_TABLE){
+        localStorage.setItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY, FFDC_HISTORICAL_DEFAULT_TABLE);
+      }
+    }
   }
   cfg.url = cfg.url || SUPABASE_URL;
   cfg.anonKey = cfg.anonKey || (cfg.id === 'live' ? SUPABASE_ANON_KEY : '');
@@ -129,20 +167,15 @@ function showDataSourceNotice(message, tone = 'warn'){
 }
 
 function switchToLiveDataSourceBecauseHistoricalKeyMissing(){
-  const message = 'Historical Supabase is not loaded because no PUBLIC anon key is configured. Falling back to Live Supabase. Add the anon key in assets/js/data-source-config.js or localStorage.ffdc_historical_anon_key, then switch to Historical again.';
-  ACTIVE_DATA_SOURCE_MODE = 'live';
-  try{ localStorage.setItem(FFDC_DATA_SOURCE_STORAGE_KEY, 'live'); }catch(_e){}
+  const message = 'Historical Supabase is selected, but no PUBLIC anon key is configured. Add the anon key in assets/js/data-source-config.js or localStorage.ffdc_historical_anon_key. The app will keep Historical selected and will not silently switch back to Live.';
+  ACTIVE_DATA_SOURCE_MODE = 'historical';
+  try{ localStorage.setItem(FFDC_DATA_SOURCE_STORAGE_KEY, 'historical'); }catch(_e){}
   ACTIVE_DATA_SOURCE = getActiveDataSourceConfig();
-  ACTIVE_DATA_CLIENT = supabase.createClient(
-    ACTIVE_DATA_SOURCE.url,
-    ACTIVE_DATA_SOURCE.anonKey || SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
-  );
-  TABLE = ACTIVE_DATA_SOURCE.table || 'ff_player_stats_raw';
+  TABLE = ACTIVE_DATA_SOURCE.table || FFDC_HISTORICAL_DEFAULT_TABLE;
   MAP_TABLE = ACTIVE_DATA_SOURCE.mapTable || 'match_api';
   const select = el('dataSourceMode');
-  if(select) select.value = 'live';
-  showDataSourceNotice(message, 'warn');
+  if(select) select.value = 'historical';
+  showDataSourceNotice(message, 'error');
   return message;
 }
 
@@ -174,8 +207,10 @@ const TEAM_LOGOS_JSON_URL = 'data/team_logos.json';
 const TOURNAMENT_PROGRESSION_JSON_URL = 'data/tournament_progression.json';
 const TOURNAMENT_STAGE_CONFIG_TABLE = 'tournament_stage_config';
 const TOURNAMENT_TEAM_ASSIGNMENTS_TABLE = 'tournament_team_assignments';
-const MAX_ROWS_TO_LOAD = 5000;
+const LIVE_MAX_ROWS_TO_LOAD = 5000;
+const HISTORICAL_MAX_ROWS_TO_LOAD = 50000;
 const CHUNK_SIZE = 1000;
+function maxRowsToLoad(){ return isHistoricalMode() ? HISTORICAL_MAX_ROWS_TO_LOAD : LIVE_MAX_ROWS_TO_LOAD; }
 let EWC_PENDING_QUALIFICATION_CUTOFF = '';
 let TOURNAMENT_STAGE_CONFIGS = [];
 let TOURNAMENT_TEAM_ASSIGNMENTS = [];
@@ -884,7 +919,7 @@ let CURRENT_TEAM = null;
 let USED_CORE_SELECT = true;
 let KEYS = {
   team:null, teamId:null, player:null, accountId:null, playerIds:[],
-  tournament:null, stage:null, group:null, year:null, week:null, day:null, matchNo:null, matchId:null, mode:null, dataSource:null, center:null,
+  tournament:null, stage:null, group:null, year:null, season:null, week:null, day:null, matchNo:null, matchId:null, mode:null, dataSource:null, center:null,
   kills:null, damage:null, assists:null, headshots:null, shoots:null, hits:null, survivalTime:null,
   booyah:null, killCount:null, killingScore:null, rankingScore:null, winRate:null,
   petName:null, petId:null, loadouts:null,
@@ -927,6 +962,7 @@ function detectSchema(sample){
   KEYS.stage = pickKey(keys, [/^Stage$/, /^stage$/i]);
   KEYS.group = pickKey(keys, [/^Group$/, /^group$/i, /^group_code$/i, /^team_group$/i]);
   KEYS.year = pickKey(keys, [/^Year$/, /^year$/i]);
+  KEYS.season = pickKey(keys, [/^Season$/, /^season$/i]);
   KEYS.week = pickKey(keys, [/^Week$/, /^week$/i]);
   KEYS.day = pickKey(keys, [/^Day$/, /^day$/i]);
   KEYS.matchNo = pickKey(keys, [/^MatchNumber$/, /^match_number$/i, /^matchno$/i, /^match$/i, /^game$/i]);
@@ -2002,10 +2038,13 @@ async function resolveHistoricalTableName(){
   if(!isHistoricalMode()) return TABLE;
   if(ACTIVE_DATA_SOURCE.resolvedTable) return ACTIVE_DATA_SOURCE.resolvedTable;
 
-  const fromStorage = (localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '').trim();
+  const fromUrl = historicalTableFromUrl();
+  const fromStorage = normalizeHistoricalTablePreference(localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '');
   const candidates = [
+    fromUrl,
+    ACTIVE_DATA_SOURCE.table || FFDC_HISTORICAL_DEFAULT_TABLE,
     fromStorage,
-    ACTIVE_DATA_SOURCE.table,
+    FFDC_HISTORICAL_DEFAULT_TABLE,
     ...(ACTIVE_DATA_SOURCE.tableCandidates || [])
   ].filter(Boolean).filter((value, index, list) => list.indexOf(value) === index);
 
@@ -2038,7 +2077,7 @@ function injectDatabaseSourceControl(){
   label.className = 'database-source-control';
   label.innerHTML = `Database <select id="dataSourceMode" class="input" style="min-width:190px">
     <option value="live">Live Supabase</option>
-    <option value="historical">Historical Supabase</option>
+    <option value="historical">Historical Supabase (ffbr_data)</option>
   </select>`;
   bar.insertBefore(label, bar.firstChild);
   const select = el('dataSourceMode');
@@ -2144,13 +2183,13 @@ async function fetchRowsWithSelect(selectList){
       out.push(...rows);
       from += rows.length;
 
-      setText('diagLoaded', `Loading: ${Math.min(out.length, MAX_ROWS_TO_LOAD)} rows…`);
+      setText('diagLoaded', `Loading: ${Math.min(out.length, maxRowsToLoad())} rows…`);
 
-      if(rows.length < CHUNK_SIZE || out.length >= MAX_ROWS_TO_LOAD) break;
+      if(rows.length < CHUNK_SIZE || out.length >= maxRowsToLoad()) break;
       await new Promise(resolve => setTimeout(resolve, 0));
     }
 
-    if(ok) return out.slice(0, MAX_ROWS_TO_LOAD);
+    if(ok) return out.slice(0, maxRowsToLoad());
   }
 
   throw new Error('All fetch order attempts failed. Check RLS and indexes for pulled_at/id.');
@@ -2159,6 +2198,7 @@ async function fetchRowsWithSelect(selectList){
 async function fetchAllRows(){
   if(!activeDataSourceIsConfigured()){
     switchToLiveDataSourceBecauseHistoricalKeyMissing();
+    return [];
   }
 
   const availableCols = await loadAvailableColumns();
@@ -2203,10 +2243,10 @@ async function fetchAllRows(){
 
 function toBool(v){ const s = norm(v).toLowerCase(); return v === true || s === '1' || s === 'true' || s === 'yes' || s === 'y'; }
 function matchKeyForRow(r){
-  const t = norm(getVal(r, KEYS.tournament)); const y = norm(getVal(r, KEYS.year)); const w = norm(getVal(r, KEYS.week)); const d = norm(getVal(r, KEYS.day)); const m = norm(getVal(r, KEYS.matchNo)); const mid = norm(getVal(r, KEYS.matchId));
-  return mid ? `${t}|${mid}` : `${t}|Y${y}|W${w}|D${d}|M${m}`;
+  const t = norm(getVal(r, KEYS.tournament)); const y = norm(getVal(r, KEYS.year)); const season = norm(getVal(r, KEYS.season)); const w = norm(getVal(r, KEYS.week)); const d = norm(getVal(r, KEYS.day)); const m = norm(getVal(r, KEYS.matchNo)); const mid = norm(getVal(r, KEYS.matchId));
+  return mid ? `${t}|${mid}` : `${t}|Y${y}|S${season}|W${w}|D${d}|M${m}`;
 }
-function currentFilter(){ return { t:el('fTournament')?.value || '__all__', s:el('fStage')?.value || '__all__', g:el('fGroup')?.value || '__all__', mode:el('fMode')?.value || '__all__', source:el('fSource')?.value || '__all__', y:el('fYear')?.value || '__all__', w:el('fWeek')?.value || '__all__', d:el('fDay')?.value || '__all__', m:el('fMatchNo')?.value || '__all__' }; }
+function currentFilter(){ return { t:el('fTournament')?.value || '__all__', s:el('fStage')?.value || '__all__', g:el('fGroup')?.value || '__all__', mode:el('fMode')?.value || '__all__', source:el('fSource')?.value || '__all__', y:el('fYear')?.value || '__all__', season:el('fSeason')?.value || '__all__', w:el('fWeek')?.value || '__all__', d:el('fDay')?.value || '__all__', m:el('fMatchNo')?.value || '__all__' }; }
 function countMatchesIn(rows){ return new Set(rows.map(matchKeyForRow)).size; }
 function uniqSorted(values, descNumeric=true){
   const arr = [...new Set(values.map(v => norm(v)).filter(Boolean))];
@@ -2225,6 +2265,7 @@ function rowsForCascade(){
   const mode = el('fMode')?.value || '__all__';
   const source = el('fSource')?.value || '__all__';
   const y = el('fYear')?.value || '__all__';
+  const season = el('fSeason')?.value || '__all__';
   const w = el('fWeek')?.value || '__all__';
   const d = el('fDay')?.value || '__all__';
 
@@ -2236,13 +2277,15 @@ function rowsForCascade(){
   const rBase = rows.slice();
   if(y !== '__all__' && KEYS.year) rows = rows.filter(r => norm(getVal(r, KEYS.year)) === y);
   const rY = rows.slice();
+  if(season !== '__all__' && KEYS.season) rows = rows.filter(r => norm(getVal(r, KEYS.season)) === season);
+  const rSeason = rows.slice();
   if(w !== '__all__' && KEYS.week) rows = rows.filter(r => norm(getVal(r, KEYS.week)) === w);
   const rW = rows.slice();
   if(d !== '__all__' && KEYS.day) rows = rows.filter(r => norm(getVal(r, KEYS.day)) === d);
-  return { rBase, rY, rW, rD: rows };
+  return { rBase, rY, rSeason, rW, rD: rows };
 }
 function refreshCascadeOptions(changed){
-  const { rBase, rY, rW, rD } = rowsForCascade();
+  const { rBase, rY, rSeason, rW, rD } = rowsForCascade();
 
   if(['tournament','stage','mode','source'].includes(changed)){
     if(changed === 'tournament' && KEYS.stage){
@@ -2251,13 +2294,21 @@ function refreshCascadeOptions(changed){
       setSelectOptions(el('fStage'), uniqSorted(stageRows.map(r=>getVal(r,KEYS.stage))), false);
     }
     if(KEYS.year) setSelectOptions(el('fYear'), uniqSorted(rBase.map(r=>getVal(r,KEYS.year))), false);
+    if(KEYS.season) setSelectOptions(el('fSeason'), uniqSorted(rY.map(r=>getVal(r,KEYS.season)), false), false);
     if(KEYS.week) setSelectOptions(el('fWeek'), uniqSorted(rY.map(r=>getVal(r,KEYS.week))), false);
     if(KEYS.day) setSelectOptions(el('fDay'), uniqSorted(rW.map(r=>getVal(r,KEYS.day))), false);
     if(KEYS.matchNo) setSelectOptions(el('fMatchNo'), uniqSorted(rD.map(r=>getVal(r,KEYS.matchNo))), false);
     return;
   }
   if(changed === 'year'){
+    if(KEYS.season) setSelectOptions(el('fSeason'), uniqSorted(rY.map(r=>getVal(r,KEYS.season)), false), false);
     if(KEYS.week) setSelectOptions(el('fWeek'), uniqSorted(rY.map(r=>getVal(r,KEYS.week))), false);
+    if(KEYS.day) setSelectOptions(el('fDay'), uniqSorted(rW.map(r=>getVal(r,KEYS.day))), false);
+    if(KEYS.matchNo) setSelectOptions(el('fMatchNo'), uniqSorted(rD.map(r=>getVal(r,KEYS.matchNo))), false);
+    return;
+  }
+  if(changed === 'season'){
+    if(KEYS.week) setSelectOptions(el('fWeek'), uniqSorted(rSeason.map(r=>getVal(r,KEYS.week))), false);
     if(KEYS.day) setSelectOptions(el('fDay'), uniqSorted(rW.map(r=>getVal(r,KEYS.day))), false);
     if(KEYS.matchNo) setSelectOptions(el('fMatchNo'), uniqSorted(rD.map(r=>getVal(r,KEYS.matchNo))), false);
     return;
@@ -2292,6 +2343,8 @@ function latestRowTuple(r){
   return [
     n(getVal(r, KEYS.year)),
     latestRowTimestamp(r),
+    // Spring/Summer/Fall sorting support for ffbr_data season metadata.
+    ({spring:1,summer:2,fall:3,autumn:3,winter:4}[norm(getVal(r, KEYS.season)).toLowerCase()] || 0),
     n(getVal(r, KEYS.week)),
     n(getVal(r, KEYS.day)),
     n(getVal(r, KEYS.matchNo)),
@@ -2319,6 +2372,7 @@ function latestContextFromRows(rows){
     mode: norm(getVal(row, KEYS.mode)).toUpperCase(),
     source: norm(getVal(row, KEYS.dataSource)),
     year: norm(getVal(row, KEYS.year)),
+    season: norm(getVal(row, KEYS.season)),
     week: norm(getVal(row, KEYS.week)),
     day: norm(getVal(row, KEYS.day)),
     match: norm(getVal(row, KEYS.matchNo))
@@ -2358,7 +2412,7 @@ function resetToLatest(){
   // Reset non-temporal filters to All so the latest match is not hidden by an
   // older mode/source choice. Then select the newest tournament represented by
   // the database rows and cascade down to its newest stage/week/day/match.
-  for(const id of ['fStage','fGroup','fMode','fSource','fYear','fWeek','fDay','fMatchNo']){
+  for(const id of ['fStage','fGroup','fMode','fSource','fYear','fSeason','fWeek','fDay','fMatchNo']){
     if(el(id)) el(id).value = '__all__';
   }
 
@@ -2393,6 +2447,8 @@ function resetToLatest(){
 
   if(latest?.year && optionExists('fYear', latest.year)) el('fYear').value = latest.year;
   refreshCascadeOptions('year');
+  if(latest?.season && optionExists('fSeason', latest.season)) el('fSeason').value = latest.season;
+  refreshCascadeOptions('season');
   if(latest?.week && optionExists('fWeek', latest.week)) el('fWeek').value = latest.week;
   refreshCascadeOptions('week');
   if(latest?.day && optionExists('fDay', latest.day)) el('fDay').value = latest.day;
@@ -2423,6 +2479,7 @@ function applyFilters(options = {}){
     if(f.mode !== '__all__' && KEYS.mode && norm(getVal(r,KEYS.mode)).toUpperCase() !== f.mode.toUpperCase()) return false;
     if(f.source !== '__all__' && KEYS.dataSource && norm(getVal(r,KEYS.dataSource)) !== f.source) return false;
     if(f.y !== '__all__' && KEYS.year && norm(getVal(r,KEYS.year)) !== f.y) return false;
+    if(f.season !== '__all__' && KEYS.season && norm(getVal(r,KEYS.season)) !== f.season) return false;
     if(f.w !== '__all__' && KEYS.week && norm(getVal(r,KEYS.week)) !== f.w) return false;
     if(f.d !== '__all__' && KEYS.day && norm(getVal(r,KEYS.day)) !== f.d) return false;
     if(f.m !== '__all__' && KEYS.matchNo && norm(getVal(r,KEYS.matchNo)) !== f.m) return false;
@@ -2454,6 +2511,7 @@ function applyFilters(options = {}){
     f.mode !== '__all__' ? f.mode : 'All modes',
     f.source !== '__all__' ? f.source : 'All sources',
     f.y !== '__all__' ? `Y${f.y}` : 'All years',
+    f.season !== '__all__' ? f.season : 'All seasons',
     f.w !== '__all__' ? `W${f.w}` : 'All weeks',
     f.d !== '__all__' ? `D${f.d}` : 'All days',
     f.m !== '__all__' ? `M${f.m}` : 'All matches'
@@ -2465,6 +2523,7 @@ function applyFilters(options = {}){
       ['Tournament', f.t !== '__all__' ? f.t : 'All'],
       ['Stage', f.s !== '__all__' ? f.s : 'All'],
       ['Group', f.g !== '__all__' ? f.g : 'All'],
+      ['Season', f.season !== '__all__' ? f.season : 'All'],
       ['Week', f.w !== '__all__' ? f.w : 'All'],
       ['Day', f.d !== '__all__' ? f.d : 'All'],
       ['Match', f.m !== '__all__' ? f.m : 'All']
@@ -7335,7 +7394,7 @@ function globalSearchResourceLabel(kind){
 }
 function globalSearchStaticEntries(){
   return [
-    {type:'section',title:'Filters',subtitle:'Tournament, stage, mode, source, year, week, day and match filters',keywords:'filter scope tournament stage mode source year week day match reset latest',sectionId:'accFilters',icon:'FL'},
+    {type:'section',title:'Filters',subtitle:'Tournament, stage, mode, source, year, season, week, day and match filters',keywords:'filter scope tournament stage mode source year season week day match reset latest',sectionId:'accFilters',icon:'FL'},
     {type:'section',title:'Tournament Progression',subtitle:'Groups, advancement paths and Champion Rush status',keywords:'group stage survival finals champion rush qualification progression advanced eliminated',sectionId:'accOverall',icon:'PR'},
     {type:'section',title:'Overall Team Summary',subtitle:'Standings, rankings, qualification cutoff, 1UP and Quali Pts',keywords:'overall summary standings leaderboard ranking rank points qualification cutoff 1up quali pts booyah eliminations damage',sectionId:'accOverall',icon:'ST'},
     {type:'section',title:'Quick Popups',subtitle:'Open skill, pet, weapon, loadout and map references',keywords:'quick popup reference library skills pets weapons loadouts maps',sectionId:'quickPopupsSection',icon:'QP'},
@@ -7640,6 +7699,7 @@ function wire(){
     ['fMode', 'mode'],
     ['fSource', 'source'],
     ['fYear', 'year'],
+    ['fSeason', 'season'],
     ['fWeek', 'week'],
     ['fDay', 'day']
   ]) {
@@ -7681,13 +7741,13 @@ function wire(){
 
 
 /* ===== Saved filters + team-card filters + color theme controls ===== */
-const EWC_FILTER_STATE_KEY = 'ewc_team_center_filter_state_v4';
+const EWC_FILTER_STATE_KEY = 'ewc_team_center_filter_state_v5';
 const EWC_COLOR_THEME_KEY = 'ewc_team_center_color_theme_v1';
 function readSelectValue(id){ return el(id)?.value || '__all__'; }
 function getFilterState(){
   return {
     t: readSelectValue('fTournament'), s: readSelectValue('fStage'), mode: readSelectValue('fMode'), source: readSelectValue('fSource'),
-    g: readSelectValue('fGroup'), y: readSelectValue('fYear'), w: readSelectValue('fWeek'), d: readSelectValue('fDay'), m: readSelectValue('fMatchNo')
+    g: readSelectValue('fGroup'), y: readSelectValue('fYear'), season: readSelectValue('fSeason'), w: readSelectValue('fWeek'), d: readSelectValue('fDay'), m: readSelectValue('fMatchNo')
   };
 }
 function saveFilterState(){
@@ -7713,6 +7773,8 @@ function applySavedFilterState(state){
   refreshCascadeOptions('tournament');
   setSelectIfExists('fYear', state.y || '__all__');
   refreshCascadeOptions('year');
+  setSelectIfExists('fSeason', state.season || '__all__');
+  refreshCascadeOptions('season');
   setSelectIfExists('fWeek', state.w || '__all__');
   refreshCascadeOptions('week');
   setSelectIfExists('fDay', state.d || '__all__');
@@ -8315,7 +8377,7 @@ function restoreDashboardViewState(state, attempt = 0){
 
 function captureFilterControlState(){
   const ids = [
-    'fTournament','fStage','fGroup','fMode','fSource','fYear','fWeek','fDay','fMatchNo',
+    'fTournament','fStage','fGroup','fMode','fSource','fYear','fSeason','fWeek','fDay','fMatchNo',
     'teamCardTournament','teamCardStage','teamCardDay','teamCardMatchNo'
   ];
   const controls = {};
@@ -8338,7 +8400,7 @@ function restoreFilterControlState(state){
 }
 function getRefreshLockedFilterSignature(){
   const f = currentFilterSnapshot();
-  return [f.t,f.s,f.g,f.mode,f.source,f.y,f.w,f.d,f.m].join('::');
+  return [f.t,f.s,f.g,f.mode,f.source,f.y,f.season,f.w,f.d,f.m].join('::');
 }
 function currentFilterSnapshot(){
   return {
@@ -8348,6 +8410,7 @@ function currentFilterSnapshot(){
     mode: el('fMode')?.value || '__all__',
     source: el('fSource')?.value || '__all__',
     y: el('fYear')?.value || '__all__',
+    season: el('fSeason')?.value || '__all__',
     w: el('fWeek')?.value || '__all__',
     d: el('fDay')?.value || '__all__',
     m: el('fMatchNo')?.value || '__all__'
@@ -8371,6 +8434,8 @@ function rebuildFilterOptionsPreservingCurrent(){
   refreshCascadeOptions('tournament');
   setSelectValueIfAvailable('fYear', f.y);
   refreshCascadeOptions('year');
+  setSelectValueIfAvailable('fSeason', f.season);
+  refreshCascadeOptions('season');
   setSelectValueIfAvailable('fWeek', f.w);
   refreshCascadeOptions('week');
   setSelectValueIfAvailable('fDay', f.d);
@@ -8475,10 +8540,24 @@ async function init(){
       openLoginModal('Sign in to load the protected dashboard data.');
       return;
     }
+    if(!activeDataSourceIsConfigured()){
+      const missingKeyMessage = switchToLiveDataSourceBecauseHistoricalKeyMissing();
+      if(loadWatchdog) clearTimeout(loadWatchdog);
+      el('veil').classList.add('hide');
+      gerr(`${missingKeyMessage}
+
+Historical table: public.${TABLE || FFDC_HISTORICAL_DEFAULT_TABLE}
+
+To test locally, run:
+localStorage.setItem('${FFDC_HISTORICAL_KEY_STORAGE_KEY}', 'YOUR_PUBLIC_ANON_KEY');
+localStorage.setItem('${FFDC_DATA_SOURCE_STORAGE_KEY}', 'historical');
+location.reload();`);
+      return;
+    }
     await withTimeout(headCount(), 15000, 'Row count timed out').catch(e => console.warn(e?.message || e));
     setText('diagLoaded', `Loading rows from ${activeDataSourceLabel()}…`);
-    RAW = await withTimeout(fetchAllRows(), 45000, 'Data load timed out. Check Supabase/RLS or try reducing MAX_ROWS_TO_LOAD.');
-    setText('diagLoaded', `Loaded: ${RAW.length} rows • ${activeDataSourceLabel()} • ${TABLE} • ${DASHBOARD_SELECT_COLS.length || 'safe'} selected columns${RAW.length >= MAX_ROWS_TO_LOAD ? ' (latest-row limit reached)' : ''}`);
+    RAW = await withTimeout(fetchAllRows(), isHistoricalMode() ? 90000 : 45000, 'Data load timed out. Check Supabase/RLS or try reducing the selected date/tournament scope.');
+    setText('diagLoaded', `Loaded: ${RAW.length} rows • ${activeDataSourceLabel()} • ${TABLE} • ${DASHBOARD_SELECT_COLS.length || 'safe'} selected columns${RAW.length >= maxRowsToLoad() ? ' (row limit reached)' : ''}`);
     if(!RAW.length){
       if(loadWatchdog) clearTimeout(loadWatchdog);
       el('veil').classList.add('hide');

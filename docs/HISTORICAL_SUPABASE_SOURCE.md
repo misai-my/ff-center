@@ -41,11 +41,12 @@ https://gkugecflfddkpitlrmws.supabase.co
 Default table name expected by the package:
 
 ```text
-public.historical_team_results
+public.ffbr_data
 ```
 
-The app can also auto-detect these fallback table names:
+The app now checks `ffbr_data` first. It can also auto-detect these fallback table names:
 
+- `ffbr_data`
 - `historical_team_results`
 - `ff_historical_team_results`
 - `ff_historical_data`
@@ -58,7 +59,7 @@ The app can also auto-detect these fallback table names:
 To force a table name:
 
 ```js
-localStorage.setItem('ffdc_historical_table', 'your_table_name');
+localStorage.setItem('ffdc_historical_table', 'ffbr_data');
 location.reload();
 ```
 
@@ -66,7 +67,7 @@ location.reload();
 
 The historical source is team-level Battle Royale match data. The app maps it into the dashboard format automatically.
 
-Required/useful columns:
+Required/useful columns for `ffbr_data`:
 
 ```text
 id, team, group, stage, day, match, map, booyah, placement, elimination, drop, damage, total, played, top3, tag, week, tournament, year, season
@@ -121,7 +122,7 @@ For a public historical read-only table, enable RLS and add a read-only SELECT p
 See:
 
 ```text
-supabase/07_historical_team_results.sql
+supabase/08_ffbr_data.sql
 ```
 
 ## Missing historical key behavior
@@ -149,3 +150,27 @@ anonKey: 'YOUR_PUBLIC_ANON_KEY'
 ```
 
 Do not use a `service_role` key in this frontend package.
+
+
+## ffbr_data update
+
+This build is configured for the historical table:
+
+```text
+public.ffbr_data
+```
+
+When **Historical Supabase (ffbr_data)** is selected, the dashboard normalizes these columns into the current dashboard schema:
+
+```text
+id, team, group, stage, day, match, map, booyah, placement, elimination, drop, damage, total, played, top3, tag, week, tournament, year, season
+```
+
+The uploaded sample contained 14,544 team-match rows. Historical mode now raises the browser row cap to 50,000 rows so the full sample-sized history can load instead of only the latest 5,000 rows.
+
+A **Season** filter was added for historical datasets where the tournament name/year alone is not enough to separate Spring, Summer, Fall, and Winter events.
+
+### Historical selection behavior
+
+When Historical Supabase is selected but no safe public anon key is configured, the dashboard now keeps the selector on **Historical Supabase (ffbr_data)** and shows a setup warning instead of silently switching back to Live Supabase. Add the public anon key in `assets/js/data-source-config.js` or set `localStorage.ffdc_historical_anon_key`, then reload.
+
