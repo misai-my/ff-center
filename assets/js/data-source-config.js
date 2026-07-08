@@ -13,16 +13,10 @@ window.FFDC_DATA_SOURCES = {
     id: 'historical',
     label: 'Historical Supabase',
     url: 'https://gkugecflfddkpitlrmws.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjA4MzA3NCwiZXhwIjoyMDYxNjU5MDc0fQ.hDvKvRLBR0PN6G7o0QZiIubDTzQ6EkdriyRKVZfqUeo',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE',
     table: 'historical_team_results',
     tableCandidates: [
       'ffbr_data',
-      'ff_historical_team_results',
-      'ff_historical_data',
-      'ffws_historical_data',
-      'ewc_qualifier_data',
-      'historical_data',
-      'ff_match_results',
       'ff_player_stats_raw'
     ],
     type: 'team_match_history'
