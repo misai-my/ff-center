@@ -13,7 +13,7 @@ window.FFDC_DATA_SOURCES = {
     id: 'historical',
     label: 'Historical Supabase',
     url: 'https://gkugecflfddkpitlrmws.supabase.co',
-    anonKey: '',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NjA4MzA3NCwiZXhwIjoyMDYxNjU5MDc0fQ.hDvKvRLBR0PN6G7o0QZiIubDTzQ6EkdriyRKVZfqUeo',
     table: 'historical_team_results',
     tableCandidates: [
       'historical_team_results',
