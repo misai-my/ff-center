@@ -1,9 +1,118 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-06-12-v2';
+const EWC_QUALIFICATION_BUILD = '2026-07-08-historical-source-v1';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
 const AI_INSIGHTS_CACHE_KEY = 'ewc_ai_insights_cache_v2';
+
+const FFDC_DATA_SOURCE_STORAGE_KEY = 'ffdc_database_mode';
+const FFDC_HISTORICAL_TABLE_STORAGE_KEY = 'ffdc_historical_table';
+const FFDC_HISTORICAL_KEY_STORAGE_KEY = 'ffdc_historical_anon_key';
+
+const FFDC_BUILTIN_DATA_SOURCES = {
+  live: {
+    id: 'live',
+    label: 'Live Supabase',
+    url: SUPABASE_URL,
+    anonKey: SUPABASE_ANON_KEY,
+    table: 'ff_player_stats_raw',
+    mapTable: 'match_api',
+    type: 'player_raw'
+  },
+  historical: {
+    id: 'historical',
+    label: 'Historical Supabase',
+    url: 'https://gkugecflfddkpitlrmws.supabase.co',
+    anonKey: '',
+    table: 'historical_team_results',
+    tableCandidates: [
+      'historical_team_results',
+      'ff_historical_team_results',
+      'ff_historical_data',
+      'ffws_historical_data',
+      'ewc_qualifier_data',
+      'historical_data',
+      'ff_match_results',
+      'ff_player_stats_raw'
+    ],
+    type: 'team_match_history'
+  }
+};
+
+const FFDC_EXTERNAL_DATA_SOURCES = (window.FFDC_DATA_SOURCES && typeof window.FFDC_DATA_SOURCES === 'object')
+  ? window.FFDC_DATA_SOURCES
+  : {};
+
+const FFDC_DATA_SOURCES = {
+  ...FFDC_BUILTIN_DATA_SOURCES,
+  ...FFDC_EXTERNAL_DATA_SOURCES
+};
+
+function decodeJwtPayload(token){
+  try{
+    const payload = String(token || '').split('.')[1];
+    if(!payload) return null;
+    const padded = payload.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - payload.length % 4) % 4);
+    return JSON.parse(atob(padded));
+  }catch(_e){ return null; }
+}
+
+function dataSourceModeFromUrl(){
+  const params = new URLSearchParams(window.location.search || '');
+  const raw = (params.get('db') || params.get('source') || '').trim().toLowerCase();
+  if(raw === 'historical' || raw === 'history') return 'historical';
+  if(raw === 'live' || raw === 'current') return 'live';
+  return '';
+}
+
+function getActiveDataSourceMode(){
+  const fromUrl = dataSourceModeFromUrl();
+  if(fromUrl) {
+    localStorage.setItem(FFDC_DATA_SOURCE_STORAGE_KEY, fromUrl);
+    return fromUrl;
+  }
+  const stored = (localStorage.getItem(FFDC_DATA_SOURCE_STORAGE_KEY) || 'live').trim().toLowerCase();
+  return FFDC_DATA_SOURCES[stored] ? stored : 'live';
+}
+
+let ACTIVE_DATA_SOURCE_MODE = getActiveDataSourceMode();
+
+function readHistoricalKeyFromRuntime(){
+  const params = new URLSearchParams(window.location.search || '');
+  const fromUrl = (params.get('historicalKey') || params.get('historical_anon_key') || '').trim();
+  if(fromUrl){
+    localStorage.setItem(FFDC_HISTORICAL_KEY_STORAGE_KEY, fromUrl);
+    return fromUrl;
+  }
+  return (localStorage.getItem(FFDC_HISTORICAL_KEY_STORAGE_KEY) || '').trim();
+}
+
+function getActiveDataSourceConfig(){
+  const base = FFDC_DATA_SOURCES[ACTIVE_DATA_SOURCE_MODE] || FFDC_DATA_SOURCES.live;
+  const cfg = { ...base };
+  if(cfg.id === 'historical'){
+    const runtimeKey = readHistoricalKeyFromRuntime();
+    if(runtimeKey) cfg.anonKey = runtimeKey;
+    const storedTable = (localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '').trim();
+    if(storedTable) cfg.table = storedTable;
+  }
+  cfg.url = cfg.url || SUPABASE_URL;
+  cfg.anonKey = cfg.anonKey || (cfg.id === 'live' ? SUPABASE_ANON_KEY : '');
+  cfg.table = cfg.table || 'ff_player_stats_raw';
+  cfg.mapTable = cfg.mapTable || 'match_api';
+  return cfg;
+}
+
+let ACTIVE_DATA_SOURCE = getActiveDataSourceConfig();
+let ACTIVE_DATA_CLIENT = supabase.createClient(
+  ACTIVE_DATA_SOURCE.url,
+  ACTIVE_DATA_SOURCE.anonKey || SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
+
+function isHistoricalMode(){ return ACTIVE_DATA_SOURCE_MODE === 'historical'; }
+function activeDataSourceLabel(){ return ACTIVE_DATA_SOURCE?.label || ACTIVE_DATA_SOURCE_MODE || 'Live Supabase'; }
+function activeDataSourceIsConfigured(){ return !isHistoricalMode() || !!ACTIVE_DATA_SOURCE.anonKey; }
 
 const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -23,8 +132,8 @@ function withTimeout(promise, ms = 20000, label = 'Operation timed out'){
 }
 
 
-const TABLE = 'ff_player_stats_raw';
-const MAP_TABLE = 'match_api';
+let TABLE = ACTIVE_DATA_SOURCE.table || 'ff_player_stats_raw';
+let MAP_TABLE = ACTIVE_DATA_SOURCE.mapTable || 'match_api';
 const CHARACTER_JSON_URL = 'data/character.json';
 const PET_JSON_URL = 'data/pet.json';
 const LOADOUT_JSON_URL = 'data/loadout.json';
@@ -788,22 +897,22 @@ function detectSchema(sample){
   KEYS.year = pickKey(keys, [/^Year$/, /^year$/i]);
   KEYS.week = pickKey(keys, [/^Week$/, /^week$/i]);
   KEYS.day = pickKey(keys, [/^Day$/, /^day$/i]);
-  KEYS.matchNo = pickKey(keys, [/^MatchNumber$/, /^match_number$/i, /^matchno$/i]);
+  KEYS.matchNo = pickKey(keys, [/^MatchNumber$/, /^match_number$/i, /^matchno$/i, /^match$/i, /^game$/i]);
   KEYS.matchId = pickKey(keys, [/^match_id$/i]);
   KEYS.mode = pickKey(keys, [/^Mode$/, /^mode$/i]);
   KEYS.dataSource = pickKey(keys, [/^data_source$/i]);
   KEYS.center = pickKey(keys, [/^center$/i]);
-  KEYS.kills = pickKey(keys, [/^player_stats_kills$/i, /^kills$/i]);
-  KEYS.damage = pickKey(keys, [/^player_stats_damage$/i, /^damage$/i]);
+  KEYS.kills = pickKey(keys, [/^player_stats_kills$/i, /^kills$/i, /^elimination$/i, /^eliminations$/i, /^elims$/i]);
+  KEYS.damage = pickKey(keys, [/^player_stats_damage$/i, /^damage$/i, /^dmg$/i]);
   KEYS.assists = pickKey(keys, [/^player_stats_assists$/i, /^assists$/i]);
   KEYS.headshots = pickKey(keys, [/^player_stats_headshots$/i, /^headshots$/i]);
   KEYS.shoots = pickKey(keys, [/^player_stats_shoots$/i, /^shoots$/i]);
   KEYS.hits = pickKey(keys, [/^player_stats_hits$/i, /^hits$/i]);
   KEYS.survivalTime = pickKey(keys, [/^player_stats_survival_time$/i, /^survival_time$/i]);
   KEYS.booyah = pickKey(keys, [/^booyah$/i, /^is_booyah$/i, /^winner$/i, /^is_winner$/i]);
-  KEYS.killCount = pickKey(keys, [/^kill_count$/i]);
-  KEYS.killingScore = pickKey(keys, [/^killing_score$/i]);
-  KEYS.rankingScore = pickKey(keys, [/^ranking_score$/i]);
+  KEYS.killCount = pickKey(keys, [/^kill_count$/i, /^elimination$/i, /^eliminations$/i, /^elims$/i]);
+  KEYS.killingScore = pickKey(keys, [/^killing_score$/i, /^elimination$/i, /^eliminations$/i, /^elims$/i]);
+  KEYS.rankingScore = pickKey(keys, [/^ranking_score$/i, /^placement$/i, /^placement_points$/i, /^rank_score$/i]);
   KEYS.winRate = pickKey(keys, [/^win_rate$/i]);
   KEYS.petName = pickKey(keys, [/^player_stats_pet_skill_name$/i, /^pet_skill_name$/i]);
   KEYS.petId = pickKey(keys, [/^player_stats_pet_skill_id$/i, /^pet_skill_id$/i]);
@@ -1786,20 +1895,154 @@ async function loadLoadoutJson(){
   }
 }
 
+
+function normalizeHistoricalTeamRows(rows){
+  return (rows || []).map(row => {
+    const team = firstPresent(row, ['team_name','team','Team','TEAM','tag','Tag','TAG']);
+    const tag = firstPresent(row, ['tag','Tag','TAG']);
+    const tournament = firstPresent(row, ['Tournament','tournament']);
+    const stage = firstPresent(row, ['Stage','stage']);
+    const group = firstPresent(row, ['Group','group','group_code']);
+    const year = firstPresent(row, ['Year','year']);
+    const season = firstPresent(row, ['season','Season']);
+    const week = firstPresent(row, ['Week','week']);
+    const day = firstPresent(row, ['Day','day']);
+    const matchNumber = firstPresent(row, ['MatchNumber','match_number','match','Match','game','Game']);
+    const map = firstPresent(row, ['map','Map']);
+    const placement = firstPresent(row, ['placement','Placement','ranking_score','rankingScore']);
+    const elimination = firstPresent(row, ['elimination','eliminations','elims','kills','player_stats_kills']);
+    const booyah = firstPresent(row, ['booyah','Booyah','is_booyah','winner']);
+    const damage = firstPresent(row, ['damage','Damage','dmg','player_stats_damage']);
+    const drop = firstPresent(row, ['drop','Drop']);
+    const played = firstPresent(row, ['played','Played']);
+    const top3 = firstPresent(row, ['top3','Top3','top_3']);
+    const source = firstPresent(row, ['data_source','source']) || 'Historical Supabase';
+    const mode = firstPresent(row, ['Mode','mode']) || 'BR';
+    const id = firstPresent(row, ['id','ID']);
+    const matchId = firstPresent(row, ['match_id','matchId']) || [tournament, stage, year, season, week, day, matchNumber, map].map(norm).join('|');
+
+    return {
+      ...row,
+      id,
+      team_name: team,
+      team,
+      tag,
+      Tournament: tournament,
+      Stage: stage,
+      Group: group,
+      Year: year,
+      Season: season,
+      Week: week,
+      Day: day,
+      MatchNumber: matchNumber,
+      match_id: matchId,
+      Mode: mode,
+      map,
+      Map: map,
+      drop,
+      Drop: drop,
+      booyah,
+      placement,
+      elimination,
+      player_stats_kills: elimination,
+      player_stats_damage: damage,
+      ranking_score: placement,
+      killing_score: elimination,
+      kill_count: elimination,
+      damage,
+      played,
+      top3,
+      data_source: source,
+      historical_total: firstPresent(row, ['total','Total'])
+    };
+  });
+}
+
+function postProcessFetchedRows(rows){
+  if(isHistoricalMode()) return normalizeHistoricalTeamRows(rows);
+  return rows || [];
+}
+
+async function resolveHistoricalTableName(){
+  if(!isHistoricalMode()) return TABLE;
+  if(ACTIVE_DATA_SOURCE.resolvedTable) return ACTIVE_DATA_SOURCE.resolvedTable;
+
+  const fromStorage = (localStorage.getItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY) || '').trim();
+  const candidates = [
+    fromStorage,
+    ACTIVE_DATA_SOURCE.table,
+    ...(ACTIVE_DATA_SOURCE.tableCandidates || [])
+  ].filter(Boolean).filter((value, index, list) => list.indexOf(value) === index);
+
+  for(const candidate of candidates){
+    try{
+      const { data, error } = await withTimeout(
+        ACTIVE_DATA_CLIENT.from(candidate).select('*').limit(1),
+        9000,
+        `Historical table probe timed out: ${candidate}`
+      );
+      if(error) {
+        console.warn(`Historical table probe failed for ${candidate}:`, error.message || error);
+        continue;
+      }
+      ACTIVE_DATA_SOURCE.resolvedTable = candidate;
+      TABLE = candidate;
+      localStorage.setItem(FFDC_HISTORICAL_TABLE_STORAGE_KEY, candidate);
+      return candidate;
+    }catch(err){
+      console.warn(`Historical table probe exception for ${candidate}:`, err?.message || err);
+    }
+  }
+  throw new Error(`Could not find a readable historical table. Tried: ${candidates.join(', ') || 'no candidates'}. Set localStorage.${FFDC_HISTORICAL_TABLE_STORAGE_KEY} to the correct table name.`);
+}
+
+function injectDatabaseSourceControl(){
+  const bar = document.querySelector('#accFilters .bar');
+  if(!bar || el('dataSourceMode')) return;
+  const label = document.createElement('label');
+  label.className = 'database-source-control';
+  label.innerHTML = `Database <select id="dataSourceMode" class="input" style="min-width:190px">
+    <option value="live">Live Supabase</option>
+    <option value="historical">Historical Supabase</option>
+  </select>`;
+  bar.insertBefore(label, bar.firstChild);
+  const select = el('dataSourceMode');
+  if(select){
+    select.value = ACTIVE_DATA_SOURCE_MODE;
+    select.addEventListener('change', () => {
+      const mode = select.value === 'historical' ? 'historical' : 'live';
+      localStorage.setItem(FFDC_DATA_SOURCE_STORAGE_KEY, mode);
+      const url = new URL(window.location.href);
+      url.searchParams.set('db', mode);
+      window.location.href = url.toString();
+    });
+  }
+  const hint = el('filterHint');
+  if(hint){
+    const keyRole = decodeJwtPayload(ACTIVE_DATA_SOURCE.anonKey)?.role || (ACTIVE_DATA_SOURCE.anonKey ? 'provided' : 'missing');
+    const note = isHistoricalMode()
+      ? `Database: Historical Supabase • table: ${TABLE || 'auto-detect'} • key: ${keyRole}`
+      : 'Database: Live Supabase';
+    hint.dataset.sourceHint = note;
+  }
+}
+
 async function headCount(){
   try{
-    const res = await withTimeout(client.from(TABLE).select('id', { count:'estimated', head:true }), 12000, 'Row count timed out');
+    if(isHistoricalMode()) await resolveHistoricalTableName();
+    const res = await withTimeout(ACTIVE_DATA_CLIENT.from(TABLE).select('id', { count:'estimated', head:true }), 12000, 'Row count timed out');
     if(res.error) throw res.error;
     setText('diagCount', `${TABLE} rows: ${res.count ?? '—'}`);
   }catch(e){ setText('diagCount', `${TABLE} rows: count blocked`); console.warn('Count failed:', e?.message || e); }
 }
 async function loadAvailableColumns(){
+  if(isHistoricalMode()) await resolveHistoricalTableName();
   const orderCandidates = ['pulled_at','id','created_at','updated_at'];
 
   for(const orderCol of orderCandidates){
     try{
       const { data, error } = await withTimeout(
-        client
+        ACTIVE_DATA_CLIENT
           .from(TABLE)
           .select('*')
           .order(orderCol, { ascending:false })
@@ -1823,7 +2066,7 @@ async function loadAvailableColumns(){
   }
 
   try{
-    const { data, error } = await withTimeout(client.from(TABLE).select('*').limit(1), 12000, 'Schema sample timed out without ordering');
+    const { data, error } = await withTimeout(ACTIVE_DATA_CLIENT.from(TABLE).select('*').limit(1), 12000, 'Schema sample timed out without ordering');
     if(error) throw error;
     const sample = data?.[0] || null;
     return sample ? Object.keys(sample).filter(k => !HEAVY_COLS.has(k)) : [];
@@ -1844,7 +2087,7 @@ async function fetchRowsWithSelect(selectList){
 
     for(;;){
       const { data, error } = await withTimeout(
-        client
+        ACTIVE_DATA_CLIENT
           .from(TABLE)
           .select(selectList)
           .order(orderCol, { ascending:false })
@@ -1878,6 +2121,10 @@ async function fetchRowsWithSelect(selectList){
 }
 
 async function fetchAllRows(){
+  if(!activeDataSourceIsConfigured()){
+    throw new Error('Historical Supabase key is not configured. Add a PUBLIC anon key in assets/js/data-source-config.js, or set localStorage.ffdc_historical_anon_key. Do not use a service_role key in a public frontend.');
+  }
+
   const availableCols = await loadAvailableColumns();
 
   if(!availableCols.length){
@@ -1887,6 +2134,12 @@ async function fetchAllRows(){
   }
 
   const available = new Set(availableCols);
+  if(isHistoricalMode()){
+    DASHBOARD_SELECT_COLS = availableCols.filter(c => !HEAVY_COLS.has(c));
+    USED_CORE_SELECT = true;
+    return postProcessFetchedRows(await fetchRowsWithSelect(DASHBOARD_SELECT_COLS.join(',')));
+  }
+
   DASHBOARD_SELECT_COLS = DASHBOARD_DESIRED_COLS.filter(c => available.has(c) && !HEAVY_COLS.has(c));
 
   // Include any safe server.js metadata aliases if your table has them, without forcing them to exist.
@@ -1909,7 +2162,7 @@ async function fetchAllRows(){
   }
 
   USED_CORE_SELECT = true;
-  return await fetchRowsWithSelect(DASHBOARD_SELECT_COLS.join(','));
+  return postProcessFetchedRows(await fetchRowsWithSelect(DASHBOARD_SELECT_COLS.join(',')));
 }
 
 function toBool(v){ const s = norm(v).toLowerCase(); return v === true || s === '1' || s === 'true' || s === 'yes' || s === 'y'; }
@@ -2170,7 +2423,7 @@ function applyFilters(options = {}){
     f.m !== '__all__' ? `M${f.m}` : 'All matches'
   ].join(' • ');
 
-  if(el('scopeChip')) el('scopeChip').textContent = 'Scope: ' + scopeText;
+  if(el('scopeChip')) el('scopeChip').textContent = `${activeDataSourceLabel()} • Scope: ${scopeText}`;
   if(el('heroScopeMirror')){
     const scopeRows = [
       ['Tournament', f.t !== '__all__' ? f.t : 'All'],
@@ -8062,6 +8315,7 @@ async function init(){
   let loadWatchdog = null;
   try{
     clearErr(); el('veil').classList.remove('hide');
+    injectDatabaseSourceControl();
     loadWatchdog = setTimeout(() => {
       try{
         el('veil').classList.add('hide');
@@ -8077,13 +8331,13 @@ async function init(){
       return;
     }
     await withTimeout(headCount(), 15000, 'Row count timed out').catch(e => console.warn(e?.message || e));
-    setText('diagLoaded', 'Loading rows from Supabase…');
+    setText('diagLoaded', `Loading rows from ${activeDataSourceLabel()}…`);
     RAW = await withTimeout(fetchAllRows(), 45000, 'Data load timed out. Check Supabase/RLS or try reducing MAX_ROWS_TO_LOAD.');
-    setText('diagLoaded', `Loaded: ${RAW.length} rows • ${DASHBOARD_SELECT_COLS.length || 'safe'} selected columns${RAW.length >= MAX_ROWS_TO_LOAD ? ' (latest-row limit reached)' : ''}`);
+    setText('diagLoaded', `Loaded: ${RAW.length} rows • ${activeDataSourceLabel()} • ${TABLE} • ${DASHBOARD_SELECT_COLS.length || 'safe'} selected columns${RAW.length >= MAX_ROWS_TO_LOAD ? ' (latest-row limit reached)' : ''}`);
     if(!RAW.length){
       if(loadWatchdog) clearTimeout(loadWatchdog);
       el('veil').classList.add('hide');
-      gerr(`No rows returned from ${TABLE}.\n\nPossible causes:\n• Table is empty\n• RLS blocks SELECT\n• You are writing to another schema/table\n\nQuick check in Supabase SQL editor:\nselect count(*) from public.${TABLE};`);
+      gerr(`No rows returned from ${TABLE} (${activeDataSourceLabel()}).\n\nPossible causes:\n• Table is empty\n• RLS blocks SELECT\n• You are writing to another schema/table\n\nQuick check in Supabase SQL editor:\nselect count(*) from public.${TABLE};`);
       return;
     }
     detectSchema(RAW[0]);
@@ -8100,7 +8354,7 @@ async function init(){
     wirePersistentViewState();
     const url = new URL(window.location.href); const qt=(url.searchParams.get('team')||'').trim().toUpperCase();
     if(qt){ const teams=new Set(FILTERED.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean)); if(teams.has(qt)) selectTeam(qt,false); }
-    startDataOnlyAutoRefresh();
+    if(!isHistoricalMode()) startDataOnlyAutoRefresh();
     document.body.classList.add('ewc-live-ready');
     if(loadWatchdog) clearTimeout(loadWatchdog);
     el('veil').classList.add('hide');
