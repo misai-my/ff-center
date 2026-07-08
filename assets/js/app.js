@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-08-ffbr-selection-fix-v1';
+const EWC_QUALIFICATION_BUILD = '2026-07-08-team-identity-v1';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -319,7 +319,11 @@ function rowPassesIndexTeamSelection(row, visibleSet){
     row?.Tag,
     row?.TAG,
     row?.team_tag,
-    row?.team_code
+    row?.team_code,
+    row?.ffdc_original_team,
+    row?.ffdc_canonical_team,
+    row?.ffdc_original_tag,
+    row?.ffdc_canonical_tag
   ].map(normalizeIndexTeamValue).filter(Boolean);
   return candidates.some(value => visibleSet.has(value));
 }
@@ -328,6 +332,218 @@ function indexTeamSelectionNotice(){
   if(!set) return '';
   const src = INDEX_TEAM_SELECTION_SOURCE === 'supabase' ? 'saved' : 'local';
   return ` • Index teams: ${set.size} ${src}`;
+}
+
+const FFDC_TEAM_GROUPING_STORAGE_KEY = 'ffdc_team_grouping_mode';
+const FFDC_TEAM_IDENTITY_STORAGE_KEY = 'ffdc_team_identity_mappings_v1';
+const FFDC_TEAM_IDENTITY_TABLE = 'team_identity';
+const FFDC_TEAM_ALIAS_TABLE = 'team_alias';
+let TEAM_GROUPING_MODE = getTeamGroupingMode();
+let TEAM_IDENTITY_ALIAS_LOOKUP = new Map();
+let TEAM_IDENTITY_SOURCE = 'none';
+let TEAM_IDENTITY_MAPPING_COUNT = 0;
+let TEAM_IDENTITY_APPLIED_COUNT = 0;
+
+function teamGroupingModeFromUrl(){
+  const params = new URLSearchParams(window.location.search || '');
+  const raw = (params.get('teamGrouping') || params.get('team_grouping') || params.get('identity') || '').trim().toLowerCase();
+  if(['identity','canonical','grouped','group'].includes(raw)) return 'identity';
+  if(['historical','raw','names','original'].includes(raw)) return 'historical';
+  return '';
+}
+function getTeamGroupingMode(){
+  const fromUrl = teamGroupingModeFromUrl();
+  if(fromUrl){
+    try{ localStorage.setItem(FFDC_TEAM_GROUPING_STORAGE_KEY, fromUrl); }catch(_e){}
+    return fromUrl;
+  }
+  const stored = (localStorage.getItem(FFDC_TEAM_GROUPING_STORAGE_KEY) || 'historical').trim().toLowerCase();
+  return stored === 'identity' ? 'identity' : 'historical';
+}
+function isTeamIdentityGrouping(){ return TEAM_GROUPING_MODE === 'identity'; }
+function normalizeTeamIdentityName(value){ return norm(value).toUpperCase(); }
+function normalizeIdentityKeyPart(value){ return normalizeTeamIdentityName(value).replace(/\s+/g, ' '); }
+function teamIdentityLookupKey(name, tag='', sourceMode='', sourceTable=''){
+  const nKey = normalizeIdentityKeyPart(name);
+  if(!nKey) return '';
+  return [sourceMode || '*', sourceTable || '*', nKey, normalizeIdentityKeyPart(tag)].join('::');
+}
+function normalizeTeamIdentityRecord(row){
+  if(!row || typeof row !== 'object') return null;
+  const nested = row.team_identity || row.identity || {};
+  const id = row.team_identity_id || row.identity_id || nested.id || row.id || '';
+  const canonicalName = normalizeTeamIdentityName(row.canonical_name || nested.canonical_name || row.team_name || row.name || row.alias_name);
+  if(!canonicalName) return null;
+  return {
+    id,
+    canonical_name: canonicalName,
+    canonical_tag: normalizeTeamIdentityName(row.canonical_tag || nested.canonical_tag || row.alias_tag || ''),
+    region: row.region || nested.region || '',
+    country: row.country || nested.country || '',
+    notes: row.notes || nested.notes || ''
+  };
+}
+function normalizeTeamAliasRecord(row){
+  if(!row || typeof row !== 'object') return null;
+  const identity = normalizeTeamIdentityRecord(row);
+  const aliasName = normalizeTeamIdentityName(row.alias_name || row.team || row.team_name || row.name);
+  if(!aliasName || !identity) return null;
+  return {
+    id: row.id || '',
+    team_identity_id: row.team_identity_id || identity.id || '',
+    alias_name: aliasName,
+    alias_tag: normalizeTeamIdentityName(row.alias_tag || row.tag || ''),
+    source_mode: norm(row.source_mode || row.sourceMode || ''),
+    source_table: norm(row.source_table || row.sourceTable || ''),
+    tournament: norm(row.tournament || ''),
+    season: norm(row.season || ''),
+    valid_from_year: row.valid_from_year ?? row.validFromYear ?? null,
+    valid_to_year: row.valid_to_year ?? row.validToYear ?? null,
+    identity
+  };
+}
+function aliasMatchesRowContext(alias, row){
+  const yearValue = toNum(getVal(row, KEYS.year));
+  if(yearValue != null){
+    const from = toNum(alias.valid_from_year);
+    const to = toNum(alias.valid_to_year);
+    if(from != null && yearValue < from) return false;
+    if(to != null && yearValue > to) return false;
+  }
+  if(alias.tournament && KEYS.tournament && norm(getVal(row, KEYS.tournament)) !== alias.tournament) return false;
+  if(alias.season && KEYS.season && norm(getVal(row, KEYS.season)) !== alias.season) return false;
+  return true;
+}
+function rebuildTeamIdentityLookup(aliasRows){
+  TEAM_IDENTITY_ALIAS_LOOKUP = new Map();
+  TEAM_IDENTITY_MAPPING_COUNT = 0;
+  for(const raw of aliasRows || []){
+    const alias = normalizeTeamAliasRecord(raw);
+    if(!alias) continue;
+    const sourceMode = alias.source_mode || '*';
+    const sourceTable = alias.source_table || '*';
+    const keys = [
+      teamIdentityLookupKey(alias.alias_name, alias.alias_tag, sourceMode, sourceTable),
+      teamIdentityLookupKey(alias.alias_name, '', sourceMode, sourceTable),
+      teamIdentityLookupKey(alias.alias_name, alias.alias_tag, '*', '*'),
+      teamIdentityLookupKey(alias.alias_name, '', '*', '*')
+    ].filter(Boolean);
+    for(const key of keys){
+      if(!TEAM_IDENTITY_ALIAS_LOOKUP.has(key)) TEAM_IDENTITY_ALIAS_LOOKUP.set(key, []);
+      TEAM_IDENTITY_ALIAS_LOOKUP.get(key).push(alias);
+    }
+    TEAM_IDENTITY_MAPPING_COUNT += 1;
+  }
+}
+function readLocalTeamIdentityMappings(){
+  try{
+    const parsed = JSON.parse(localStorage.getItem(FFDC_TEAM_IDENTITY_STORAGE_KEY) || '{}');
+    if(Array.isArray(parsed?.aliases)) return parsed.aliases;
+    if(Array.isArray(parsed)) return parsed;
+  }catch(_e){}
+  return [];
+}
+async function loadTeamIdentityMappings(){
+  TEAM_IDENTITY_SOURCE = 'none';
+  TEAM_IDENTITY_MAPPING_COUNT = 0;
+  TEAM_IDENTITY_APPLIED_COUNT = 0;
+  let aliases = [];
+  try{
+    const { data, error } = await withTimeout(
+      client
+        .from(FFDC_TEAM_ALIAS_TABLE)
+        .select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,team_identity:team_identity_id(id,canonical_name,canonical_tag,region,country,notes)')
+        .limit(5000),
+      9000,
+      'Team identity aliases load timed out'
+    );
+    if(error) throw error;
+    aliases = data || [];
+    TEAM_IDENTITY_SOURCE = aliases.length ? 'supabase' : 'supabase-empty';
+  }catch(error){
+    console.warn('Team identity alias table unavailable; using local mappings only:', error?.message || error);
+    aliases = readLocalTeamIdentityMappings();
+    TEAM_IDENTITY_SOURCE = aliases.length ? 'local' : 'none';
+  }
+  rebuildTeamIdentityLookup(aliases);
+  return aliases;
+}
+function getRowTeamTag(row){
+  return firstPresent(row, ['tag','Tag','TAG','team_tag','team_code','canonical_tag']);
+}
+function findTeamIdentityForRow(row){
+  if(!row || !KEYS.team) return null;
+  const name = normalizeTeamIdentityName(getVal(row, KEYS.team));
+  if(!name) return null;
+  const tag = normalizeTeamIdentityName(getRowTeamTag(row));
+  const lookupKeys = [
+    teamIdentityLookupKey(name, tag, ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
+    teamIdentityLookupKey(name, '', ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
+    teamIdentityLookupKey(name, tag, '*', '*'),
+    teamIdentityLookupKey(name, '', '*', '*')
+  ].filter(Boolean);
+  for(const key of lookupKeys){
+    const matches = TEAM_IDENTITY_ALIAS_LOOKUP.get(key) || [];
+    const match = matches.find(alias => aliasMatchesRowContext(alias, row));
+    if(match?.identity?.canonical_name) return match.identity;
+  }
+  return null;
+}
+function applyTeamIdentityGroupingToRows(rows){
+  TEAM_IDENTITY_APPLIED_COUNT = 0;
+  if(!isTeamIdentityGrouping() || !KEYS.team || !TEAM_IDENTITY_ALIAS_LOOKUP.size) return rows || [];
+  for(const row of rows || []){
+    const originalTeam = norm(getVal(row, KEYS.team));
+    if(!originalTeam) continue;
+    const originalTag = norm(getRowTeamTag(row));
+    const identity = findTeamIdentityForRow(row);
+    if(!identity?.canonical_name) continue;
+    row.ffdc_original_team = row.ffdc_original_team || originalTeam;
+    row.ffdc_original_tag = row.ffdc_original_tag || originalTag;
+    row.ffdc_team_identity_id = identity.id || '';
+    row.ffdc_canonical_team = identity.canonical_name;
+    row.ffdc_canonical_tag = identity.canonical_tag || originalTag;
+    row[KEYS.team] = identity.canonical_name;
+    row.team_name = identity.canonical_name;
+    row.team = identity.canonical_name;
+    if(row.Team != null) row.Team = identity.canonical_name;
+    if(identity.canonical_tag){
+      row.tag = identity.canonical_tag;
+      if(row.Tag != null) row.Tag = identity.canonical_tag;
+      if(row.TAG != null) row.TAG = identity.canonical_tag;
+    }
+    TEAM_IDENTITY_APPLIED_COUNT += 1;
+  }
+  return rows || [];
+}
+function teamIdentityNotice(){
+  if(!isTeamIdentityGrouping()) return ' • Team names: historical';
+  const src = TEAM_IDENTITY_SOURCE === 'supabase' ? 'saved' : (TEAM_IDENTITY_SOURCE === 'local' ? 'local' : 'no mappings');
+  return ` • Team identity: ${TEAM_IDENTITY_MAPPING_COUNT} aliases ${src}${TEAM_IDENTITY_APPLIED_COUNT ? ` • ${TEAM_IDENTITY_APPLIED_COUNT} rows grouped` : ''}`;
+}
+function injectTeamIdentityControl(){
+  const bar = document.querySelector('#accFilters .bar');
+  if(!bar || el('teamGroupingMode')) return;
+  const label = document.createElement('label');
+  label.className = 'database-source-control team-identity-control';
+  label.innerHTML = `Team Names <select id="teamGroupingMode" class="input" style="min-width:190px">
+    <option value="historical">Historical Names</option>
+    <option value="identity">Group by Team Identity</option>
+  </select>`;
+  const dataSource = el('dataSourceMode')?.closest('label');
+  if(dataSource?.nextSibling) bar.insertBefore(label, dataSource.nextSibling);
+  else bar.insertBefore(label, bar.firstChild);
+  const select = el('teamGroupingMode');
+  if(select){
+    select.value = TEAM_GROUPING_MODE;
+    select.addEventListener('change', () => {
+      TEAM_GROUPING_MODE = select.value === 'identity' ? 'identity' : 'historical';
+      localStorage.setItem(FFDC_TEAM_GROUPING_STORAGE_KEY, TEAM_GROUPING_MODE);
+      const url = new URL(window.location.href);
+      url.searchParams.set('teamGrouping', TEAM_GROUPING_MODE);
+      window.location.href = url.toString();
+    });
+  }
 }
 
 // Columns used by this dashboard only. Heavy JSON/text columns such as row_data,
@@ -2610,6 +2826,7 @@ function applyFilters(options = {}){
   const matchCount = countMatchesIn(FILTERED);
   const teamCount = new Set(FILTERED.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean)).size;
   const indexSelectionText = indexTeamSelectionNotice();
+  const teamIdentityText = teamIdentityNotice();
 
   // Live refresh mode is intentionally narrow: it must not touch filters,
   // dropdown option lists, team tiles, selected team modals, tabs, or helper cards.
@@ -2635,7 +2852,7 @@ function applyFilters(options = {}){
     f.m !== '__all__' ? `M${f.m}` : 'All matches'
   ].join(' • ');
 
-  if(el('scopeChip')) el('scopeChip').textContent = `${activeDataSourceLabel()} • Scope: ${scopeText}${indexSelectionText}`;
+  if(el('scopeChip')) el('scopeChip').textContent = `${activeDataSourceLabel()} • Scope: ${scopeText}${indexSelectionText}${teamIdentityText}`;
   if(el('heroScopeMirror')){
     const scopeRows = [
       ['Tournament', f.t !== '__all__' ? f.t : 'All'],
@@ -2650,7 +2867,7 @@ function applyFilters(options = {}){
     setStableHTML(el('heroScopeMirror'), scopeHtml, 'hero-scope', silentRefresh);
   }
   if(el('heroScopeSub')) el('heroScopeSub').textContent = `${matchCount} matches`;
-  if(el('filterHint')) el('filterHint').textContent = `Matches: ${matchCount} • Teams: ${teamCount}${indexSelectionText}`;
+  if(el('filterHint')) el('filterHint').textContent = `Matches: ${matchCount} • Teams: ${teamCount}${indexSelectionText}${teamIdentityText}`;
   if(el('overallHint')) el('overallHint').textContent = `${matchCount} matches`;
 
   renderOverall({ silentRefresh });
@@ -8581,6 +8798,7 @@ async function refreshDataOnly(){
       updateLiveFeedConnectionBadge('error');
       return;
     }
+    applyTeamIdentityGroupingToRows(freshRows);
 
     EWC_LAST_LIVE_REFRESH_AT = Date.now();
     updateLiveFeedConnectionBadge('live', EWC_LAST_LIVE_REFRESH_AT);
@@ -8644,6 +8862,7 @@ async function init(){
   try{
     clearErr(); el('veil').classList.remove('hide');
     injectDatabaseSourceControl();
+    injectTeamIdentityControl();
     loadWatchdog = setTimeout(() => {
       try{
         el('veil').classList.add('hide');
@@ -8683,6 +8902,8 @@ location.reload();`);
       return;
     }
     detectSchema(RAW[0]);
+    await loadTeamIdentityMappings();
+    applyTeamIdentityGroupingToRows(RAW);
     await loadIndexTeamSelection();
     await loadMatchApi();
     await loadCharacterJson();

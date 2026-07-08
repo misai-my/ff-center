@@ -386,3 +386,22 @@ admin-index-teams.html
 It can load teams from Live Supabase or Historical Supabase (`ffbr_data`), then save a selected team list for the matching database/table. Run `supabase/09_index_team_selection.sql` in the main dashboard Supabase project to enable shared saves. Without that SQL, the page still saves locally in the current browser for testing.
 
 See `docs/INDEX_TEAM_SELECTION.md` for details.
+
+## Team Identity / Alias Manager
+
+This package includes a new `admin-team-identity.html` page for grouping historical team names, tags, and rebrands under one canonical identity.
+
+Use it when a team changes names across years but should still count as the same organization in long-term analytics. The raw match table stays unchanged; the dashboard can switch between raw historical names and grouped identities.
+
+Run this SQL for shared mappings:
+
+```text
+supabase/10_team_identity_aliases.sql
+```
+
+Dashboard users can choose:
+
+- **Historical Names** — show names exactly as stored in the selected database.
+- **Group by Team Identity** — combine aliases under the saved canonical team.
+
+See `docs/TEAM_IDENTITY_MANAGER.md` for setup and workflow.
