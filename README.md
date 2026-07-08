@@ -396,7 +396,7 @@ Use it when a team changes names across years but should still count as the same
 Run this SQL for shared mappings:
 
 ```text
-supabase/10_team_identity_aliases.sql
+supabase/10_team_identity_aliases.sql (migration-safe; adds missing columns such as source_mode/source_table when upgrading older installs)
 ```
 
 Dashboard users can choose:

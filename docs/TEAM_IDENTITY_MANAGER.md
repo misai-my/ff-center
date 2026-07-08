@@ -52,3 +52,9 @@ This keeps tournament history accurate while allowing all-time / multi-year anal
 ## Fallback behavior
 
 If the SQL has not been installed, the admin page still saves mappings in the current browser using `localStorage.ffdc_team_identity_mappings_v1`. Shared saves across devices require the SQL table.
+
+## Troubleshooting: `column "source_mode" does not exist`
+
+This means `public.team_alias` already existed from an older/manual setup that did not include the newer data-source columns. The updated `supabase/10_team_identity_aliases.sql` is migration-safe and now adds missing columns with `alter table ... add column if not exists` before creating the indexes.
+
+You do **not** need to drop your existing aliases. Run the updated SQL again.
