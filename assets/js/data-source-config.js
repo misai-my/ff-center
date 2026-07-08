@@ -13,7 +13,7 @@ window.FFDC_DATA_SOURCES = {
     id: 'historical',
     label: 'Historical Supabase (ffbr_data)',
     url: 'https://gkugecflfddkpitlrmws.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrdWdlY2ZsZmRka3BpdGxybXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwODMwNzQsImV4cCI6MjA2MTY1OTA3NH0.OgQOx9k71DDdK1yOa7VNKGSgoFD9kNGo8j-bR91zGKE',
+    anonKey: '',
     table: 'ffbr_data',
     tableCandidates: [
       'ffbr_data',

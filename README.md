@@ -405,3 +405,7 @@ Dashboard users can choose:
 - **Group by Team Identity** — combine aliases under the saved canonical team.
 
 See `docs/TEAM_IDENTITY_MANAGER.md` for setup and workflow.
+
+### Team Identity merge behavior
+
+When **Team Names → Merge by Team Identity** is active, the dashboard now materializes the canonical team identity into the working rows before rendering. Standings, team tiles, selected team profile, match log, team KPIs, and historical totals are merged under the canonical team name while preserving the original historical name in `ffdc_original_team` / `ffdc_original_tag` for reference.

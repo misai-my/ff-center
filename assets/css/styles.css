@@ -7643,3 +7643,46 @@ html[data-theme="light"] .database-source-control{
   background:rgba(255,189,89,.18);
   border-color:rgba(122,77,4,.25);
 }
+
+/* Team identity merge visibility */
+.identity-merge-note{
+  grid-column:1 / -1;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px 14px;
+  padding:12px 14px;
+  border:1px solid rgba(255,189,89,.34);
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,189,89,.16),rgba(78,161,255,.08));
+  color:var(--text,#f7fafc);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+}
+.identity-merge-note b{
+  color:#ffd36a;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-size:.78rem;
+}
+.identity-merge-note span{
+  color:var(--text,#f7fafc);
+  opacity:.94;
+  font-size:.9rem;
+}
+[data-theme="light"] .identity-merge-note,
+.light .identity-merge-note,
+body.light-theme .identity-merge-note{
+  color:#172033;
+  background:linear-gradient(135deg,rgba(255,189,89,.25),rgba(35,103,220,.08));
+  border-color:rgba(178,116,0,.26);
+}
+[data-theme="light"] .identity-merge-note b,
+.light .identity-merge-note b,
+body.light-theme .identity-merge-note b{
+  color:#8a5200;
+}
+[data-theme="light"] .identity-merge-note span,
+.light .identity-merge-note span,
+body.light-theme .identity-merge-note span{
+  color:#172033;
+}

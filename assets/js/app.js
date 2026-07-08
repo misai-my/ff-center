@@ -471,6 +471,42 @@ async function loadTeamIdentityMappings(){
 function getRowTeamTag(row){
   return firstPresent(row, ['tag','Tag','TAG','team_tag','team_code','canonical_tag']);
 }
+function rawTeamNameForRow(row){
+  return norm(row?.ffdc_original_team || (KEYS.team ? getVal(row, KEYS.team) : '') || row?.team || row?.Team || row?.TEAM || row?.team_name);
+}
+function rawTeamTagForRow(row){
+  return norm(row?.ffdc_original_tag || row?.tag || row?.Tag || row?.TAG || row?.team_tag || row?.team_code || row?.ffdc_canonical_tag);
+}
+function displayTeamNameForRow(row){
+  return normalizeTeamIdentityName(row?.ffdc_canonical_team || row?.ffdc_display_team || (KEYS.team ? getVal(row, KEYS.team) : '') || row?.team || row?.Team || row?.TEAM || row?.team_name);
+}
+function displayTeamTagForRow(row){
+  return normalizeTeamIdentityName(row?.ffdc_canonical_tag || row?.ffdc_display_tag || getRowTeamTag(row));
+}
+function teamIdentityHasMergedAliasesForRows(rows){
+  if(!isTeamIdentityGrouping()) return false;
+  const aliases = new Set();
+  for(const row of rows || []){
+    const raw = rawTeamNameForRow(row).toUpperCase();
+    const display = displayTeamNameForRow(row);
+    if(raw && display && raw !== display) aliases.add(raw);
+  }
+  return aliases.size > 0;
+}
+function rowBelongsToDisplayTeam(row, teamCode){
+  const code = normalizeTeamIdentityName(teamCode);
+  if(!code) return false;
+  const candidates = [
+    displayTeamNameForRow(row),
+    normalizeTeamIdentityName(row?.ffdc_canonical_team),
+    normalizeTeamIdentityName(KEYS.team ? getVal(row, KEYS.team) : ''),
+    normalizeTeamIdentityName(row?.team),
+    normalizeTeamIdentityName(row?.Team),
+    normalizeTeamIdentityName(row?.TEAM),
+    normalizeTeamIdentityName(row?.team_name)
+  ].filter(Boolean);
+  return candidates.includes(code);
+}
 function findTeamIdentityForRow(row){
   if(!row || !KEYS.team) return null;
   const name = normalizeTeamIdentityName(getVal(row, KEYS.team));
@@ -491,31 +527,56 @@ function findTeamIdentityForRow(row){
 }
 function applyTeamIdentityGroupingToRows(rows){
   TEAM_IDENTITY_APPLIED_COUNT = 0;
-  if(!isTeamIdentityGrouping() || !KEYS.team || !TEAM_IDENTITY_ALIAS_LOOKUP.size) return rows || [];
-  for(const row of rows || []){
-    const originalTeam = norm(getVal(row, KEYS.team));
+  if(!Array.isArray(rows)) return [];
+
+  for(const row of rows){
+    const originalTeam = rawTeamNameForRow(row);
+    const originalTag = rawTeamTagForRow(row);
+    if(originalTeam){
+      row.ffdc_original_team = row.ffdc_original_team || originalTeam;
+      row.ffdc_display_team = normalizeTeamIdentityName(originalTeam);
+    }
+    if(originalTag){
+      row.ffdc_original_tag = row.ffdc_original_tag || originalTag;
+      row.ffdc_display_tag = normalizeTeamIdentityName(originalTag);
+    }
+  }
+
+  if(!isTeamIdentityGrouping() || !KEYS.team || !TEAM_IDENTITY_ALIAS_LOOKUP.size) return rows;
+
+  for(const row of rows){
+    const originalTeam = rawTeamNameForRow(row);
     if(!originalTeam) continue;
-    const originalTag = norm(getRowTeamTag(row));
+    const originalTag = rawTeamTagForRow(row);
     const identity = findTeamIdentityForRow(row);
     if(!identity?.canonical_name) continue;
-    row.ffdc_original_team = row.ffdc_original_team || originalTeam;
-    row.ffdc_original_tag = row.ffdc_original_tag || originalTag;
+
     row.ffdc_team_identity_id = identity.id || '';
     row.ffdc_canonical_team = identity.canonical_name;
-    row.ffdc_canonical_tag = identity.canonical_tag || originalTag;
+    row.ffdc_canonical_tag = identity.canonical_tag || normalizeTeamIdentityName(originalTag);
+    row.ffdc_display_team = identity.canonical_name;
+    row.ffdc_display_tag = identity.canonical_tag || normalizeTeamIdentityName(originalTag);
+
+    // Materialize the canonical team into common team fields so existing filters,
+    // tables and cards naturally merge all alias rows under the identity name.
     row[KEYS.team] = identity.canonical_name;
     row.team_name = identity.canonical_name;
     row.team = identity.canonical_name;
     if(row.Team != null) row.Team = identity.canonical_name;
+    if(row.TEAM != null) row.TEAM = identity.canonical_name;
+
     if(identity.canonical_tag){
       row.tag = identity.canonical_tag;
       if(row.Tag != null) row.Tag = identity.canonical_tag;
       if(row.TAG != null) row.TAG = identity.canonical_tag;
+      if(row.team_tag != null) row.team_tag = identity.canonical_tag;
+      if(row.team_code != null) row.team_code = identity.canonical_tag;
     }
     TEAM_IDENTITY_APPLIED_COUNT += 1;
   }
-  return rows || [];
+  return rows;
 }
+
 function teamIdentityNotice(){
   if(!isTeamIdentityGrouping()) return ' • Team names: historical';
   const src = TEAM_IDENTITY_SOURCE === 'supabase' ? 'saved' : (TEAM_IDENTITY_SOURCE === 'local' ? 'local' : 'no mappings');
@@ -528,7 +589,7 @@ function injectTeamIdentityControl(){
   label.className = 'database-source-control team-identity-control';
   label.innerHTML = `Team Names <select id="teamGroupingMode" class="input" style="min-width:190px">
     <option value="historical">Historical Names</option>
-    <option value="identity">Group by Team Identity</option>
+    <option value="identity">Merge by Team Identity</option>
   </select>`;
   const dataSource = el('dataSourceMode')?.closest('label');
   if(dataSource?.nextSibling) bar.insertBefore(label, dataSource.nextSibling);
@@ -2812,7 +2873,7 @@ function applyFilters(options = {}){
     if(f.d !== '__all__' && KEYS.day && norm(getVal(r,KEYS.day)) !== f.d) return false;
     if(f.m !== '__all__' && KEYS.matchNo && norm(getVal(r,KEYS.matchNo)) !== f.m) return false;
     if(f.g !== '__all__') {
-      const team=norm(getVal(r,KEYS.team)).toUpperCase();
+      const team=displayTeamNameForRow(r);
       if((groupFilterMap?.get(team)||'') !== f.g) return false;
     }
     return true;
@@ -2824,7 +2885,7 @@ function applyFilters(options = {}){
   }
 
   const matchCount = countMatchesIn(FILTERED);
-  const teamCount = new Set(FILTERED.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean)).size;
+  const teamCount = new Set(FILTERED.map(displayTeamNameForRow).filter(Boolean)).size;
   const indexSelectionText = indexTeamSelectionNotice();
   const teamIdentityText = teamIdentityNotice();
 
@@ -3459,7 +3520,7 @@ function liveFeedElimFeedHtml(events){
 }
 function buildLiveFeedTeams(rows){
   const killIndex = buildLiveFeedKillIndex(rows);
-  const grouped = groupBy(rows, r => norm(getVal(r, KEYS.team)).toUpperCase() || 'UNKNOWN');
+  const grouped = groupBy(rows, r => displayTeamNameForRow(r) || 'UNKNOWN');
   const teams = [];
   for(const [team, list] of grouped.entries()){
     const rankScore = Math.max(...list.map(r => n(getVal(r, KEYS.rankingScore))), 0);
@@ -4371,7 +4432,8 @@ function applyProgressionToRows(rows,state){
 function teamMatchAgg(rows){
   const m = new Map();
   for(const r of rows){
-    const team = norm(getVal(r, KEYS.team)).toUpperCase(); if(!team) continue;
+    const team = displayTeamNameForRow(r);
+    if(!team) continue;
     const mk = matchKeyForRow(r); const key = `${team}||${mk}`;
     const matchOrder = matchOrderValueForRow(r);
     if(!m.has(key)) m.set(key, {
@@ -4380,13 +4442,21 @@ function teamMatchAgg(rows){
       match_no: norm(getVal(r, KEYS.matchNo)),
       match_id: norm(getVal(r, KEYS.matchId)),
       booyah:0, elims:0, damage:0, assists:0, headshots:0,
-      ranking_score:0, killing_score:0, kill_count:0, historical_total:null, drop:'', top3:0
+      ranking_score:0, killing_score:0, kill_count:0, historical_total:null, drop:'', top3:0,
+      display_tag: displayTeamTagForRow(r), identity_id: norm(r?.ffdc_team_identity_id),
+      original_teams: new Set(), original_tags: new Set()
     });
     const o = m.get(key);
     o.match_order = Math.max(o.match_order || 0, matchOrder);
     if(!o.day) o.day = norm(getVal(r, KEYS.day));
     if(!o.match_no) o.match_no = norm(getVal(r, KEYS.matchNo));
     if(!o.match_id) o.match_id = norm(getVal(r, KEYS.matchId));
+    if(!o.display_tag) o.display_tag = displayTeamTagForRow(r);
+    if(!o.identity_id) o.identity_id = norm(r?.ffdc_team_identity_id);
+    const originalTeam = normalizeTeamIdentityName(r?.ffdc_original_team || rawTeamNameForRow(r));
+    const originalTag = normalizeTeamIdentityName(r?.ffdc_original_tag || rawTeamTagForRow(r));
+    if(originalTeam) o.original_teams.add(originalTeam);
+    if(originalTag) o.original_tags.add(originalTag);
     if(toBool(getVal(r, KEYS.booyah))) o.booyah = 1;
     if(KEYS.kills) o.elims += n(getVal(r, KEYS.kills));
     if(KEYS.damage) o.damage += n(getVal(r, KEYS.damage));
@@ -4401,7 +4471,12 @@ function teamMatchAgg(rows){
     if(drop && !o.drop) o.drop = drop;
     if(toBool(r?.top3 ?? r?.Top3 ?? r?.top_3)) o.top3 = 1;
   }
-  return [...m.values()];
+  return [...m.values()].map(item => ({
+    ...item,
+    original_teams: [...(item.original_teams || [])].filter(Boolean),
+    original_tags: [...(item.original_tags || [])].filter(Boolean),
+    alias_count: Math.max(0, [...(item.original_teams || [])].filter(name => name && name !== item.team).length)
+  }));
 }
 
 function sortRows(rows, key, dir, isText=false){
@@ -4457,8 +4532,11 @@ function buildOverallRowsFromTeamMatches(teamMatches){
     const hasHistoricalTotal = list.some(b => Number.isFinite(Number(b.historical_total)));
     const total_score = hasHistoricalTotal ? historicalTotal : (elims + ranking_score);
 
+    const mergedAliases = [...new Set(list.flatMap(match => match.original_teams || []))].filter(name => name && name !== team);
     rows.push({
       team, matches, booyahs, elims, damage, ranking_score, total_score, final_ranking_score,
+      identity_aliases: mergedAliases,
+      identity_alias_count: mergedAliases.length,
       elims_pm:matches?elims/matches:0,
       dmg_pm:matches?damage/matches:0,
       ranking_score_pm:matches?ranking_score/matches:0,
@@ -4847,7 +4925,7 @@ function renderOverall(options = {}){
     {label:'Rank', key:'display_rank', right:true, html:(r)=>`<span class="premium-rank-badge" aria-label="Rank ${escHtml(r.display_rank)}"><span>${escHtml(r.display_rank)}</span></span>`},
     {
       label:'Team', key:'team', escape:false,
-      html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>Team profile</small></span>${rankMovementHtml(r)}</div>`
+      html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>${isTeamIdentityGrouping() && r.identity_alias_count ? `Merged identity • ${fmtNum(r.identity_alias_count + 1)} names` : 'Team profile'}</small></span>${rankMovementHtml(r)}</div>`
     }
   ];
   if(progressionState?.grouped){
@@ -5231,7 +5309,7 @@ function summarizeTeamLoadout(rows){
 }
 
 function getScopedTeamList(){
-  return [...new Set(FILTERED.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  return [...new Set(FILTERED.map(displayTeamNameForRow).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
 }
 function populateModalTeamSelect(){
   const sel = el('modalTeamSelect');
@@ -5466,21 +5544,22 @@ function getTeamMatchStats(teamRows){
   const elims = matches.reduce((a,b)=>a+(b.elims||0),0);
   const damage = matches.reduce((a,b)=>a+(b.damage||0),0);
   const rankPoints = matches.reduce((a,b)=>a+(b.ranking_score||0),0);
-  const totalPoints = elims + rankPoints;
+  const totalPoints = matches.reduce((a,b)=>a+matchTotalScoreValue(b),0);
+  const mergedAliasNames = [...new Set(matches.flatMap(m => m.original_teams || []))].filter(name => name && name !== matches[0]?.team);
   const last3 = matches.slice(-3).map(m => ({
     day: m.day || '—',
     matchNumber: m.match_no || '—',
     elims: m.elims || 0,
     rankPoints: m.ranking_score || 0,
-    total: (m.elims||0)+(m.ranking_score||0),
+    total: matchTotalScoreValue(m),
     damage: m.damage || 0,
     booyah: !!m.booyah
   }));
-  const best = matches.slice().sort((a,b)=>((b.elims||0)+(b.ranking_score||0))-((a.elims||0)+(a.ranking_score||0)))[0] || null;
+  const best = matches.slice().sort((a,b)=>matchTotalScoreValue(b)-matchTotalScoreValue(a))[0] || null;
   const avgPoints = count ? totalPoints / count : 0;
   const recentAvg = last3.length ? last3.reduce((a,b)=>a+(b.total||0),0)/last3.length : 0;
   return {
-    matches, count, booyahs, elims, damage, rankPoints, totalPoints,
+    matches, count, booyahs, elims, damage, rankPoints, totalPoints, mergedAliasNames,
     elimsPerMatch: count ? elims / count : 0,
     rankPerMatch: count ? rankPoints / count : 0,
     damagePerMatch: count ? damage / count : 0,
@@ -5728,14 +5807,17 @@ function renderTeamProfileHero(teamCode, teamRows){
   const profile = getTeamProfile(teamCode);
   const stats = getTeamMatchStats(teamRows);
   const status = stats.count ? (stats.avgPoints >= 15 ? 'High Output' : stats.avgPoints >= 9 ? 'Contender Pace' : 'Needs Surge') : 'Insufficient Data';
-  const best = stats.best ? `D${stats.best.day || '—'} • M${stats.best.match_no || '—'} • ${fmtNum((stats.best.elims||0)+(stats.best.ranking_score||0))} pts` : '—';
+  const best = stats.best ? `D${stats.best.day || '—'} • M${stats.best.match_no || '—'} • ${fmtNum(matchTotalScoreValue(stats.best))} pts` : '—';
   const last3 = stats.last3.length ? stats.last3.map(m => `<span class="form-pill">D${escHtml(m.day)} M${escHtml(m.matchNumber)} <b>${fmtNum(m.total)}</b></span>`).join('') : '<span class="form-pill">No recent matches</span>';
   const progressChart = renderTeamProgressChart(stats.matches, teamRows);
   const statSource = (m) => m ? `D${m.day || '—'} • M${m.match_no || '—'}` : '—';
-  const matchTotal = (m) => n(m?.elims) + n(m?.ranking_score);
+  const matchTotal = (m) => matchTotalScoreValue(m);
   const bestTotalMatch = stats.matches.length ? stats.matches.slice().sort((a,b)=>matchTotal(b)-matchTotal(a))[0] : null;
   const bestElimsMatch = stats.matches.length ? stats.matches.slice().sort((a,b)=>n(b.elims)-n(a.elims))[0] : null;
   const bestDamageMatch = stats.matches.length ? stats.matches.slice().sort((a,b)=>n(b.damage)-n(a.damage))[0] : null;
+  const identityMergeNote = isTeamIdentityGrouping() && stats.mergedAliasNames?.length
+    ? `<div class="identity-merge-note"><b>Team Identity Active</b><span>Merged historical names: ${stats.mergedAliasNames.map(escHtml).join(' • ')}</span></div>`
+    : '';
   el('teamProfileHero').innerHTML = `
     <div class="profile-hero-card">
       <div class="profile-id-card">
@@ -5770,6 +5852,7 @@ function renderTeamProfileHero(teamCode, teamRows){
         <div class="profile-meta"><span>Best Match</span><b>${escHtml(best)}</b></div>
         <div class="profile-meta"><span>Last 3 Match Form</span><div class="form-pill-row">${last3}</div></div>
       </div>
+      ${identityMergeNote}
       <div class="team-progress-card full-width">
         <div class="progress-chart-head"><span>Per Match Progress</span><b>Total Points + Eliminations</b></div>
         ${progressChart}
@@ -5781,7 +5864,7 @@ function renderTeamProfileHero(teamCode, teamRows){
 function getTeamRowsByCode(teamCode){
   const code = norm(teamCode).toUpperCase();
   if(!code) return [];
-  return FILTERED.filter(r => norm(getVal(r, KEYS.team)).toUpperCase() === code);
+  return FILTERED.filter(r => rowBelongsToDisplayTeam(r, code));
 }
 function buildTeamCompareStats(teamCode){
   const rows = getTeamRowsByCode(teamCode);
@@ -6489,7 +6572,7 @@ function selectTeam(team, keepCurrentModalState=false){
   const teamCode = norm(team).toUpperCase();
   if(!teamCode) return;
 
-  const teamRows = FILTERED.filter(r => norm(getVal(r, KEYS.team)).toUpperCase() === teamCode);
+  const teamRows = FILTERED.filter(r => rowBelongsToDisplayTeam(r, teamCode));
   CURRENT_TEAM = teamCode;
   LAST_SELECTED_TEAM_ROWS = teamRows;
   LAST_PLAYER_SUMMARY_ROWS = [];
