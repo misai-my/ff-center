@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Index Team Selection — Free Fire Data Center</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('ff_theme_v1');
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__ffdcSupabaseFailed=true"></script>
+  <script src="assets/js/data-source-config.js?v=20260708-ffbr"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/admin-group-assignments.css?v=20260708-index-teams" />
+</head>
+<body>
+  <div class="admin-shell index-team-admin">
+    <header class="admin-topbar">
+      <div class="admin-brand">
+        <div class="admin-logo">FF</div>
+        <div>
+          <p>Free Fire Data Center</p>
+          <h1>Index Team Selection</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn ghost" href="index.html">← Data Center</a>
+        <a class="btn ghost" href="admin-group-assignments.html">Group Assignments</a>
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+        <div class="admin-user" id="adminUser">Checking access…</div>
+        <button class="btn danger" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <section class="notice" id="pageNotice" hidden></section>
+      <button class="btn secondary retry-init" id="retryInitBtn" type="button" hidden>Retry loading</button>
+
+      <section class="panel setup-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Dashboard visibility</span>
+            <h2>Choose which teams appear on the Index</h2>
+            <p>Select teams from the active database. When enabled, the Index dashboard will show only those teams for the matching database/table.</p>
+          </div>
+          <span class="status-pill" id="selectionStatus">Not loaded</span>
+        </div>
+
+        <div class="setup-grid index-source-grid">
+          <label class="field wide">
+            <span>Database source</span>
+            <select id="sourceModeInput">
+              <option value="live">Live Supabase</option>
+              <option value="historical">Historical Supabase (ffbr_data)</option>
+            </select>
+          </label>
+          <label class="field wide historical-key-field" id="historicalKeyField" hidden>
+            <span>Historical public anon key</span>
+            <input id="historicalKeyInput" type="password" placeholder="Optional for this browser only" autocomplete="off" />
+            <small>Used only to read historical teams from <code>ffbr_data</code>. Do not paste a service_role key.</small>
+          </label>
+          <label class="field compact">
+            <span>Table</span>
+            <input id="sourceTableInput" value="ff_player_stats_raw" autocomplete="off" />
+          </label>
+          <button class="btn primary load-btn" id="loadTeamsBtn" type="button">Load Teams</button>
+        </div>
+      </section>
+
+      <section class="panel toolbar-panel" id="selectionToolbar" hidden>
+        <div class="toolbar-left index-toolbar-left">
+          <label class="field compact">
+            <span>Tournament</span>
+            <select id="filterTournament"><option value="__all__">All</option></select>
+          </label>
+          <label class="field compact">
+            <span>Stage</span>
+            <select id="filterStage"><option value="__all__">All</option></select>
+          </label>
+          <label class="field compact">
+            <span>Year</span>
+            <select id="filterYear"><option value="__all__">All</option></select>
+          </label>
+          <label class="field compact">
+            <span>Season</span>
+            <select id="filterSeason"><option value="__all__">All</option></select>
+          </label>
+          <label class="search-field index-search">
+            <span aria-hidden="true">⌕</span>
+            <input id="teamSearchInput" type="search" placeholder="Search teams…" />
+          </label>
+        </div>
+        <div class="toolbar-actions">
+          <label class="switch-row" title="Turn the Index team filter on or off">
+            <input id="selectionEnabledInput" type="checkbox" checked />
+            <span>Enabled on Index</span>
+          </label>
+          <button class="btn secondary" id="selectVisibleBtn" type="button">Select Visible</button>
+          <button class="btn secondary" id="clearSelectedBtn" type="button">Clear</button>
+          <button class="btn primary" id="saveSelectionBtn" type="button">Save Index Teams</button>
+        </div>
+      </section>
+
+      <section class="validation" id="selectionSummary" hidden></section>
+      <section class="index-team-board" id="teamBoard" aria-live="polite"></section>
+    </main>
+  </div>
+
+  <div class="modal auth-modal" id="adminLoginModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Administrator access</span>
+          <h2 id="adminLoginTitle">Sign in to manage Index teams</h2>
+          <p>Use an account listed in <code>public.app_admins</code>.</p>
+        </div>
+        <a class="icon-btn" href="index.html" aria-label="Back to Data Center" title="Back to Data Center">×</a>
+      </div>
+      <form id="adminLoginForm" class="auth-form team-form">
+        <label class="field required">
+          <span>Email</span>
+          <input id="adminLoginEmail" type="email" autocomplete="email" required placeholder="you@example.com" />
+        </label>
+        <label class="field required">
+          <span>Password</span>
+          <div class="password-field">
+            <input id="adminLoginPassword" type="password" autocomplete="current-password" required placeholder="Password" />
+            <button class="btn ghost password-toggle" id="adminPasswordToggle" type="button">Show</button>
+          </div>
+        </label>
+        <div class="auth-message" id="adminLoginMessage" hidden></div>
+        <div class="modal-actions auth-actions">
+          <a class="btn ghost" href="index.html">Back</a>
+          <button class="btn primary" id="adminLoginSubmit" type="submit">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loader"></div>
+    <strong>Loading Index team selector…</strong>
+  </div>
+
+  <script src="assets/js/admin-index-teams.js?v=20260708-index-teams"></script>
+</body>
+</html>

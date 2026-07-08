@@ -218,6 +218,118 @@ let TOURNAMENT_PROGRESSION_DEFAULTS = {};
 let EWC_CURRENT_PROGRESSION = null;
 let EWC_GROUP_MAP_CACHE = new Map();
 
+
+const FFDC_INDEX_TEAM_SELECTION_STORAGE_KEY = 'ffdc_index_team_selection_v1';
+const FFDC_INDEX_TEAM_SELECTION_TABLE = 'index_team_selection';
+let INDEX_TEAM_SELECTION = null;
+let INDEX_TEAM_SELECTION_SOURCE = 'none';
+
+function normalizeIndexTeamValue(value){
+  return norm(value).toUpperCase();
+}
+function activeIndexSelectionKey(){
+  return `${ACTIVE_DATA_SOURCE_MODE || 'live'}::${TABLE || ACTIVE_DATA_SOURCE?.table || 'ff_player_stats_raw'}`;
+}
+function selectionSourceKey(selection){
+  if(!selection || typeof selection !== 'object') return '';
+  return `${selection.source_mode || selection.sourceMode || 'live'}::${selection.source_table || selection.sourceTable || 'ff_player_stats_raw'}`;
+}
+function normalizeIndexTeamSelection(selection){
+  if(!selection || typeof selection !== 'object') return null;
+  const rawTeams = selection.teams || selection.team_codes || selection.visible_teams || [];
+  const teams = Array.isArray(rawTeams)
+    ? rawTeams.map(normalizeIndexTeamValue).filter(Boolean)
+    : [];
+  const uniqueTeams = [...new Set(teams)];
+  return {
+    ...selection,
+    source_mode: selection.source_mode || selection.sourceMode || 'live',
+    source_table: selection.source_table || selection.sourceTable || 'ff_player_stats_raw',
+    enabled: selection.enabled !== false,
+    teams: uniqueTeams,
+    updated_at: selection.updated_at || selection.updatedAt || selection.savedAt || '',
+    source_label: selection.source_label || selection.sourceLabel || ''
+  };
+}
+function readLocalIndexTeamSelection(){
+  try{
+    const raw = localStorage.getItem(FFDC_INDEX_TEAM_SELECTION_STORAGE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    const key = activeIndexSelectionKey();
+    if(parsed?.selections && typeof parsed.selections === 'object'){
+      return normalizeIndexTeamSelection(parsed.selections[key]);
+    }
+    const normalized = normalizeIndexTeamSelection(parsed);
+    return normalized && selectionSourceKey(normalized) === key ? normalized : null;
+  }catch(_e){
+    return null;
+  }
+}
+async function loadIndexTeamSelection(options = {}){
+  const localSelection = readLocalIndexTeamSelection();
+  let remoteSelection = null;
+  try{
+    const { data, error } = await withTimeout(
+      client
+        .from(FFDC_INDEX_TEAM_SELECTION_TABLE)
+        .select('*')
+        .eq('source_mode', ACTIVE_DATA_SOURCE_MODE || 'live')
+        .eq('source_table', TABLE || ACTIVE_DATA_SOURCE?.table || 'ff_player_stats_raw')
+        .eq('enabled', true)
+        .maybeSingle(),
+      8000,
+      'Index team selection load timed out'
+    );
+    if(!error && data) remoteSelection = normalizeIndexTeamSelection(data);
+    if(error) console.warn('Index team selection table unavailable:', error.message || error);
+  }catch(err){
+    console.warn('Index team selection load skipped:', err?.message || err);
+  }
+
+  const chosen = remoteSelection || localSelection;
+  if(chosen && chosen.enabled && chosen.teams?.length && selectionSourceKey(chosen) === activeIndexSelectionKey()){
+    INDEX_TEAM_SELECTION = chosen;
+    INDEX_TEAM_SELECTION_SOURCE = remoteSelection ? 'supabase' : 'local';
+  }else{
+    INDEX_TEAM_SELECTION = null;
+    INDEX_TEAM_SELECTION_SOURCE = 'none';
+  }
+
+  if(!options.silent && INDEX_TEAM_SELECTION){
+    console.info(`Index team visibility active: ${INDEX_TEAM_SELECTION.teams.length} teams from ${INDEX_TEAM_SELECTION_SOURCE}.`);
+  }
+  return INDEX_TEAM_SELECTION;
+}
+function getIndexVisibleTeamSet(){
+  if(!INDEX_TEAM_SELECTION?.enabled || !Array.isArray(INDEX_TEAM_SELECTION.teams) || !INDEX_TEAM_SELECTION.teams.length) return null;
+  if(selectionSourceKey(INDEX_TEAM_SELECTION) !== activeIndexSelectionKey()) return null;
+  return new Set(INDEX_TEAM_SELECTION.teams.map(normalizeIndexTeamValue).filter(Boolean));
+}
+function rowPassesIndexTeamSelection(row, visibleSet){
+  if(!visibleSet) return true;
+  const candidates = [
+    KEYS.team ? getVal(row, KEYS.team) : '',
+    KEYS.teamId ? getVal(row, KEYS.teamId) : '',
+    row?.team,
+    row?.team_name,
+    row?.Team,
+    row?.TEAM,
+    row?.tag,
+    row?.Tag,
+    row?.TAG,
+    row?.team_tag,
+    row?.team_code
+  ].map(normalizeIndexTeamValue).filter(Boolean);
+  return candidates.some(value => visibleSet.has(value));
+}
+function indexTeamSelectionNotice(){
+  const set = getIndexVisibleTeamSet();
+  if(!set) return '';
+  const src = INDEX_TEAM_SELECTION_SOURCE === 'supabase' ? 'saved' : 'local';
+  return ` • Index teams: ${set.size} ${src}`;
+}
+
 // Columns used by this dashboard only. Heavy JSON/text columns such as row_data,
 // player_stats_weapon_usages and knock_down_damage_info are intentionally excluded.
 // player_stats_kill_info is included for the Live Feed team elimination timeline.
@@ -2095,7 +2207,7 @@ function injectDatabaseSourceControl(){
   if(hint){
     const keyRole = decodeJwtPayload(ACTIVE_DATA_SOURCE.anonKey)?.role || (ACTIVE_DATA_SOURCE.anonKey ? 'provided' : 'missing');
     const note = isHistoricalMode()
-      ? `Database: Historical Supabase • table: ${TABLE || 'auto-detect'} • key: ${keyRole}${keyRole === 'missing' ? ' • will fall back to Live until configured' : ''}`
+      ? `Database: Historical Supabase • table: ${TABLE || 'auto-detect'} • key: ${keyRole}${keyRole === 'missing' ? ' • Historical stays selected but needs a public anon key' : ''}`
       : 'Database: Live Supabase';
     hint.dataset.sourceHint = note;
     if(keyRole === 'missing') hint.textContent = note;
@@ -2490,8 +2602,14 @@ function applyFilters(options = {}){
     return true;
   });
 
+  const indexVisibleTeamSet = getIndexVisibleTeamSet();
+  if(indexVisibleTeamSet){
+    FILTERED = FILTERED.filter(row => rowPassesIndexTeamSelection(row, indexVisibleTeamSet));
+  }
+
   const matchCount = countMatchesIn(FILTERED);
   const teamCount = new Set(FILTERED.map(r=>norm(getVal(r,KEYS.team)).toUpperCase()).filter(Boolean)).size;
+  const indexSelectionText = indexTeamSelectionNotice();
 
   // Live refresh mode is intentionally narrow: it must not touch filters,
   // dropdown option lists, team tiles, selected team modals, tabs, or helper cards.
@@ -2517,7 +2635,7 @@ function applyFilters(options = {}){
     f.m !== '__all__' ? `M${f.m}` : 'All matches'
   ].join(' • ');
 
-  if(el('scopeChip')) el('scopeChip').textContent = `${activeDataSourceLabel()} • Scope: ${scopeText}`;
+  if(el('scopeChip')) el('scopeChip').textContent = `${activeDataSourceLabel()} • Scope: ${scopeText}${indexSelectionText}`;
   if(el('heroScopeMirror')){
     const scopeRows = [
       ['Tournament', f.t !== '__all__' ? f.t : 'All'],
@@ -2532,7 +2650,7 @@ function applyFilters(options = {}){
     setStableHTML(el('heroScopeMirror'), scopeHtml, 'hero-scope', silentRefresh);
   }
   if(el('heroScopeSub')) el('heroScopeSub').textContent = `${matchCount} matches`;
-  if(el('filterHint')) el('filterHint').textContent = `Matches: ${matchCount} • Teams: ${teamCount}`;
+  if(el('filterHint')) el('filterHint').textContent = `Matches: ${matchCount} • Teams: ${teamCount}${indexSelectionText}`;
   if(el('overallHint')) el('overallHint').textContent = `${matchCount} matches`;
 
   renderOverall({ silentRefresh });
@@ -8565,6 +8683,7 @@ location.reload();`);
       return;
     }
     detectSchema(RAW[0]);
+    await loadIndexTeamSelection();
     await loadMatchApi();
     await loadCharacterJson();
     await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson(), loadTeamLogosJson(), loadTournamentProgressionData()]);

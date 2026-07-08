@@ -373,3 +373,16 @@ Historical mode now allows up to 50,000 rows per browser load so sample-sized hi
 
 When Historical Supabase is selected but no safe public anon key is configured, the dashboard now keeps the selector on **Historical Supabase (ffbr_data)** and shows a setup warning instead of silently switching back to Live Supabase. Add the public anon key in `assets/js/data-source-config.js` or set `localStorage.ffdc_historical_anon_key`, then reload.
 
+
+
+## Index Team Selection
+
+A new admin page is included for controlling which teams appear on `index.html`:
+
+```text
+admin-index-teams.html
+```
+
+It can load teams from Live Supabase or Historical Supabase (`ffbr_data`), then save a selected team list for the matching database/table. Run `supabase/09_index_team_selection.sql` in the main dashboard Supabase project to enable shared saves. Without that SQL, the page still saves locally in the current browser for testing.
+
+See `docs/INDEX_TEAM_SELECTION.md` for details.
