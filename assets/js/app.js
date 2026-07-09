@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-09-team-identity-merge-v2';
+const EWC_QUALIFICATION_BUILD = '2026-07-09-team-identity-hard-merge-v3';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -344,6 +344,8 @@ let TEAM_IDENTITY_SOURCE = 'none';
 let TEAM_IDENTITY_MAPPING_COUNT = 0;
 let TEAM_IDENTITY_APPLIED_COUNT = 0;
 let TEAM_IDENTITY_ALL_ALIASES = [];
+let TEAM_IDENTITY_FORCE_NAME_LOOKUP = new Map();
+let TEAM_IDENTITY_FORCE_TAG_LOOKUP = new Map();
 
 function teamGroupingModeFromUrl(){
   const params = new URLSearchParams(window.location.search || '');
@@ -362,7 +364,13 @@ function getTeamGroupingMode(){
   return stored === 'identity' ? 'identity' : 'historical';
 }
 function isTeamIdentityGrouping(){ return TEAM_GROUPING_MODE === 'identity'; }
-function normalizeTeamIdentityName(value){ return norm(value).toUpperCase(); }
+function normalizeTeamIdentityName(value){
+  return norm(value)
+    .normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\u00A0]/g, ' ')
+    .toUpperCase();
+}
 function normalizeIdentityKeyPart(value){ return normalizeTeamIdentityName(value).replace(/\s+/g, ' '); }
 function uniqueIdentityValues(values){
   return [...new Set((values || []).map(v => normalizeIdentityKeyPart(v)).filter(Boolean))];
@@ -486,6 +494,8 @@ function compareTeamIdentityAliases(a, b){
 function rebuildTeamIdentityLookup(aliasRows){
   TEAM_IDENTITY_ALIAS_LOOKUP = new Map();
   TEAM_IDENTITY_ALL_ALIASES = [];
+  TEAM_IDENTITY_FORCE_NAME_LOOKUP = new Map();
+  TEAM_IDENTITY_FORCE_TAG_LOOKUP = new Map();
   TEAM_IDENTITY_MAPPING_COUNT = 0;
   for(const raw of aliasRows || []){
     const alias = normalizeTeamAliasRecord(raw);
@@ -498,6 +508,14 @@ function rebuildTeamIdentityLookup(aliasRows){
     const aliasNames = alias.alias_name_variants?.length ? alias.alias_name_variants : teamIdentityNameVariants(alias.alias_name);
     const aliasTags = alias.alias_tag_variants?.length ? alias.alias_tag_variants : teamIdentityTagVariants(alias.alias_tag, alias.alias_name);
     const tagOptions = [...new Set(['', ...aliasTags])];
+    for(const aliasName of aliasNames){
+      if(!TEAM_IDENTITY_FORCE_NAME_LOOKUP.has(aliasName)) TEAM_IDENTITY_FORCE_NAME_LOOKUP.set(aliasName, []);
+      TEAM_IDENTITY_FORCE_NAME_LOOKUP.get(aliasName).push(alias);
+    }
+    for(const aliasTag of aliasTags){
+      if(!TEAM_IDENTITY_FORCE_TAG_LOOKUP.has(aliasTag)) TEAM_IDENTITY_FORCE_TAG_LOOKUP.set(aliasTag, []);
+      TEAM_IDENTITY_FORCE_TAG_LOOKUP.get(aliasTag).push(alias);
+    }
     for(const sm of sourceModes){
       for(const st of sourceTables){
         for(const aliasName of aliasNames){
@@ -513,6 +531,8 @@ function rebuildTeamIdentityLookup(aliasRows){
     TEAM_IDENTITY_MAPPING_COUNT += 1;
   }
   for(const list of TEAM_IDENTITY_ALIAS_LOOKUP.values()) list.sort(compareTeamIdentityAliases);
+  for(const list of TEAM_IDENTITY_FORCE_NAME_LOOKUP.values()) list.sort(compareTeamIdentityAliases);
+  for(const list of TEAM_IDENTITY_FORCE_TAG_LOOKUP.values()) list.sort(compareTeamIdentityAliases);
   TEAM_IDENTITY_ALL_ALIASES.sort(compareTeamIdentityAliases);
 }
 function readLocalTeamIdentityPayload(){
@@ -632,9 +652,17 @@ function rawTeamTagForRow(row){
   return norm(row?.ffdc_original_tag || row?.tag || row?.Tag || row?.TAG || row?.team_tag || row?.team_code || row?.ffdc_canonical_tag);
 }
 function displayTeamNameForRow(row){
+  if(isTeamIdentityGrouping()){
+    const forced = forcedTeamIdentityForRow(row);
+    if(forced?.canonical_name) return forced.canonical_name;
+  }
   return normalizeTeamIdentityName(row?.ffdc_canonical_team || row?.ffdc_display_team || (KEYS.team ? getVal(row, KEYS.team) : '') || row?.team || row?.Team || row?.TEAM || row?.team_name);
 }
 function displayTeamTagForRow(row){
+  if(isTeamIdentityGrouping()){
+    const forced = forcedTeamIdentityForRow(row);
+    if(forced?.canonical_tag) return forced.canonical_tag;
+  }
   return normalizeTeamIdentityName(row?.ffdc_canonical_tag || row?.ffdc_display_tag || getRowTeamTag(row));
 }
 function teamIdentityHasMergedAliasesForRows(rows){
@@ -660,6 +688,36 @@ function rowBelongsToDisplayTeam(row, teamCode){
     normalizeTeamIdentityName(row?.team_name)
   ].filter(Boolean);
   return candidates.includes(code);
+}
+
+function bestIdentityFromForcedAliasList(list){
+  const alias = (list || []).find(item => item?.identity?.canonical_name);
+  return alias?.identity?.canonical_name ? alias.identity : null;
+}
+function forcedTeamIdentityForValues(nameValue, tagValue=''){
+  if(!isTeamIdentityGrouping()) return null;
+  const nameCandidates = uniqueIdentityValues([nameValue].flatMap(teamIdentityNameVariants));
+  const tagCandidates = uniqueIdentityValues([tagValue].flatMap(value => teamIdentityTagVariants(value)));
+
+  // Hard fallback for saved identities: once an admin maps BIGETRON, BIGETRON BY VITALITY,
+  // and TEAM VITALITY under one identity, every exact alias name should merge regardless
+  // of table/source/year filters. Source/year context is still respected first by
+  // findTeamIdentityForRow(); this is only used when strict matching fails.
+  for(const name of nameCandidates){
+    const identity = bestIdentityFromForcedAliasList(TEAM_IDENTITY_FORCE_NAME_LOOKUP.get(name));
+    if(identity) return identity;
+  }
+  for(const tag of tagCandidates){
+    const identity = bestIdentityFromForcedAliasList(TEAM_IDENTITY_FORCE_TAG_LOOKUP.get(tag));
+    if(identity) return identity;
+  }
+  return null;
+}
+function forcedTeamIdentityForRow(row){
+  if(!row) return null;
+  const name = row?.ffdc_original_team || (KEYS.team ? getVal(row, KEYS.team) : '') || row?.team || row?.team_name || row?.Team || row?.TEAM;
+  const tag = row?.ffdc_original_tag || getRowTeamTag(row) || row?.tag || row?.Tag || row?.TAG || row?.team_tag || row?.team_code;
+  return forcedTeamIdentityForValues(name, tag);
 }
 function teamIdentitySourceMatches(alias, mode, table){
   const aliasMode = normalizeTeamIdentitySourceMode(alias?.source_mode || '*');
@@ -717,7 +775,13 @@ function findTeamIdentityForRow(row){
   // Last-resort scan across aliases, used when an old saved mapping had a human
   // label like "BIGETRON / BTR" or a different source specificity.
   const fallback = TEAM_IDENTITY_ALL_ALIASES.find(alias => teamIdentityAliasMatchesRow(alias, row));
-  return fallback?.identity?.canonical_name ? fallback.identity : null;
+  if(fallback?.identity?.canonical_name) return fallback.identity;
+
+  // Final hard merge fallback: if the admin identity list shows an alias under a
+  // canonical team, the dashboard must merge it even when the alias was saved with
+  // older source/year metadata. This is what makes TEAM VITALITY + BIGETRON +
+  // BIGETRON BY VITALITY collapse into one row after selecting Merge by Identity.
+  return forcedTeamIdentityForRow(row);
 }
 function applyTeamIdentityGroupingToRows(rows){
   TEAM_IDENTITY_APPLIED_COUNT = 0;
@@ -736,7 +800,7 @@ function applyTeamIdentityGroupingToRows(rows){
     }
   }
 
-  if(!isTeamIdentityGrouping() || !KEYS.team || !TEAM_IDENTITY_ALIAS_LOOKUP.size) return rows;
+  if(!isTeamIdentityGrouping() || !KEYS.team || (!TEAM_IDENTITY_ALIAS_LOOKUP.size && !TEAM_IDENTITY_FORCE_NAME_LOOKUP.size && !TEAM_IDENTITY_FORCE_TAG_LOOKUP.size)) return rows;
 
   for(const row of rows){
     const originalTeam = rawTeamNameForRow(row);

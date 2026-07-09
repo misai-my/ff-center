@@ -415,3 +415,10 @@ When **Team Names → Merge by Team Identity** is active, the dashboard now mate
 `admin-team-identity.html` now supports editing previously saved identities. Pick an identity from the dropdown or click **Edit** in the saved mappings list; the form is filled and the matching team aliases from the loaded source are selected automatically.
 
 The dashboard now merges identity mappings from Supabase plus localStorage backup, and each canonical identity is treated as a global alias so rows already using the new name are included in the merged total.
+
+
+### Team Identity hard-merge fix
+
+This build strengthens **Merge by Team Identity** so saved aliases are also used as a final hard-merge map. If an admin identity contains aliases such as `BIGETRON`, `BIGETRON BY VITALITY`, and `TEAM VITALITY`, the dashboard will collapse those rows into the canonical team name even if the alias was saved with older source/table/year metadata.
+
+After deploying, hard refresh the browser so `assets/js/app.js?v=team-identity-hard-merge-v3` is loaded.

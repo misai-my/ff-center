@@ -75,3 +75,13 @@ Example:
 - `BIGETRON BY VITALITY / BTR`
 
 When all are saved under the `TEAM VITALITY` identity, the Index summary should show one merged `TEAM VITALITY` row when **Team Names → Merge by Team Identity** is selected.
+
+
+## Hard merge behavior
+
+When the dashboard is set to **Merge by Team Identity**, the app now uses a two-step merge:
+
+1. Strict match by source/table/year/tournament/season where available.
+2. Final hard match by any saved alias name or alias tag under the identity.
+
+This means visible aliases under an identity, for example `BIGETRON / BTR`, `BIGETRON BY VITALITY / BTR`, and `TEAM VITALITY / VIT`, will merge into the canonical identity row on the dashboard.
