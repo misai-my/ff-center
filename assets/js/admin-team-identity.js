@@ -318,6 +318,52 @@ function mergeAliasRows(...groups){
   }
   return [...byKey.values()];
 }
+
+function uniqueClean(values){ return [...new Set((values || []).map(keyText).filter(Boolean))]; }
+function aliasBelongsToSourceScope(alias, mode=state.sourceMode, table=state.sourceTable){
+  const aliasMode = normalizeSourceMode(alias?.source_mode || '*');
+  const aliasTable = normalizeSourceTable(alias?.source_table || '*');
+  const activeMode = normalizeSourceMode(mode);
+  const activeTable = normalizeSourceTable(table);
+  return (aliasMode === '*' || aliasMode === activeMode) && (aliasTable === '*' || aliasTable === activeTable);
+}
+function aliasConflictsWithSelectedTeam(alias, teams, identityId){
+  if(!alias || alias.team_identity_id === identityId) return false;
+  if(!aliasBelongsToSourceScope(alias)) return false;
+  const names = uniqueClean(teams.map(team => team.name));
+  const tags = uniqueClean(teams.map(team => team.tag));
+  const aliasName = keyText(alias.alias_name);
+  const aliasTag = keyText(alias.alias_tag);
+  return names.includes(aliasName) || (aliasTag && tags.includes(aliasTag));
+}
+async function deleteConflictingAliasesFromSupabase(teams, identityId){
+  if(!state.sharedSaveReady || !teams.length) return;
+  const names = uniqueClean(teams.map(team => team.name));
+  const tags = uniqueClean(teams.map(team => team.tag));
+  // Move selected teams cleanly from old identities into the current one. Without
+  // this, a previous BIGETRON identity can still win on the dashboard before the
+  // newer TEAM VITALITY alias is found.
+  for(const name of names){
+    const { error } = await liveClient
+      .from(TEAM_ALIAS_TABLE)
+      .delete()
+      .neq('team_identity_id', identityId)
+      .eq('alias_name', name);
+    if(error) throw error;
+  }
+  for(const tag of tags){
+    const { error } = await liveClient
+      .from(TEAM_ALIAS_TABLE)
+      .delete()
+      .neq('team_identity_id', identityId)
+      .eq('alias_tag', tag);
+    if(error) throw error;
+  }
+}
+function removeConflictingAliasesLocally(teams, identityId){
+  if(!teams.length) return;
+  state.aliases = state.aliases.filter(alias => !aliasConflictsWithSelectedTeam(alias, teams, identityId));
+}
 function buildCanonicalAliasRows(identities){
   return (identities || []).map(identity => ({
     id: `canonical-${identity.id || identity.canonical_name}`,
@@ -643,7 +689,12 @@ async function saveIdentityAndAliases(){
     }
 
     const uniqueAliasRows = mergeAliasRows(aliasRows);
+    // Reassign selected teams from any previous identity to this one. This is the
+    // key fix for cases like BIGETRON + BIGETRON BY VITALITY -> TEAM VITALITY.
+    // Previously the old BIGETRON mapping could remain in the table/local backup,
+    // leaving the dashboard with two rows even when the identity looked correct.
     if(state.sharedSaveReady){
+      await deleteConflictingAliasesFromSupabase(teams, identity.id);
       if(uniqueAliasRows.length){
         const dbRows = uniqueAliasRows.map(({team_identity, ...row}) => row);
         const { error } = await liveClient.from(TEAM_ALIAS_TABLE).upsert(dbRows, { onConflict:'alias_key' });
@@ -651,6 +702,7 @@ async function saveIdentityAndAliases(){
       }
       await loadMappings();
     }else{
+      removeConflictingAliasesLocally(teams, identity.id);
       const byKey = new Map(state.aliases.map(alias => [alias.alias_key, alias]));
       uniqueAliasRows.forEach(row => byKey.set(row.alias_key, { id: byKey.get(row.alias_key)?.id || makeId(), ...row }));
       state.aliases = [...byKey.values()];

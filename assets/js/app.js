@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-08-team-identity-v1';
+const EWC_QUALIFICATION_BUILD = '2026-07-09-team-identity-merge-v2';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -343,6 +343,7 @@ let TEAM_IDENTITY_ALIAS_LOOKUP = new Map();
 let TEAM_IDENTITY_SOURCE = 'none';
 let TEAM_IDENTITY_MAPPING_COUNT = 0;
 let TEAM_IDENTITY_APPLIED_COUNT = 0;
+let TEAM_IDENTITY_ALL_ALIASES = [];
 
 function teamGroupingModeFromUrl(){
   const params = new URLSearchParams(window.location.search || '');
@@ -363,6 +364,40 @@ function getTeamGroupingMode(){
 function isTeamIdentityGrouping(){ return TEAM_GROUPING_MODE === 'identity'; }
 function normalizeTeamIdentityName(value){ return norm(value).toUpperCase(); }
 function normalizeIdentityKeyPart(value){ return normalizeTeamIdentityName(value).replace(/\s+/g, ' '); }
+function uniqueIdentityValues(values){
+  return [...new Set((values || []).map(v => normalizeIdentityKeyPart(v)).filter(Boolean))];
+}
+function teamIdentityNameVariants(value){
+  const clean = normalizeIdentityKeyPart(value);
+  if(!clean) return [];
+  const out = [clean];
+
+  // Admin chips and human-entered aliases are often written as "TEAM NAME / TAG"
+  // or "TEAM NAME (TAG)". The dashboard rows usually contain only TEAM NAME,
+  // so index both forms to make the merge forgiving.
+  if(clean.includes('/')){
+    const parts = clean.split('/').map(part => normalizeIdentityKeyPart(part));
+    if(parts[0]) out.push(parts[0]);
+  }
+  const noParen = normalizeIdentityKeyPart(clean.replace(/\s*\([^)]*\)\s*/g, ' '));
+  if(noParen) out.push(noParen);
+  const beforeDash = normalizeIdentityKeyPart(clean.split(' - ')[0]);
+  if(beforeDash) out.push(beforeDash);
+  return uniqueIdentityValues(out);
+}
+function teamIdentityTagVariants(tag, name=''){
+  const out = [];
+  const tagClean = normalizeIdentityKeyPart(tag);
+  if(tagClean) out.push(tagClean);
+  const nameClean = normalizeIdentityKeyPart(name);
+  if(nameClean.includes('/')){
+    const parts = nameClean.split('/').map(part => normalizeIdentityKeyPart(part)).filter(Boolean);
+    if(parts.length > 1) out.push(parts[parts.length - 1]);
+  }
+  const paren = nameClean.match(/\(([^)]+)\)/);
+  if(paren?.[1]) out.push(paren[1]);
+  return uniqueIdentityValues(out);
+}
 function normalizeTeamIdentitySourceMode(value){
   const v = norm(value).toLowerCase();
   return (!v || v === 'all' || v === 'any' || v === '__all__') ? '*' : v;
@@ -411,7 +446,11 @@ function normalizeTeamAliasRecord(row){
     season: norm(row.season || ''),
     valid_from_year: row.valid_from_year ?? row.validFromYear ?? null,
     valid_to_year: row.valid_to_year ?? row.validToYear ?? null,
-    identity
+    updated_at: row.updated_at || row.updatedAt || row.created_at || row.createdAt || '',
+    created_at: row.created_at || row.createdAt || '',
+    identity,
+    alias_name_variants: teamIdentityNameVariants(aliasName),
+    alias_tag_variants: teamIdentityTagVariants(row.alias_tag || row.tag || '', aliasName)
   };
 }
 function aliasMatchesRowContext(alias, row){
@@ -426,29 +465,55 @@ function aliasMatchesRowContext(alias, row){
   if(alias.season && KEYS.season && norm(getVal(row, KEYS.season)) !== alias.season) return false;
   return true;
 }
+function teamIdentityAliasSpecificity(alias){
+  let score = 0;
+  if(alias.source_mode && alias.source_mode !== '*') score += 8;
+  if(alias.source_table && alias.source_table !== '*') score += 8;
+  if(alias.alias_tag) score += 4;
+  if(alias.tournament) score += 2;
+  if(alias.season) score += 1;
+  if(alias.valid_from_year != null || alias.valid_to_year != null) score += 1;
+  return score;
+}
+function compareTeamIdentityAliases(a, b){
+  const specific = teamIdentityAliasSpecificity(b) - teamIdentityAliasSpecificity(a);
+  if(specific) return specific;
+  const bTime = Date.parse(b.updated_at || b.created_at || '') || 0;
+  const aTime = Date.parse(a.updated_at || a.created_at || '') || 0;
+  if(bTime !== aTime) return bTime - aTime;
+  return String(b.id || '').localeCompare(String(a.id || ''));
+}
 function rebuildTeamIdentityLookup(aliasRows){
   TEAM_IDENTITY_ALIAS_LOOKUP = new Map();
+  TEAM_IDENTITY_ALL_ALIASES = [];
   TEAM_IDENTITY_MAPPING_COUNT = 0;
   for(const raw of aliasRows || []){
     const alias = normalizeTeamAliasRecord(raw);
     if(!alias) continue;
+    TEAM_IDENTITY_ALL_ALIASES.push(alias);
     const sourceMode = alias.source_mode || '*';
     const sourceTable = alias.source_table || '*';
     const sourceModes = [...new Set([sourceMode, '*'])];
     const sourceTables = [...new Set([sourceTable, '*'])];
-    const keys = [];
+    const aliasNames = alias.alias_name_variants?.length ? alias.alias_name_variants : teamIdentityNameVariants(alias.alias_name);
+    const aliasTags = alias.alias_tag_variants?.length ? alias.alias_tag_variants : teamIdentityTagVariants(alias.alias_tag, alias.alias_name);
+    const tagOptions = [...new Set(['', ...aliasTags])];
     for(const sm of sourceModes){
       for(const st of sourceTables){
-        keys.push(teamIdentityLookupKey(alias.alias_name, alias.alias_tag, sm, st));
-        keys.push(teamIdentityLookupKey(alias.alias_name, '', sm, st));
+        for(const aliasName of aliasNames){
+          for(const aliasTag of tagOptions){
+            const key = teamIdentityLookupKey(aliasName, aliasTag, sm, st);
+            if(!key) continue;
+            if(!TEAM_IDENTITY_ALIAS_LOOKUP.has(key)) TEAM_IDENTITY_ALIAS_LOOKUP.set(key, []);
+            TEAM_IDENTITY_ALIAS_LOOKUP.get(key).push(alias);
+          }
+        }
       }
-    }
-    for(const key of keys.filter(Boolean)){
-      if(!TEAM_IDENTITY_ALIAS_LOOKUP.has(key)) TEAM_IDENTITY_ALIAS_LOOKUP.set(key, []);
-      TEAM_IDENTITY_ALIAS_LOOKUP.get(key).push(alias);
     }
     TEAM_IDENTITY_MAPPING_COUNT += 1;
   }
+  for(const list of TEAM_IDENTITY_ALIAS_LOOKUP.values()) list.sort(compareTeamIdentityAliases);
+  TEAM_IDENTITY_ALL_ALIASES.sort(compareTeamIdentityAliases);
 }
 function readLocalTeamIdentityPayload(){
   try{
@@ -515,7 +580,7 @@ async function loadTeamIdentityMappings(){
   try{
     const [identityRes, aliasRes] = await Promise.all([
       withTimeout(client.from(FFDC_TEAM_IDENTITY_TABLE).select('id,canonical_name,canonical_tag,region,country,notes').limit(5000), 9000, 'Team identity load timed out'),
-      withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,team_identity:team_identity_id(id,canonical_name,canonical_tag,region,country,notes)').limit(10000), 9000, 'Team identity aliases load timed out')
+      withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,created_at,updated_at,team_identity:team_identity_id(id,canonical_name,canonical_tag,region,country,notes)').limit(10000), 9000, 'Team identity aliases load timed out')
     ]);
     if(identityRes.error) throw identityRes.error;
     if(aliasRes.error) throw aliasRes.error;
@@ -527,7 +592,7 @@ async function loadTeamIdentityMappings(){
     try{
       const [identityRes, aliasRes] = await Promise.all([
         withTimeout(client.from(FFDC_TEAM_IDENTITY_TABLE).select('id,canonical_name,canonical_tag,region,country,notes').limit(5000), 9000, 'Team identity fallback load timed out'),
-        withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes').limit(10000), 9000, 'Team alias fallback load timed out')
+        withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,created_at,updated_at').limit(10000), 9000, 'Team alias fallback load timed out')
       ]);
       if(identityRes.error) throw identityRes.error;
       if(aliasRes.error) throw aliasRes.error;
@@ -596,23 +661,63 @@ function rowBelongsToDisplayTeam(row, teamCode){
   ].filter(Boolean);
   return candidates.includes(code);
 }
+function teamIdentitySourceMatches(alias, mode, table){
+  const aliasMode = normalizeTeamIdentitySourceMode(alias?.source_mode || '*');
+  const aliasTable = normalizeTeamIdentitySourceTable(alias?.source_table || '*');
+  const activeMode = normalizeTeamIdentitySourceMode(mode || ACTIVE_DATA_SOURCE_MODE || 'live');
+  const activeTable = normalizeTeamIdentitySourceTable(table || TABLE || '');
+  return (aliasMode === '*' || aliasMode === activeMode) && (aliasTable === '*' || aliasTable === activeTable);
+}
+function teamIdentityAliasMatchesRow(alias, row){
+  if(!alias || !row || !aliasMatchesRowContext(alias, row) || !teamIdentitySourceMatches(alias, ACTIVE_DATA_SOURCE_MODE, TABLE)) return false;
+  const rowNames = uniqueIdentityValues([
+    getVal(row, KEYS.team), row?.team, row?.team_name, row?.Team, row?.TEAM, row?.ffdc_original_team
+  ].flatMap(teamIdentityNameVariants));
+  const rowTags = uniqueIdentityValues([
+    getRowTeamTag(row), row?.tag, row?.Tag, row?.TAG, row?.team_tag, row?.team_code, row?.ffdc_original_tag
+  ].flatMap(value => teamIdentityTagVariants(value)));
+  const aliasNames = alias.alias_name_variants?.length ? alias.alias_name_variants : teamIdentityNameVariants(alias.alias_name);
+  const aliasTags = alias.alias_tag_variants?.length ? alias.alias_tag_variants : teamIdentityTagVariants(alias.alias_tag, alias.alias_name);
+  const nameHit = rowNames.some(name => aliasNames.includes(name));
+  const tagHit = rowTags.length && aliasTags.length && rowTags.some(tag => aliasTags.includes(tag));
+  if(nameHit) return true;
+  // Tag-only fallback is intentionally limited to aliases that have a tag saved.
+  // It catches rebrands such as BIGETRON/BTR and BIGETRON BY VITALITY/BTR when
+  // the row name is slightly different from the saved alias.
+  return Boolean(tagHit && aliasTags.length);
+}
 function findTeamIdentityForRow(row){
-  if(!row || !KEYS.team) return null;
-  const name = normalizeTeamIdentityName(getVal(row, KEYS.team));
+  if(!row) return null;
+  const name = normalizeTeamIdentityName(KEYS.team ? getVal(row, KEYS.team) : row.team || row.team_name || row.Team || row.TEAM);
   if(!name) return null;
   const tag = normalizeTeamIdentityName(getRowTeamTag(row));
-  const lookupKeys = [
-    teamIdentityLookupKey(name, tag, ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
-    teamIdentityLookupKey(name, '', ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
-    teamIdentityLookupKey(name, tag, '*', '*'),
-    teamIdentityLookupKey(name, '', '*', '*')
-  ].filter(Boolean);
-  for(const key of lookupKeys){
+  const nameCandidates = teamIdentityNameVariants(name);
+  const tagCandidates = ['', ...teamIdentityTagVariants(tag)];
+  const lookupKeys = [];
+  for(const nameCandidate of nameCandidates){
+    for(const tagCandidate of tagCandidates){
+      lookupKeys.push(
+        teamIdentityLookupKey(nameCandidate, tagCandidate, ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
+        teamIdentityLookupKey(nameCandidate, '', ACTIVE_DATA_SOURCE_MODE || 'live', TABLE || ''),
+        teamIdentityLookupKey(nameCandidate, tagCandidate, ACTIVE_DATA_SOURCE_MODE || 'live', '*'),
+        teamIdentityLookupKey(nameCandidate, '', ACTIVE_DATA_SOURCE_MODE || 'live', '*'),
+        teamIdentityLookupKey(nameCandidate, tagCandidate, '*', TABLE || ''),
+        teamIdentityLookupKey(nameCandidate, '', '*', TABLE || ''),
+        teamIdentityLookupKey(nameCandidate, tagCandidate, '*', '*'),
+        teamIdentityLookupKey(nameCandidate, '', '*', '*')
+      );
+    }
+  }
+  for(const key of [...new Set(lookupKeys.filter(Boolean))]){
     const matches = TEAM_IDENTITY_ALIAS_LOOKUP.get(key) || [];
-    const match = matches.find(alias => aliasMatchesRowContext(alias, row));
+    const match = matches.find(alias => teamIdentityAliasMatchesRow(alias, row));
     if(match?.identity?.canonical_name) return match.identity;
   }
-  return null;
+
+  // Last-resort scan across aliases, used when an old saved mapping had a human
+  // label like "BIGETRON / BTR" or a different source specificity.
+  const fallback = TEAM_IDENTITY_ALL_ALIASES.find(alias => teamIdentityAliasMatchesRow(alias, row));
+  return fallback?.identity?.canonical_name ? fallback.identity : null;
 }
 function applyTeamIdentityGroupingToRows(rows){
   TEAM_IDENTITY_APPLIED_COUNT = 0;
