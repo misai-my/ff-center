@@ -46,8 +46,18 @@ function norm(value){ return String(value ?? '').trim(); }
 function keyText(value){ return norm(value).toUpperCase().replace(/\s+/g, ' '); }
 function safeText(value){ return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function makeId(){ return (crypto?.randomUUID?.() || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`); }
+function normalizeSourceMode(value){
+  const v = norm(value).toLowerCase();
+  return (!v || v === 'all' || v === 'any' || v === '__all__') ? '*' : v;
+}
+function normalizeSourceTable(value){
+  let v = norm(value).toLowerCase();
+  if(!v || v === 'all' || v === 'any' || v === '__all__') return '*';
+  if(v.includes('.')) v = v.split('.').pop();
+  return v || '*';
+}
 function aliasKeyFor({source_mode, source_table, alias_name, alias_tag, tournament='', season='', valid_from_year='', valid_to_year=''}){
-  return [source_mode || '*', source_table || '*', keyText(alias_name), keyText(alias_tag), norm(tournament), norm(season), norm(valid_from_year), norm(valid_to_year)].join('::');
+  return [normalizeSourceMode(source_mode), normalizeSourceTable(source_table), keyText(alias_name), keyText(alias_tag), norm(tournament), norm(season), norm(valid_from_year), norm(valid_to_year)].join('::');
 }
 function showNotice(message, type=''){
   if(!els.notice) return;
@@ -97,7 +107,7 @@ function getSourceConfig(){
   }
   return { mode, label: 'Live Supabase', url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY, table: els.sourceTable?.value.trim() || DEFAULT_LIVE_TABLE };
 }
-function sourceKey(mode=state.sourceMode, table=state.sourceTable){ return `${mode}::${table}`; }
+function sourceKey(mode=state.sourceMode, table=state.sourceTable){ return `${normalizeSourceMode(mode)}::${normalizeSourceTable(table)}`; }
 function saveLocalMappings(){
   const payload = {
     savedAt: new Date().toISOString(),
@@ -248,8 +258,8 @@ function normalizeAlias(row){
   const alias = {
     id: row.id || makeId(),
     team_identity_id: row.team_identity_id || identity?.id || '',
-    source_mode: norm(row.source_mode || row.sourceMode || '*') || '*',
-    source_table: norm(row.source_table || row.sourceTable || '*') || '*',
+    source_mode: normalizeSourceMode(row.source_mode || row.sourceMode || '*'),
+    source_table: normalizeSourceTable(row.source_table || row.sourceTable || '*'),
     alias_name: keyText(row.alias_name || row.team || row.name || ''),
     alias_tag: keyText(row.alias_tag || row.tag || ''),
     alias_key: norm(row.alias_key || ''),
@@ -264,16 +274,66 @@ function normalizeAlias(row){
   return alias.alias_name && alias.team_identity_id ? alias : null;
 }
 function findAliasForTeam(team){
+  const teamName = keyText(team?.name);
+  const teamTag = keyText(team?.tag);
   const keyVariants = [
-    aliasKeyFor({source_mode:state.sourceMode, source_table:state.sourceTable, alias_name:team.name, alias_tag:team.tag}),
-    aliasKeyFor({source_mode:state.sourceMode, source_table:state.sourceTable, alias_name:team.name, alias_tag:''}),
-    aliasKeyFor({source_mode:'*', source_table:'*', alias_name:team.name, alias_tag:team.tag}),
-    aliasKeyFor({source_mode:'*', source_table:'*', alias_name:team.name, alias_tag:''})
+    aliasKeyFor({source_mode:state.sourceMode, source_table:state.sourceTable, alias_name:teamName, alias_tag:teamTag}),
+    aliasKeyFor({source_mode:state.sourceMode, source_table:state.sourceTable, alias_name:teamName, alias_tag:''}),
+    aliasKeyFor({source_mode:state.sourceMode, source_table:'*', alias_name:teamName, alias_tag:teamTag}),
+    aliasKeyFor({source_mode:state.sourceMode, source_table:'*', alias_name:teamName, alias_tag:''}),
+    aliasKeyFor({source_mode:'*', source_table:state.sourceTable, alias_name:teamName, alias_tag:teamTag}),
+    aliasKeyFor({source_mode:'*', source_table:state.sourceTable, alias_name:teamName, alias_tag:''}),
+    aliasKeyFor({source_mode:'*', source_table:'*', alias_name:teamName, alias_tag:teamTag}),
+    aliasKeyFor({source_mode:'*', source_table:'*', alias_name:teamName, alias_tag:''})
   ];
-  return state.aliases.find(alias => keyVariants.includes(alias.alias_key));
+  return state.aliases.find(alias => keyVariants.includes(alias.alias_key)) || state.aliases.find(alias => alias.alias_name === teamName && (!alias.alias_tag || !teamTag || alias.alias_tag === teamTag));
+}
+function mergeIdentityRows(...groups){
+  const byId = new Map();
+  const byName = new Map();
+  for(const group of groups){
+    for(const raw of group || []){
+      const identity = normalizeIdentity(raw);
+      if(!identity?.canonical_name) continue;
+      const idKey = identity.id || '';
+      const nameKey = `${identity.canonical_name}::${identity.canonical_tag || ''}`;
+      if(idKey && byId.has(idKey)) Object.assign(byId.get(idKey), { ...identity, ...byId.get(idKey) });
+      else if(byName.has(nameKey)) Object.assign(byName.get(nameKey), { ...identity, ...byName.get(nameKey) });
+      else {
+        byId.set(identity.id, identity);
+        byName.set(nameKey, identity);
+      }
+    }
+  }
+  return [...new Set([...byId.values(), ...byName.values()])];
+}
+function mergeAliasRows(...groups){
+  const byKey = new Map();
+  for(const group of groups){
+    for(const raw of group || []){
+      const alias = normalizeAlias(raw);
+      if(!alias) continue;
+      byKey.set(alias.alias_key || aliasKeyFor(alias), alias);
+    }
+  }
+  return [...byKey.values()];
+}
+function buildCanonicalAliasRows(identities){
+  return (identities || []).map(identity => ({
+    id: `canonical-${identity.id || identity.canonical_name}`,
+    team_identity_id: identity.id,
+    source_mode: '*',
+    source_table: '*',
+    alias_name: identity.canonical_name,
+    alias_tag: identity.canonical_tag || '',
+    team_identity: identity
+  }));
 }
 async function loadMappings(){
   let loadedRemote = false;
+  let remoteIdentities = [];
+  let remoteAliases = [];
+  const local = readLocalMappings();
   try{
     const [identityRes, aliasRes] = await Promise.all([
       withTimeout(liveClient.from(TEAM_IDENTITY_TABLE).select('*').order('canonical_name', { ascending:true }).limit(5000), 9000, 'Identity load'),
@@ -281,23 +341,49 @@ async function loadMappings(){
     ]);
     if(identityRes.error) throw identityRes.error;
     if(aliasRes.error) throw aliasRes.error;
-    state.identities = (identityRes.data || []).map(normalizeIdentity).filter(Boolean);
-    state.aliases = (aliasRes.data || []).map(normalizeAlias).filter(Boolean);
+    remoteIdentities = identityRes.data || [];
+    remoteAliases = aliasRes.data || [];
     state.sharedSaveReady = true;
     loadedRemote = true;
   }catch(error){
-    console.warn('Remote identity tables unavailable. Local fallback enabled:', error?.message || error);
-    const local = readLocalMappings();
-    state.identities = local.identities.map(normalizeIdentity).filter(Boolean);
-    state.aliases = local.aliases.map(normalizeAlias).filter(Boolean);
-    state.sharedSaveReady = false;
+    console.warn('Remote identity relation load failed, retrying without embedded relationship:', error?.message || error);
+    try{
+      const [identityRes, aliasRes] = await Promise.all([
+        withTimeout(liveClient.from(TEAM_IDENTITY_TABLE).select('*').order('canonical_name', { ascending:true }).limit(5000), 9000, 'Identity fallback load'),
+        withTimeout(liveClient.from(TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,alias_key,valid_from_year,valid_to_year,tournament,season,notes').order('alias_name', { ascending:true }).limit(10000), 9000, 'Alias fallback load')
+      ]);
+      if(identityRes.error) throw identityRes.error;
+      if(aliasRes.error) throw aliasRes.error;
+      remoteIdentities = identityRes.data || [];
+      const identityById = new Map(remoteIdentities.map(identity => [identity.id, identity]));
+      remoteAliases = (aliasRes.data || []).map(alias => ({ ...alias, team_identity: identityById.get(alias.team_identity_id) || null }));
+      state.sharedSaveReady = true;
+      loadedRemote = true;
+    }catch(fallbackError){
+      console.warn('Remote identity tables unavailable. Local fallback enabled:', fallbackError?.message || fallbackError);
+      state.sharedSaveReady = false;
+    }
   }
+
+  const identityRowsFromAliases = [
+    ...remoteAliases.map(alias => alias.team_identity).filter(Boolean),
+    ...(local.aliases || []).map(alias => alias.team_identity).filter(Boolean)
+  ];
+  state.identities = mergeIdentityRows(remoteIdentities, local.identities, identityRowsFromAliases);
+  const identityById = new Map(state.identities.map(identity => [identity.id, identity]));
+  const localAliases = (local.aliases || []).map(alias => ({
+    ...alias,
+    team_identity: alias.team_identity || identityById.get(alias.team_identity_id) || null
+  }));
+  state.aliases = mergeAliasRows(remoteAliases, localAliases, buildCanonicalAliasRows(state.identities));
   saveLocalMappings();
   renderIdentitySelect();
   renderIdentityList();
   updateStats();
-  showNotice(loadedRemote ? 'Team identity mappings loaded from Supabase.' : 'Team identity tables are not installed yet. Local browser fallback is active. Run supabase/10_team_identity_aliases.sql for shared saves.', loadedRemote ? 'success' : 'warn');
+  const localNote = local.aliases?.length ? ` Local backup also loaded: ${local.aliases.length} aliases.` : '';
+  showNotice(loadedRemote ? `Team identity mappings loaded from Supabase.${localNote}` : 'Team identity tables are not installed yet. Local browser fallback is active. Run supabase/10_team_identity_aliases.sql for shared saves.', loadedRemote ? 'success' : 'warn');
 }
+
 async function loadTeams(){
   const cfg = getSourceConfig();
   if(cfg.mode === 'historical'){
@@ -427,21 +513,50 @@ function renderIdentityList(){
   }
   els.identityList.innerHTML = state.identities.slice().sort((a,b)=>a.canonical_name.localeCompare(b.canonical_name)).map(identity => {
     const aliases = aliasesForIdentity(identity.id);
-    return `<article class="identity-row">
-      <strong>${safeText(identity.canonical_name)}${identity.canonical_tag ? ` <span class="mini-chip">${safeText(identity.canonical_tag)}</span>` : ''}</strong>
+    return `<article class="identity-row" data-identity-id="${safeText(identity.id)}">
+      <div class="identity-row-head">
+        <strong>${safeText(identity.canonical_name)}${identity.canonical_tag ? ` <span class="mini-chip">${safeText(identity.canonical_tag)}</span>` : ''}</strong>
+        <div class="identity-row-actions">
+          <button class="btn tiny secondary" type="button" data-edit-identity="${safeText(identity.id)}">Edit</button>
+          <button class="btn tiny ghost" type="button" data-select-identity="${safeText(identity.id)}">Select aliases</button>
+        </div>
+      </div>
       <div class="alias-list">${aliases.length ? aliases.slice(0,12).map(alias => `<span class="mini-chip">${safeText(alias.alias_name)}${alias.alias_tag ? ` / ${safeText(alias.alias_tag)}` : ''}</span>`).join('') : '<span class="mini-chip">No aliases</span>'}</div>
       ${aliases.length > 12 ? `<small class="muted">+${aliases.length - 12} more aliases</small>` : ''}
     </article>`;
   }).join('');
 }
-function fillFormFromIdentity(id){
+function teamMatchesAlias(team, alias){
+  const name = keyText(team?.name);
+  const tag = keyText(team?.tag);
+  if(!name || !alias) return false;
+  return alias.alias_name === name && (!alias.alias_tag || !tag || alias.alias_tag === tag);
+}
+function selectTeamsForIdentity(id, append=false){
+  if(!append) state.selected.clear();
+  const identity = state.identities.find(item => item.id === id);
+  const aliases = aliasesForIdentity(id);
+  for(const team of state.teams.values()){
+    const mapped = findAliasForTeam(team);
+    const isMapped = mapped?.team_identity_id === id || mapped?.team_identity?.id === id || aliases.some(alias => teamMatchesAlias(team, alias));
+    const isCanonical = identity && keyText(team.name) === keyText(identity.canonical_name) && (!identity.canonical_tag || !team.tag || keyText(team.tag) === keyText(identity.canonical_tag));
+    if(isMapped || isCanonical) state.selected.add(team.key);
+  }
+  renderTeams();
+}
+function fillFormFromIdentity(id, selectMapped=false){
   const identity = state.identities.find(item => item.id === id);
   if(!identity) return;
+  els.identitySelect.value = identity.id;
   els.canonicalName.value = identity.canonical_name || '';
   els.canonicalTag.value = identity.canonical_tag || '';
   els.region.value = identity.region || '';
   els.country.value = identity.country || '';
   els.notes.value = identity.notes || '';
+  if(selectMapped) {
+    selectTeamsForIdentity(id);
+    showNotice(`Editing ${identity.canonical_name}. Existing aliases from the loaded team list were selected.`, 'success');
+  }
 }
 function selectedTeams(){ return [...state.selected].map(key => state.teams.get(key)).filter(Boolean); }
 function useFirstSelected(){
@@ -453,11 +568,11 @@ function useFirstSelected(){
 }
 async function saveIdentityAndAliases(){
   const teams = selectedTeams();
-  if(!teams.length) return showNotice('Select at least one team alias to save.', 'error');
   let identityId = els.identitySelect.value;
   let identity = identityId ? state.identities.find(item => item.id === identityId) : null;
-  const canonicalName = keyText(els.canonicalName.value);
+  const canonicalName = keyText(els.canonicalName.value || identity?.canonical_name || '');
   if(!identity && !canonicalName) return showNotice('Choose an existing identity or enter a canonical team name.', 'error');
+  if(!teams.length && !identity) return showNotice('Select at least one team alias to create a new identity.', 'error');
 
   const identityPayload = {
     canonical_name: canonicalName || identity?.canonical_name || '',
@@ -506,14 +621,38 @@ async function saveIdentityAndAliases(){
       return row;
     });
 
+    // Always save the canonical name as a global alias too. This makes rows that
+    // already use the new identity name join the merge, and it also fixes cases
+    // where the canonical team was not checked in the team source list.
+    if(identity.canonical_name){
+      const canonicalAlias = {
+        team_identity_id: identity.id,
+        source_mode: '*',
+        source_table: '*',
+        alias_name: keyText(identity.canonical_name),
+        alias_tag: keyText(identity.canonical_tag || ''),
+        valid_from_year: null,
+        valid_to_year: null,
+        tournament: '',
+        season: '',
+        notes: norm(els.notes.value),
+        team_identity: identity
+      };
+      canonicalAlias.alias_key = aliasKeyFor(canonicalAlias);
+      aliasRows.push(canonicalAlias);
+    }
+
+    const uniqueAliasRows = mergeAliasRows(aliasRows);
     if(state.sharedSaveReady){
-      const dbRows = aliasRows.map(({team_identity, ...row}) => row);
-      const { error } = await liveClient.from(TEAM_ALIAS_TABLE).upsert(dbRows, { onConflict:'alias_key' });
-      if(error) throw error;
+      if(uniqueAliasRows.length){
+        const dbRows = uniqueAliasRows.map(({team_identity, ...row}) => row);
+        const { error } = await liveClient.from(TEAM_ALIAS_TABLE).upsert(dbRows, { onConflict:'alias_key' });
+        if(error) throw error;
+      }
       await loadMappings();
     }else{
       const byKey = new Map(state.aliases.map(alias => [alias.alias_key, alias]));
-      aliasRows.forEach(row => byKey.set(row.alias_key, { id: byKey.get(row.alias_key)?.id || makeId(), ...row }));
+      uniqueAliasRows.forEach(row => byKey.set(row.alias_key, { id: byKey.get(row.alias_key)?.id || makeId(), ...row }));
       state.aliases = [...byKey.values()];
       saveLocalMappings();
       renderIdentitySelect();
@@ -521,7 +660,8 @@ async function saveIdentityAndAliases(){
       updateStats();
     }
 
-    showNotice(`Saved ${aliasRows.length} alias${aliasRows.length === 1 ? '' : 'es'} under ${identity.canonical_name}.`, 'success');
+    els.identitySelect.value = identity.id;
+    showNotice(`${teams.length ? `Saved ${teams.length} selected alias${teams.length === 1 ? '' : 'es'} and updated` : 'Updated'} ${identity.canonical_name}.`, 'success');
     renderTeams();
   }catch(error){
     console.error(error);
@@ -530,6 +670,7 @@ async function saveIdentityAndAliases(){
     setBusy(els.save, false);
   }
 }
+
 
 function updateSourceFields(){
   const historical = els.sourceMode.value === 'historical';
@@ -547,7 +688,15 @@ function wire(){
   [els.fTournament, els.fYear, els.fSeason].forEach(control => control?.addEventListener('change', renderTeams));
   els.selectVisible?.addEventListener('click', () => { state.visibleKeys.forEach(key => state.selected.add(key)); renderTeams(); });
   els.clearSelected?.addEventListener('click', () => { state.selected.clear(); renderTeams(); });
-  els.identitySelect?.addEventListener('change', () => fillFormFromIdentity(els.identitySelect.value));
+  els.identitySelect?.addEventListener('change', () => fillFormFromIdentity(els.identitySelect.value, true));
+  els.identityList?.addEventListener('click', event => {
+    const edit = event.target.closest('[data-edit-identity]');
+    const select = event.target.closest('[data-select-identity]');
+    const id = edit?.dataset.editIdentity || select?.dataset.selectIdentity || '';
+    if(!id) return;
+    fillFormFromIdentity(id, true);
+    document.querySelector('.identity-form-grid')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  });
   els.guess?.addEventListener('click', useFirstSelected);
   els.save?.addEventListener('click', saveIdentityAndAliases);
   els.reload?.addEventListener('click', loadMappings);

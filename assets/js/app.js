@@ -363,10 +363,22 @@ function getTeamGroupingMode(){
 function isTeamIdentityGrouping(){ return TEAM_GROUPING_MODE === 'identity'; }
 function normalizeTeamIdentityName(value){ return norm(value).toUpperCase(); }
 function normalizeIdentityKeyPart(value){ return normalizeTeamIdentityName(value).replace(/\s+/g, ' '); }
+function normalizeTeamIdentitySourceMode(value){
+  const v = norm(value).toLowerCase();
+  return (!v || v === 'all' || v === 'any' || v === '__all__') ? '*' : v;
+}
+function normalizeTeamIdentitySourceTable(value){
+  let v = norm(value).toLowerCase();
+  if(!v || v === 'all' || v === 'any' || v === '__all__') return '*';
+  // Supabase may display tables as either ffbr_data or public.ffbr_data.
+  // Identity matching should not fail only because the schema prefix differs.
+  if(v.includes('.')) v = v.split('.').pop();
+  return v || '*';
+}
 function teamIdentityLookupKey(name, tag='', sourceMode='', sourceTable=''){
   const nKey = normalizeIdentityKeyPart(name);
   if(!nKey) return '';
-  return [sourceMode || '*', sourceTable || '*', nKey, normalizeIdentityKeyPart(tag)].join('::');
+  return [normalizeTeamIdentitySourceMode(sourceMode), normalizeTeamIdentitySourceTable(sourceTable), nKey, normalizeIdentityKeyPart(tag)].join('::');
 }
 function normalizeTeamIdentityRecord(row){
   if(!row || typeof row !== 'object') return null;
@@ -393,8 +405,8 @@ function normalizeTeamAliasRecord(row){
     team_identity_id: row.team_identity_id || identity.id || '',
     alias_name: aliasName,
     alias_tag: normalizeTeamIdentityName(row.alias_tag || row.tag || ''),
-    source_mode: norm(row.source_mode || row.sourceMode || ''),
-    source_table: norm(row.source_table || row.sourceTable || ''),
+    source_mode: normalizeTeamIdentitySourceMode(row.source_mode || row.sourceMode || ''),
+    source_table: normalizeTeamIdentitySourceTable(row.source_table || row.sourceTable || ''),
     tournament: norm(row.tournament || ''),
     season: norm(row.season || ''),
     valid_from_year: row.valid_from_year ?? row.validFromYear ?? null,
@@ -422,49 +434,126 @@ function rebuildTeamIdentityLookup(aliasRows){
     if(!alias) continue;
     const sourceMode = alias.source_mode || '*';
     const sourceTable = alias.source_table || '*';
-    const keys = [
-      teamIdentityLookupKey(alias.alias_name, alias.alias_tag, sourceMode, sourceTable),
-      teamIdentityLookupKey(alias.alias_name, '', sourceMode, sourceTable),
-      teamIdentityLookupKey(alias.alias_name, alias.alias_tag, '*', '*'),
-      teamIdentityLookupKey(alias.alias_name, '', '*', '*')
-    ].filter(Boolean);
-    for(const key of keys){
+    const sourceModes = [...new Set([sourceMode, '*'])];
+    const sourceTables = [...new Set([sourceTable, '*'])];
+    const keys = [];
+    for(const sm of sourceModes){
+      for(const st of sourceTables){
+        keys.push(teamIdentityLookupKey(alias.alias_name, alias.alias_tag, sm, st));
+        keys.push(teamIdentityLookupKey(alias.alias_name, '', sm, st));
+      }
+    }
+    for(const key of keys.filter(Boolean)){
       if(!TEAM_IDENTITY_ALIAS_LOOKUP.has(key)) TEAM_IDENTITY_ALIAS_LOOKUP.set(key, []);
       TEAM_IDENTITY_ALIAS_LOOKUP.get(key).push(alias);
     }
     TEAM_IDENTITY_MAPPING_COUNT += 1;
   }
 }
-function readLocalTeamIdentityMappings(){
+function readLocalTeamIdentityPayload(){
   try{
     const parsed = JSON.parse(localStorage.getItem(FFDC_TEAM_IDENTITY_STORAGE_KEY) || '{}');
-    if(Array.isArray(parsed?.aliases)) return parsed.aliases;
-    if(Array.isArray(parsed)) return parsed;
+    if(Array.isArray(parsed)) return { identities: [], aliases: parsed };
+    return {
+      identities: Array.isArray(parsed?.identities) ? parsed.identities : [],
+      aliases: Array.isArray(parsed?.aliases) ? parsed.aliases : []
+    };
   }catch(_e){}
-  return [];
+  return { identities: [], aliases: [] };
+}
+function readLocalTeamIdentityMappings(){ return readLocalTeamIdentityPayload().aliases; }
+function buildSyntheticIdentityAliases(identityRows){
+  const out = [];
+  for(const raw of identityRows || []){
+    const identity = normalizeTeamIdentityRecord(raw);
+    if(!identity?.canonical_name) continue;
+    out.push({
+      id: `synthetic-${identity.id || identity.canonical_name}`,
+      team_identity_id: identity.id || '',
+      source_mode: '*',
+      source_table: '*',
+      alias_name: identity.canonical_name,
+      alias_tag: identity.canonical_tag || '',
+      team_identity: identity,
+      identity
+    });
+  }
+  return out;
+}
+function mergeTeamIdentityAliasRows(...groups){
+  const out = [];
+  const seen = new Set();
+  for(const group of groups){
+    for(const raw of group || []){
+      const alias = normalizeTeamAliasRecord(raw);
+      if(!alias) continue;
+      const signature = [
+        alias.team_identity_id || alias.identity?.canonical_name || '',
+        alias.source_mode || '*',
+        alias.source_table || '*',
+        alias.alias_name || '',
+        alias.alias_tag || '',
+        alias.tournament || '',
+        alias.season || '',
+        alias.valid_from_year ?? '',
+        alias.valid_to_year ?? ''
+      ].join('::');
+      if(seen.has(signature)) continue;
+      seen.add(signature);
+      out.push(alias);
+    }
+  }
+  return out;
 }
 async function loadTeamIdentityMappings(){
   TEAM_IDENTITY_SOURCE = 'none';
   TEAM_IDENTITY_MAPPING_COUNT = 0;
   TEAM_IDENTITY_APPLIED_COUNT = 0;
-  let aliases = [];
+  let remoteAliases = [];
+  let remoteIdentities = [];
+  let remoteOk = false;
   try{
-    const { data, error } = await withTimeout(
-      client
-        .from(FFDC_TEAM_ALIAS_TABLE)
-        .select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,team_identity:team_identity_id(id,canonical_name,canonical_tag,region,country,notes)')
-        .limit(5000),
-      9000,
-      'Team identity aliases load timed out'
-    );
-    if(error) throw error;
-    aliases = data || [];
-    TEAM_IDENTITY_SOURCE = aliases.length ? 'supabase' : 'supabase-empty';
+    const [identityRes, aliasRes] = await Promise.all([
+      withTimeout(client.from(FFDC_TEAM_IDENTITY_TABLE).select('id,canonical_name,canonical_tag,region,country,notes').limit(5000), 9000, 'Team identity load timed out'),
+      withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes,team_identity:team_identity_id(id,canonical_name,canonical_tag,region,country,notes)').limit(10000), 9000, 'Team identity aliases load timed out')
+    ]);
+    if(identityRes.error) throw identityRes.error;
+    if(aliasRes.error) throw aliasRes.error;
+    remoteIdentities = identityRes.data || [];
+    remoteAliases = aliasRes.data || [];
+    remoteOk = true;
   }catch(error){
-    console.warn('Team identity alias table unavailable; using local mappings only:', error?.message || error);
-    aliases = readLocalTeamIdentityMappings();
-    TEAM_IDENTITY_SOURCE = aliases.length ? 'local' : 'none';
+    console.warn('Team identity relation load failed, retrying without embedded relationship:', error?.message || error);
+    try{
+      const [identityRes, aliasRes] = await Promise.all([
+        withTimeout(client.from(FFDC_TEAM_IDENTITY_TABLE).select('id,canonical_name,canonical_tag,region,country,notes').limit(5000), 9000, 'Team identity fallback load timed out'),
+        withTimeout(client.from(FFDC_TEAM_ALIAS_TABLE).select('id,team_identity_id,source_mode,source_table,alias_name,alias_tag,valid_from_year,valid_to_year,tournament,season,notes').limit(10000), 9000, 'Team alias fallback load timed out')
+      ]);
+      if(identityRes.error) throw identityRes.error;
+      if(aliasRes.error) throw aliasRes.error;
+      remoteIdentities = identityRes.data || [];
+      const identityById = new Map(remoteIdentities.map(identity => [identity.id, identity]));
+      remoteAliases = (aliasRes.data || []).map(alias => ({ ...alias, team_identity: identityById.get(alias.team_identity_id) || null }));
+      remoteOk = true;
+    }catch(fallbackError){
+      console.warn('Team identity tables unavailable; using local mappings only:', fallbackError?.message || fallbackError);
+    }
   }
+
+  const local = readLocalTeamIdentityPayload();
+  // Always include local mappings as a safety net. This fixes the common flow where
+  // identities were created before the SQL was installed, so Supabase is empty but
+  // the admin page still shows local aliases.
+  const aliases = mergeTeamIdentityAliasRows(
+    remoteAliases,
+    local.aliases,
+    buildSyntheticIdentityAliases(remoteIdentities),
+    buildSyntheticIdentityAliases(local.identities)
+  );
+  TEAM_IDENTITY_SOURCE = remoteOk && remoteAliases.length ? (local.aliases.length ? 'supabase+local' : 'supabase')
+    : remoteOk && remoteIdentities.length ? (local.aliases.length ? 'supabase-identities+local' : 'supabase-identities')
+    : local.aliases.length ? 'local'
+    : 'none';
   rebuildTeamIdentityLookup(aliases);
   return aliases;
 }
@@ -579,7 +668,7 @@ function applyTeamIdentityGroupingToRows(rows){
 
 function teamIdentityNotice(){
   if(!isTeamIdentityGrouping()) return ' • Team names: historical';
-  const src = TEAM_IDENTITY_SOURCE === 'supabase' ? 'saved' : (TEAM_IDENTITY_SOURCE === 'local' ? 'local' : 'no mappings');
+  const src = TEAM_IDENTITY_SOURCE.includes('supabase') ? (TEAM_IDENTITY_SOURCE.includes('local') ? 'saved + local' : 'saved') : (TEAM_IDENTITY_SOURCE === 'local' ? 'local' : 'no mappings');
   return ` • Team identity: ${TEAM_IDENTITY_MAPPING_COUNT} aliases ${src}${TEAM_IDENTITY_APPLIED_COUNT ? ` • ${TEAM_IDENTITY_APPLIED_COUNT} rows grouped` : ''}`;
 }
 function injectTeamIdentityControl(){

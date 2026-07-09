@@ -409,3 +409,9 @@ See `docs/TEAM_IDENTITY_MANAGER.md` for setup and workflow.
 ### Team Identity merge behavior
 
 When **Team Names → Merge by Team Identity** is active, the dashboard now materializes the canonical team identity into the working rows before rendering. Standings, team tiles, selected team profile, match log, team KPIs, and historical totals are merged under the canonical team name while preserving the original historical name in `ffdc_original_team` / `ffdc_original_tag` for reference.
+
+### Team Identity merge/edit update
+
+`admin-team-identity.html` now supports editing previously saved identities. Pick an identity from the dropdown or click **Edit** in the saved mappings list; the form is filled and the matching team aliases from the loaded source are selected automatically.
+
+The dashboard now merges identity mappings from Supabase plus localStorage backup, and each canonical identity is treated as a global alias so rows already using the new name are included in the merged total.

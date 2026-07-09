@@ -58,3 +58,20 @@ If the SQL has not been installed, the admin page still saves mappings in the cu
 This means `public.team_alias` already existed from an older/manual setup that did not include the newer data-source columns. The updated `supabase/10_team_identity_aliases.sql` is migration-safe and now adds missing columns with `alter table ... add column if not exists` before creating the indexes.
 
 You do **not** need to drop your existing aliases. Run the updated SQL again.
+
+## Identity merge fix / edit workflow
+
+This build improves Team Identity behavior in two ways:
+
+1. The dashboard now loads identity mappings from both Supabase and the browser local backup. This prevents unmapped standings when aliases were created locally before the SQL tables were installed or populated.
+2. Selecting an existing canonical identity in `admin-team-identity.html` now loads it for editing and selects the already-mapped team aliases from the loaded database list.
+
+When saving an identity, the canonical team name is also saved as a global alias. This makes rows that already use the new identity name merge together with older names.
+
+Example:
+
+- `TEAM VITALITY / VIT`
+- `BIGETRON / BTR`
+- `BIGETRON BY VITALITY / BTR`
+
+When all are saved under the `TEAM VITALITY` identity, the Index summary should show one merged `TEAM VITALITY` row when **Team Names → Merge by Team Identity** is selected.
