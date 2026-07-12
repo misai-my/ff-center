@@ -343,15 +343,18 @@
   },
   {
     "team_code": "PE",
-    "team_name": "P Esports",
+    "team_name": "GAMxPE",
     "image_url": "assets/logo/pe.png",
     "remote_image_url": "",
     "aliases": [
       "PE",
-      "P Esports"
+      "P Esports",
+      "GAMxPE"
     ],
     "is_placeholder": false,
     "local_image_path": "assets/logo/pe.png"
+    "region": "SOUTHEAST ASIA",
+    "country": "VN"
   },
   {
     "team_code": "R7",
