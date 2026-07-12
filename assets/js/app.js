@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-09-team-identity-hard-merge-v3';
+const EWC_QUALIFICATION_BUILD = '2026-07-09-match-detail-tournament-source';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -4696,9 +4696,17 @@ function teamMatchAgg(rows){
     const matchOrder = matchOrderValueForRow(r);
     if(!m.has(key)) m.set(key, {
       team, mk, match_order: matchOrder,
+      tournament: norm(getVal(r, KEYS.tournament)),
+      stage: norm(getVal(r, KEYS.stage)),
+      year: norm(getVal(r, KEYS.year)),
+      season: norm(getVal(r, KEYS.season)),
+      week: norm(getVal(r, KEYS.week)),
       day: norm(getVal(r, KEYS.day)),
       match_no: norm(getVal(r, KEYS.matchNo)),
       match_id: norm(getVal(r, KEYS.matchId)),
+      map: norm(r?.Map ?? r?.map),
+      mode: norm(getVal(r, KEYS.mode)),
+      data_source: norm(getVal(r, KEYS.dataSource)),
       booyah:0, elims:0, damage:0, assists:0, headshots:0,
       ranking_score:0, killing_score:0, kill_count:0, historical_total:null, drop:'', top3:0,
       display_tag: displayTeamTagForRow(r), identity_id: norm(r?.ffdc_team_identity_id),
@@ -4706,9 +4714,17 @@ function teamMatchAgg(rows){
     });
     const o = m.get(key);
     o.match_order = Math.max(o.match_order || 0, matchOrder);
+    if(!o.tournament) o.tournament = norm(getVal(r, KEYS.tournament));
+    if(!o.stage) o.stage = norm(getVal(r, KEYS.stage));
+    if(!o.year) o.year = norm(getVal(r, KEYS.year));
+    if(!o.season) o.season = norm(getVal(r, KEYS.season));
+    if(!o.week) o.week = norm(getVal(r, KEYS.week));
     if(!o.day) o.day = norm(getVal(r, KEYS.day));
     if(!o.match_no) o.match_no = norm(getVal(r, KEYS.matchNo));
     if(!o.match_id) o.match_id = norm(getVal(r, KEYS.matchId));
+    if(!o.map) o.map = norm(r?.Map ?? r?.map);
+    if(!o.mode) o.mode = norm(getVal(r, KEYS.mode));
+    if(!o.data_source) o.data_source = norm(getVal(r, KEYS.dataSource));
     if(!o.display_tag) o.display_tag = displayTeamTagForRow(r);
     if(!o.identity_id) o.identity_id = norm(r?.ffdc_team_identity_id);
     const originalTeam = normalizeTeamIdentityName(r?.ffdc_original_team || rawTeamNameForRow(r));
@@ -5891,15 +5907,34 @@ function playerImpactTag(row, teamStats){
   return 'Watch Factor';
 }
 
+function matchTournamentContext(match){
+  if(!match) return '—';
+  const yearSeason = [match.year, match.season].map(norm).filter(Boolean).join(' ');
+  return [
+    norm(match.tournament),
+    norm(match.stage),
+    yearSeason,
+    norm(match.week) ? `Week ${norm(match.week)}` : '',
+    norm(match.map)
+  ].filter(Boolean).join(' • ') || '—';
+}
 function renderTeamProgressChart(matches, teamRows=[]){
   const clean = (matches || []).map((m, index) => {
     const elims = n(m.elims);
     const rank = n(m.ranking_score);
-    const total = elims + rank;
+    const total = matchTotalScoreValue(m);
+    const tournament = norm(m.tournament);
+    const stage = norm(m.stage);
+    const year = norm(m.year);
+    const season = norm(m.season);
+    const week = norm(m.week);
+    const map = norm(m.map);
     const playedLabel = `D${m.day || '—'} M${m.match_no || index + 1}`;
-    const shortLabel = `D${m.day || '—'}\nM${m.match_no || index + 1}`;
+    const shortLabel = `D${m.day || '—'}
+M${m.match_no || index + 1}`;
     const sourceLabel = playedLabel;
-    return { ...m, total, elims, rank, label: playedLabel, shortLabel, sourceLabel, detailIndex:index };
+    const tournamentContext = matchTournamentContext({ tournament, stage, year, season, week, map });
+    return { ...m, tournament, stage, year, season, week, map, total, elims, rank, label: playedLabel, shortLabel, sourceLabel, tournamentContext, detailIndex:index };
   }).filter(item => Number.isFinite(item.total) || Number.isFinite(item.elims));
 
   window.EWC_MATCH_CHART_DETAILS = clean.map((m, index) => {
@@ -5978,7 +6013,7 @@ function renderTeamProgressChart(matches, teamRows=[]){
   const highTotal = clean.reduce((best, p) => p.total > best.total ? p : best, clean[0]);
   const highElims = clean.reduce((best, p) => p.elims > best.elims ? p : best, clean[0]);
 
-  const clickCircle = p => `<circle class="chart-click-target" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="13" fill="transparent" onclick="openChartMatchDetail(${p.index})"><title>${escHtml(p.sourceLabel)} • Total: ${fmtNum(p.total)} • Elims: ${fmtNum(p.elims)} • Rank: ${fmtNum(p.rank)}</title></circle>`;
+  const clickCircle = p => `<circle class="chart-click-target" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="13" fill="transparent" onclick="openChartMatchDetail(${p.index})"><title>${escHtml([p.tournamentContext, p.sourceLabel, `Total: ${fmtNum(p.total)}`, `Elims: ${fmtNum(p.elims)}`, `Rank: ${fmtNum(p.rank)}`].filter(Boolean).join(' • '))}</title></circle>`;
   const totalPointNodes = totalPoints.map((p, i) => `
     ${clickCircle(p)}
     <circle class="chart-point total ${i === totalPoints.length - 1 ? 'last' : ''}" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${i === totalPoints.length - 1 ? 4.8 : 3.2}"></circle>
@@ -6044,14 +6079,19 @@ function openChartMatchDetail(index){
   const detail = window.EWC_MATCH_CHART_DETAILS?.[index];
   if(!detail) return;
   setText('itemDetailTitle', `${detail.sourceLabel} — Match Detail`);
-  setText('itemDetailSub', 'Team chart point breakdown');
+  setText('itemDetailSub', matchTournamentContext(detail));
   const body = el('itemDetailBody');
   const detailCard = el('itemDetailModal')?.querySelector('.item-detail-card');
   detailCard?.classList.remove('map-view');
   body.innerHTML = `
+    <div class="item-detail-desc-block match-detail-tournament-source"><b>TOURNAMENT</b><span>${escHtml(detail.tournament || '—')}</span></div>
     <div class="item-detail-extra">
+      <div class="item-detail-meta"><span>Stage</span><b>${escHtml(detail.stage || '—')}</b></div>
+      <div class="item-detail-meta"><span>Year / Season</span><b>${escHtml([detail.year, detail.season].map(norm).filter(Boolean).join(' ') || '—')}</b></div>
+      <div class="item-detail-meta"><span>Week</span><b>${escHtml(detail.week || '—')}</b></div>
       <div class="item-detail-meta"><span>Day</span><b>${escHtml(detail.day || '—')}</b></div>
       <div class="item-detail-meta"><span>Match</span><b>${escHtml(detail.match_no || '—')}</b></div>
+      <div class="item-detail-meta"><span>Map</span><b>${escHtml(detail.map || '—')}</b></div>
       <div class="item-detail-meta"><span>Total Points</span><b>${fmtNum(detail.total)}</b></div>
       <div class="item-detail-meta"><span>Elims</span><b>${fmtNum(detail.elims)}</b></div>
       <div class="item-detail-meta"><span>Rank</span><b>${fmtNum(detail.rank)}</b></div>

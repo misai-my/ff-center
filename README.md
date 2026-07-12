@@ -421,8 +421,14 @@ The dashboard now merges identity mappings from Supabase plus localStorage backu
 
 This build strengthens **Merge by Team Identity** so saved aliases are also used as a final hard-merge map. If an admin identity contains aliases such as `BIGETRON`, `BIGETRON BY VITALITY`, and `TEAM VITALITY`, the dashboard will collapse those rows into the canonical team name even if the alias was saved with older source/table/year metadata.
 
-After deploying, hard refresh the browser so `assets/js/app.js?v=team-identity-hard-merge-v3` is loaded.
+After deploying, hard refresh the browser so `assets/js/app.js?v=match-detail-tournament-source` is loaded.
 
 ### Team Identity delete function
 
 `admin-team-identity.html` now has a **Delete** button for each saved identity. It removes the identity and its alias mappings only; raw match history is untouched. Rerun `supabase/10_team_identity_aliases.sql` if Supabase delete actions are blocked by RLS policies.
+
+## Team overview match detail tournament source
+
+The Team Overview **Per Match Progress** chart now carries tournament context into each clickable chart point. Opening a match detail shows the source tournament plus stage, year/season, week, day, match number, and map before the points/player breakdown. This is especially useful when historical identity-merged data spans multiple tournaments.
+
+The chart detail total uses the historical `total` field when present, so historical match detail totals stay aligned with the source table instead of being rebuilt only from placement + eliminations.
