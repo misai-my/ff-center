@@ -6,10 +6,14 @@
     "remote_image_url": "",
     "aliases": [
       "AG",
-      "All Gamers"
+      "All Gamers",
+      "AG.AL",
+      "ALL GAMERS"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/ag.png"
+    "local_image_path": "assets/logo/ag.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "TH"
   },
   {
     "team_code": "AHL",
@@ -18,9 +22,12 @@
     "local_image_path": "assets/logo/ahl.png",
     "remote_image_url": "",
     "aliases": [
-      "AHL"
+      "AHL",
+      "AL AHLI ESPORTS"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "MENA",
+    "country": "MN"
   },
   {
     "team_code": "AUR",
@@ -29,9 +36,12 @@
     "local_image_path": "assets/logo/aur.png",
     "remote_image_url": "",
     "aliases": [
-      "AUR"
+      "AUR",
+      "AURORA GAMING"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "SOUTHEAST ASIA",
+    "country": "MY"
   },
   {
     "team_code": "AVD",
@@ -51,10 +61,13 @@
     "remote_image_url": "",
     "aliases": [
       "BRU",
-      "Buriram United Esports"
+      "Buriram United Esports",
+      "BURIRAM UNITED ESPORTS"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/bru.png"
+    "local_image_path": "assets/logo/bru.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "TH"
   },
   {
     "team_code": "BTR",
@@ -63,9 +76,12 @@
     "local_image_path": "assets/logo/btr.png",
     "remote_image_url": "",
     "aliases": [
-      "BTR"
+      "BTR",
+      "BIGETRON BY VITALITY"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "SOUTHEAST ASIA",
+    "country": "ID"
   },
   {
     "team_code": "CLVS",
@@ -86,9 +102,12 @@
     "local_image_path": "assets/logo/dp.png",
     "remote_image_url": "",
     "aliases": [
-      "DP"
+      "DP",
+      "DEMONS PRIDE"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "PAKISTAN",
+    "country": "PK"
   },
   {
     "team_code": "DRS",
@@ -97,9 +116,12 @@
     "local_image_path": "assets/logo/drs.png",
     "remote_image_url": "",
     "aliases": [
-      "DRS"
+      "DRS",
+      "DRS GAMING"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "NEPAL",
+    "country": "NP"
   },
   {
     "team_code": "E1",
@@ -120,10 +142,13 @@
     "remote_image_url": "",
     "aliases": [
       "EVOS",
-      "EVOS Divine"
+      "EVOS Divine",
+      "EVOS DIVINE"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/evos.png"
+    "local_image_path": "assets/logo/evos.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "ID"
   },
   {
     "team_code": "FF",
@@ -154,10 +179,13 @@
     "remote_image_url": "",
     "aliases": [
       "FLCN",
-      "Team Falcons"
+      "Team Falcons",
+      "TEAM FALCONS"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/flcn.png"
+    "local_image_path": "assets/logo/flcn.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "TH"
   },
   {
     "team_code": "FX",
@@ -166,10 +194,14 @@
     "remote_image_url": "",
     "aliases": [
       "FX",
-      "Fluxo"
+      "Fluxo",
+      "FLUXO W7M",
+      "FLUXO"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/fx.png"
+    "local_image_path": "assets/logo/fx.png",
+    "region": "BRAZIL",
+    "country": "BR"
   },
   {
     "team_code": "GOW",
@@ -216,7 +248,9 @@
     "aliases": [
       "LOUD"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "BRAZIL",
+    "country": "BR"
   },
   {
     "team_code": "LYON",
@@ -227,7 +261,9 @@
     "aliases": [
       "LYON"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "LATAM",
+    "country": "MX"
   },
   {
     "team_code": "MEC",
@@ -247,9 +283,12 @@
     "local_image_path": "assets/logo/mia.png",
     "remote_image_url": "",
     "aliases": [
-      "MIA"
+      "MIA",
+      "MIA CORP"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "USA",
+    "country": "USA"
   },
   {
     "team_code": "MIBR",
@@ -258,9 +297,12 @@
     "local_image_path": "assets/logo/mibr.png",
     "remote_image_url": "",
     "aliases": [
-      "MIBR"
+      "MIBR",
+      "MIBR.LOS"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "BRAZIL",
+    "country": "BR"
   },
   {
     "team_code": "NVL",
@@ -292,9 +334,12 @@
     "local_image_path": "assets/logo/pdx.png",
     "remote_image_url": "",
     "aliases": [
-      "PDX"
+      "PDX",
+      "PARADOX GAMING"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "AFRICA",
+    "country": "SA"
   },
   {
     "team_code": "PE",
@@ -351,10 +396,13 @@
     "remote_image_url": "",
     "aliases": [
       "RRQ",
-      "RRQ Kazu"
+      "RRQ Kazu",
+      "RRQ KAZU"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/rrq.png"
+    "local_image_path": "assets/logo/rrq.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "ID"
   },
   {
     "team_code": "SE",
@@ -374,9 +422,12 @@
     "local_image_path": "assets/logo/sh.png",
     "remote_image_url": "",
     "aliases": [
-      "SH"
+      "SH",
+      "STRAWHATS"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "BANGLADESH",
+    "country": "BD"
   },
   {
     "team_code": "TEC",
@@ -385,9 +436,12 @@
     "local_image_path": "assets/logo/tec.png",
     "remote_image_url": "",
     "aliases": [
-      "TEC"
+      "TEC",
+      "TITAN ESPORTS CLUB"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "BANGLADESH",
+    "country": "BD"
   },
   {
     "team_code": "TS",
@@ -408,9 +462,12 @@
     "local_image_path": "assets/logo/twis.png",
     "remote_image_url": "",
     "aliases": [
-      "TWIS"
+      "TWIS",
+      "TWISTED MINDS"
     ],
-    "is_placeholder": false
+    "is_placeholder": false,
+    "region": "SOUTHEAST ASIA",
+    "country": "TH"
   },
   {
     "team_code": "WAG",
@@ -419,9 +476,67 @@
     "remote_image_url": "",
     "aliases": [
       "WAG",
-      "WAG"
+      "SECRET WAG"
     ],
     "is_placeholder": false,
-    "local_image_path": "assets/logo/wag.png"
+    "local_image_path": "assets/logo/wag.png",
+    "region": "SOUTHEAST ASIA",
+    "country": "VN"
+  },
+  {
+    "team_code": "GD",
+    "team_name": "GUNDYNASTY",
+    "image_url": "assets/logo/gd.png",
+    "local_image_path": "assets/logo/gd.png",
+    "remote_image_url": "",
+    "aliases": [
+      "GD",
+      "GUNDYNASTY"
+    ],
+    "is_placeholder": false,
+    "region": "LATAM",
+    "country": "MX"
+  },
+  {
+    "team_code": "TG",
+    "team_name": "IQOO TOTAL GAMING",
+    "image_url": "assets/logo/tg.png",
+    "local_image_path": "assets/logo/tg.png",
+    "remote_image_url": "",
+    "aliases": [
+      "TG",
+      "IQOO TOTAL GAMING"
+    ],
+    "is_placeholder": false,
+    "region": "INDIA",
+    "country": "IN"
+  },
+  {
+    "team_code": "TAG",
+    "team_name": "TEAM APEX GAMING",
+    "image_url": "assets/logo/tag.png",
+    "local_image_path": "assets/logo/tag.png",
+    "remote_image_url": "",
+    "aliases": [
+      "TAG",
+      "TEAM APEX GAMING"
+    ],
+    "is_placeholder": false,
+    "region": "INDIA",
+    "country": "IN"
+  },
+  {
+    "team_code": "S8UL",
+    "team_name": "S8UL ESPORTS",
+    "image_url": "assets/logo/s8ul.png",
+    "local_image_path": "assets/logo/s8ul.png",
+    "remote_image_url": "",
+    "aliases": [
+      "S8UL",
+      "S8UL ESPORTS"
+    ],
+    "is_placeholder": false,
+    "region": "INDIA",
+    "country": "IN"
   }
 ]
