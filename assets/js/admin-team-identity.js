@@ -565,7 +565,6 @@ function renderIdentityList(){
         <div class="identity-row-actions">
           <button class="btn tiny secondary" type="button" data-edit-identity="${safeText(identity.id)}">Edit</button>
           <button class="btn tiny ghost" type="button" data-select-identity="${safeText(identity.id)}">Select aliases</button>
-          <button class="btn tiny danger" type="button" data-delete-identity="${safeText(identity.id)}" title="Delete this identity and its aliases">Delete</button>
         </div>
       </div>
       <div class="alias-list">${aliases.length ? aliases.slice(0,12).map(alias => `<span class="mini-chip">${safeText(alias.alias_name)}${alias.alias_tag ? ` / ${safeText(alias.alias_tag)}` : ''}</span>`).join('') : '<span class="mini-chip">No aliases</span>'}</div>
@@ -605,61 +604,6 @@ function fillFormFromIdentity(id, selectMapped=false){
     showNotice(`Editing ${identity.canonical_name}. Existing aliases from the loaded team list were selected.`, 'success');
   }
 }
-
-function resetIdentityForm(){
-  if(els.identitySelect) els.identitySelect.value = '';
-  if(els.canonicalName) els.canonicalName.value = '';
-  if(els.canonicalTag) els.canonicalTag.value = '';
-  if(els.region) els.region.value = '';
-  if(els.country) els.country.value = '';
-  if(els.validFrom) els.validFrom.value = '';
-  if(els.validTo) els.validTo.value = '';
-  if(els.notes) els.notes.value = '';
-  state.selected.clear();
-}
-function removeIdentityFromState(identityId){
-  state.identities = state.identities.filter(item => item.id !== identityId);
-  state.aliases = state.aliases.filter(alias => alias.team_identity_id !== identityId && alias.team_identity?.id !== identityId);
-}
-async function deleteIdentity(identityId){
-  const identity = state.identities.find(item => item.id === identityId);
-  if(!identity) return showNotice('That identity no longer exists. Reload mappings and try again.', 'error');
-  const aliases = aliasesForIdentity(identityId);
-  const aliasText = `${aliases.length} alias${aliases.length === 1 ? '' : 'es'}`;
-  const confirmed = window.confirm(`Delete the team identity "${identity.canonical_name}" and ${aliasText}?\n\nThis will remove its alias mappings. Raw match data will not be deleted.`);
-  if(!confirmed) return;
-
-  setLoading(`Deleting ${identity.canonical_name}…`, true);
-  try{
-    if(state.sharedSaveReady){
-      const { error: aliasError } = await liveClient.from(TEAM_ALIAS_TABLE).delete().eq('team_identity_id', identityId);
-      if(aliasError) throw aliasError;
-      const { error: identityError } = await liveClient.from(TEAM_IDENTITY_TABLE).delete().eq('id', identityId);
-      if(identityError) throw identityError;
-      removeIdentityFromState(identityId);
-      saveLocalMappings();
-      await loadMappings();
-    }else{
-      removeIdentityFromState(identityId);
-      saveLocalMappings();
-      renderIdentitySelect();
-      renderIdentityList();
-      updateStats();
-    }
-
-    if(els.identitySelect?.value === identityId || keyText(els.canonicalName?.value) === keyText(identity.canonical_name)) resetIdentityForm();
-    state.selected.clear();
-    renderTeams();
-    showNotice(`Deleted ${identity.canonical_name} and ${aliasText}. Dashboard identity grouping will no longer merge those aliases.`, 'success');
-  }catch(error){
-    console.error(error);
-    const hint = /permission|policy|rls|delete/i.test(error.message || '') ? ' Check that supabase/10_team_identity_aliases.sql has been run so admin delete policies are installed.' : '';
-    showNotice(`${error.message || 'Unable to delete identity.'}${hint}`, 'error');
-  }finally{
-    setLoading('', false);
-  }
-}
-
 function selectedTeams(){ return [...state.selected].map(key => state.teams.get(key)).filter(Boolean); }
 function useFirstSelected(){
   const first = selectedTeams()[0];
@@ -797,12 +741,7 @@ function wire(){
   els.selectVisible?.addEventListener('click', () => { state.visibleKeys.forEach(key => state.selected.add(key)); renderTeams(); });
   els.clearSelected?.addEventListener('click', () => { state.selected.clear(); renderTeams(); });
   els.identitySelect?.addEventListener('change', () => fillFormFromIdentity(els.identitySelect.value, true));
-  els.identityList?.addEventListener('click', async event => {
-    const del = event.target.closest('[data-delete-identity]');
-    if(del){
-      await deleteIdentity(del.dataset.deleteIdentity || '');
-      return;
-    }
+  els.identityList?.addEventListener('click', event => {
     const edit = event.target.closest('[data-edit-identity]');
     const select = event.target.closest('[data-select-identity]');
     const id = edit?.dataset.editIdentity || select?.dataset.selectIdentity || '';

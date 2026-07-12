@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-09-match-detail-tournament-source';
+const EWC_QUALIFICATION_BUILD = '2026-07-12-team-profile-region-identity-fix';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -4696,17 +4696,9 @@ function teamMatchAgg(rows){
     const matchOrder = matchOrderValueForRow(r);
     if(!m.has(key)) m.set(key, {
       team, mk, match_order: matchOrder,
-      tournament: norm(getVal(r, KEYS.tournament)),
-      stage: norm(getVal(r, KEYS.stage)),
-      year: norm(getVal(r, KEYS.year)),
-      season: norm(getVal(r, KEYS.season)),
-      week: norm(getVal(r, KEYS.week)),
       day: norm(getVal(r, KEYS.day)),
       match_no: norm(getVal(r, KEYS.matchNo)),
       match_id: norm(getVal(r, KEYS.matchId)),
-      map: norm(r?.Map ?? r?.map),
-      mode: norm(getVal(r, KEYS.mode)),
-      data_source: norm(getVal(r, KEYS.dataSource)),
       booyah:0, elims:0, damage:0, assists:0, headshots:0,
       ranking_score:0, killing_score:0, kill_count:0, historical_total:null, drop:'', top3:0,
       display_tag: displayTeamTagForRow(r), identity_id: norm(r?.ffdc_team_identity_id),
@@ -4714,17 +4706,9 @@ function teamMatchAgg(rows){
     });
     const o = m.get(key);
     o.match_order = Math.max(o.match_order || 0, matchOrder);
-    if(!o.tournament) o.tournament = norm(getVal(r, KEYS.tournament));
-    if(!o.stage) o.stage = norm(getVal(r, KEYS.stage));
-    if(!o.year) o.year = norm(getVal(r, KEYS.year));
-    if(!o.season) o.season = norm(getVal(r, KEYS.season));
-    if(!o.week) o.week = norm(getVal(r, KEYS.week));
     if(!o.day) o.day = norm(getVal(r, KEYS.day));
     if(!o.match_no) o.match_no = norm(getVal(r, KEYS.matchNo));
     if(!o.match_id) o.match_id = norm(getVal(r, KEYS.matchId));
-    if(!o.map) o.map = norm(r?.Map ?? r?.map);
-    if(!o.mode) o.mode = norm(getVal(r, KEYS.mode));
-    if(!o.data_source) o.data_source = norm(getVal(r, KEYS.dataSource));
     if(!o.display_tag) o.display_tag = displayTeamTagForRow(r);
     if(!o.identity_id) o.identity_id = norm(r?.ffdc_team_identity_id);
     const originalTeam = normalizeTeamIdentityName(r?.ffdc_original_team || rawTeamNameForRow(r));
@@ -5199,7 +5183,7 @@ function renderOverall(options = {}){
     {label:'Rank', key:'display_rank', right:true, html:(r)=>`<span class="premium-rank-badge" aria-label="Rank ${escHtml(r.display_rank)}"><span>${escHtml(r.display_rank)}</span></span>`},
     {
       label:'Team', key:'team', escape:false,
-      html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>${isTeamIdentityGrouping() && r.identity_alias_count ? `Merged identity • ${fmtNum(r.identity_alias_count + 1)} names` : 'Team profile'}</small></span>${rankMovementHtml(r)}</div>`
+      html:(r)=>`<div class="team-name-move premium-team-cell" data-team-code="${escHtml(r.team)}">${teamLogoHtml(r.team, getTeamProfile(r.team, rowsForTeamProfile(r.team, FILTERED)), 'team-summary-logo')}<span class="team-name-copy"><strong class="team-name-text">${escHtml(r.team)}</strong><small>${isTeamIdentityGrouping() && r.identity_alias_count ? `Merged identity • ${fmtNum(r.identity_alias_count + 1)} names` : 'Team profile'}</small></span>${rankMovementHtml(r)}</div>`
     }
   ];
   if(progressionState?.grouped){
@@ -5613,7 +5597,7 @@ function renderTeamGrid(filter='', options = {}){
   }
 
   const html = teams.map(t=>{
-    const profile = getTeamProfile(t);
+    const profile = getTeamProfile(t, rowsForTeamProfile(t));
     return `<button type="button" class="team-tile" data-team="${escHtml(t)}" aria-label="Open ${escHtml(t)} team profile" aria-pressed="${CURRENT_TEAM === t ? 'true' : 'false'}">${teamLogoHtml(t, profile, 'team-tile-logo')}<span class="team-code" title="${escHtml(t)}">${escHtml(t)}</span></button>`;
   }).join('');
 
@@ -5690,21 +5674,94 @@ async function loadTeamLogosJson(){
   }
 }
 
-function getTeamProfile(teamCode){
-  const direct = SAMPLE_TEAM_PROFILES[teamCode] || SAMPLE_TEAM_PROFILES[teamCode?.toUpperCase?.()] || SAMPLE_TEAM_PROFILES.DEFAULT || {};
+function teamProfileDirectLookup(value){
+  const raw = norm(value);
+  if(!raw) return null;
+  const keys = uniqueList([
+    raw,
+    raw.toUpperCase(),
+    normalizeTeamIdentityName(raw),
+    normalizeIdentityKeyPart(raw)
+  ]);
+  for(const key of keys){
+    const profile = SAMPLE_TEAM_PROFILES[key] || SAMPLE_TEAM_PROFILES[key?.toUpperCase?.()];
+    if(profile && profile !== SAMPLE_TEAM_PROFILES.DEFAULT) return profile;
+  }
+  return null;
+}
+function teamProfileIdentityCandidate(teamCode, rows=[]){
+  const code = normalizeTeamIdentityName(teamCode);
+  const candidates = [];
+  let identity = null;
+  const rowList = Array.isArray(rows) ? rows : [];
+
+  for(const row of rowList){
+    candidates.push(rawTeamNameForRow(row), rawTeamTagForRow(row), row?.ffdc_original_team, row?.ffdc_original_tag, row?.ffdc_canonical_team, row?.ffdc_canonical_tag, getRowTeamTag(row));
+    if(!identity) identity = findTeamIdentityForRow(row);
+  }
+
+  if(!identity && code) identity = forcedTeamIdentityForValues(code);
+  if(identity){
+    candidates.push(identity.canonical_name, identity.canonical_tag);
+  }
+
+  if(code && TEAM_IDENTITY_ALL_ALIASES?.length){
+    for(const alias of TEAM_IDENTITY_ALL_ALIASES){
+      const aliasIdentity = alias?.identity || {};
+      const canonicalName = normalizeTeamIdentityName(aliasIdentity.canonical_name);
+      const canonicalTag = normalizeTeamIdentityName(aliasIdentity.canonical_tag);
+      const sameIdentity = canonicalName === code || canonicalTag === code || (identity?.canonical_name && canonicalName === normalizeTeamIdentityName(identity.canonical_name));
+      if(!sameIdentity) continue;
+      identity = identity || aliasIdentity;
+      candidates.push(alias.alias_name, alias.alias_tag, ...(alias.alias_name_variants || []), ...(alias.alias_tag_variants || []));
+    }
+  }
+  return { identity, candidates: uniqueList(candidates.map(v => norm(v)).filter(Boolean)) };
+}
+function resolveTeamProfile(teamCode, rows=[]){
+  const direct = teamProfileDirectLookup(teamCode);
+  const identityInfo = teamProfileIdentityCandidate(teamCode, rows);
+  if(direct) return { profile: direct, identity: identityInfo.identity || null };
+
+  for(const candidate of identityInfo.candidates){
+    const profile = teamProfileDirectLookup(candidate);
+    if(profile) return { profile, identity: identityInfo.identity || null };
+  }
+  return { profile: SAMPLE_TEAM_PROFILES.DEFAULT || {}, identity: identityInfo.identity || null };
+}
+function nonTbd(value, fallback=''){
+  const v = norm(value);
+  if(!v) return fallback;
+  if(/^TBD\b/i.test(v) || /TBD$/i.test(v) || /TBD/i.test(v)) return fallback;
+  return value;
+}
+
+function rowsForTeamProfile(teamCode, sourceRows){
+  const rows = Array.isArray(sourceRows) ? sourceRows : (Array.isArray(FILTERED) && FILTERED.length ? FILTERED : RAW);
+  const target = normalizeTeamIdentityName(teamCode);
+  if(!target || !Array.isArray(rows)) return [];
+  return rows.filter(row => rowBelongsToDisplayTeam(row, target));
+}
+
+function getTeamProfile(teamCode, rows=[]){
+  const resolved = resolveTeamProfile(teamCode, rows);
+  const direct = resolved.profile || SAMPLE_TEAM_PROFILES.DEFAULT || {};
+  const identity = resolved.identity || null;
   const progression = EWC_CURRENT_PROGRESSION?.byTeam?.get?.(norm(teamCode).toUpperCase()) || null;
+  const rowList = Array.isArray(rows) ? rows : [];
+  const rowGroup = rowList.map(r => norm(r?.ffdc_original_group || getVal(r, KEYS.group))).find(Boolean);
   return {
-    team_name: direct.team_name || teamCode,
-    region: direct.region || 'TBD Region',
-    country: direct.country || 'TBD Country',
-    group: progression?.group_code ? `Group ${progression.group_code}` : (direct.group || 'TBD Group'),
-    seed: direct.seed || direct.team_seed || direct.slot || 'TBD Seed',
-    qualification_path: progression ? progressionStatusLabel(progression.advancement_status) + (progression.is_provisional ? ' (Provisional)' : '') : (direct.qualification_path || 'Qualification path TBD'),
-    coach: direct.coach || 'TBD Coach',
+    team_name: identity?.canonical_name || direct.team_name || teamCode,
+    region: nonTbd(identity?.region, nonTbd(direct.region, 'TBD Region')),
+    country: nonTbd(identity?.country, nonTbd(direct.country, 'TBD Country')),
+    group: progression?.group_code ? `Group ${progression.group_code}` : nonTbd(direct.group, rowGroup || 'TBD Group'),
+    seed: nonTbd(direct.seed || direct.team_seed || direct.slot, 'TBD Seed'),
+    qualification_path: progression ? progressionStatusLabel(progression.advancement_status) + (progression.is_provisional ? ' (Provisional)' : '') : nonTbd(direct.qualification_path, 'Qualification path TBD'),
+    coach: nonTbd(direct.coach, 'TBD Coach'),
     team_logo_url: direct.team_logo_url || '',
     logo_url: direct.logo_url || '',
-    team_logo_tag: direct.team_logo_tag || direct.logo_tag || direct.team_tag || direct.tag || '',
-    team_code: direct.team_code || direct.code || teamCode,
+    team_logo_tag: identity?.canonical_tag || direct.team_logo_tag || direct.logo_tag || direct.team_tag || direct.tag || '',
+    team_code: identity?.canonical_tag || direct.team_code || direct.code || teamCode,
     team_color: direct.team_color || '#ffbd59'
   };
 }
@@ -5907,34 +5964,15 @@ function playerImpactTag(row, teamStats){
   return 'Watch Factor';
 }
 
-function matchTournamentContext(match){
-  if(!match) return '—';
-  const yearSeason = [match.year, match.season].map(norm).filter(Boolean).join(' ');
-  return [
-    norm(match.tournament),
-    norm(match.stage),
-    yearSeason,
-    norm(match.week) ? `Week ${norm(match.week)}` : '',
-    norm(match.map)
-  ].filter(Boolean).join(' • ') || '—';
-}
 function renderTeamProgressChart(matches, teamRows=[]){
   const clean = (matches || []).map((m, index) => {
     const elims = n(m.elims);
     const rank = n(m.ranking_score);
-    const total = matchTotalScoreValue(m);
-    const tournament = norm(m.tournament);
-    const stage = norm(m.stage);
-    const year = norm(m.year);
-    const season = norm(m.season);
-    const week = norm(m.week);
-    const map = norm(m.map);
+    const total = elims + rank;
     const playedLabel = `D${m.day || '—'} M${m.match_no || index + 1}`;
-    const shortLabel = `D${m.day || '—'}
-M${m.match_no || index + 1}`;
+    const shortLabel = `D${m.day || '—'}\nM${m.match_no || index + 1}`;
     const sourceLabel = playedLabel;
-    const tournamentContext = matchTournamentContext({ tournament, stage, year, season, week, map });
-    return { ...m, tournament, stage, year, season, week, map, total, elims, rank, label: playedLabel, shortLabel, sourceLabel, tournamentContext, detailIndex:index };
+    return { ...m, total, elims, rank, label: playedLabel, shortLabel, sourceLabel, detailIndex:index };
   }).filter(item => Number.isFinite(item.total) || Number.isFinite(item.elims));
 
   window.EWC_MATCH_CHART_DETAILS = clean.map((m, index) => {
@@ -6013,7 +6051,7 @@ M${m.match_no || index + 1}`;
   const highTotal = clean.reduce((best, p) => p.total > best.total ? p : best, clean[0]);
   const highElims = clean.reduce((best, p) => p.elims > best.elims ? p : best, clean[0]);
 
-  const clickCircle = p => `<circle class="chart-click-target" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="13" fill="transparent" onclick="openChartMatchDetail(${p.index})"><title>${escHtml([p.tournamentContext, p.sourceLabel, `Total: ${fmtNum(p.total)}`, `Elims: ${fmtNum(p.elims)}`, `Rank: ${fmtNum(p.rank)}`].filter(Boolean).join(' • '))}</title></circle>`;
+  const clickCircle = p => `<circle class="chart-click-target" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="13" fill="transparent" onclick="openChartMatchDetail(${p.index})"><title>${escHtml(p.sourceLabel)} • Total: ${fmtNum(p.total)} • Elims: ${fmtNum(p.elims)} • Rank: ${fmtNum(p.rank)}</title></circle>`;
   const totalPointNodes = totalPoints.map((p, i) => `
     ${clickCircle(p)}
     <circle class="chart-point total ${i === totalPoints.length - 1 ? 'last' : ''}" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${i === totalPoints.length - 1 ? 4.8 : 3.2}"></circle>
@@ -6079,19 +6117,14 @@ function openChartMatchDetail(index){
   const detail = window.EWC_MATCH_CHART_DETAILS?.[index];
   if(!detail) return;
   setText('itemDetailTitle', `${detail.sourceLabel} — Match Detail`);
-  setText('itemDetailSub', matchTournamentContext(detail));
+  setText('itemDetailSub', 'Team chart point breakdown');
   const body = el('itemDetailBody');
   const detailCard = el('itemDetailModal')?.querySelector('.item-detail-card');
   detailCard?.classList.remove('map-view');
   body.innerHTML = `
-    <div class="item-detail-desc-block match-detail-tournament-source"><b>TOURNAMENT</b><span>${escHtml(detail.tournament || '—')}</span></div>
     <div class="item-detail-extra">
-      <div class="item-detail-meta"><span>Stage</span><b>${escHtml(detail.stage || '—')}</b></div>
-      <div class="item-detail-meta"><span>Year / Season</span><b>${escHtml([detail.year, detail.season].map(norm).filter(Boolean).join(' ') || '—')}</b></div>
-      <div class="item-detail-meta"><span>Week</span><b>${escHtml(detail.week || '—')}</b></div>
       <div class="item-detail-meta"><span>Day</span><b>${escHtml(detail.day || '—')}</b></div>
       <div class="item-detail-meta"><span>Match</span><b>${escHtml(detail.match_no || '—')}</b></div>
-      <div class="item-detail-meta"><span>Map</span><b>${escHtml(detail.map || '—')}</b></div>
       <div class="item-detail-meta"><span>Total Points</span><b>${fmtNum(detail.total)}</b></div>
       <div class="item-detail-meta"><span>Elims</span><b>${fmtNum(detail.elims)}</b></div>
       <div class="item-detail-meta"><span>Rank</span><b>${fmtNum(detail.rank)}</b></div>
@@ -6102,7 +6135,7 @@ function openChartMatchDetail(index){
   openManagedModal(el('itemDetailModal'), { initialFocus:'#itemDetailBack:not([hidden]), #itemDetailClose', announce:`${detail.sourceLabel} match detail opened` });
 }
 function renderTeamProfileHero(teamCode, teamRows){
-  const profile = getTeamProfile(teamCode);
+  const profile = getTeamProfile(teamCode, teamRows);
   const stats = getTeamMatchStats(teamRows);
   const status = stats.count ? (stats.avgPoints >= 15 ? 'High Output' : stats.avgPoints >= 9 ? 'Contender Pace' : 'Needs Surge') : 'Insufficient Data';
   const best = stats.best ? `D${stats.best.day || '—'} • M${stats.best.match_no || '—'} • ${fmtNum(matchTotalScoreValue(stats.best))} pts` : '—';
@@ -8127,7 +8160,7 @@ function buildGlobalSearchEntries(){
   const out = [...globalSearchStaticEntries()];
   const teams = getScopedTeamList();
   for(const team of teams){
-    const profile = getTeamProfile(team) || {};
+    const profile = getTeamProfile(team, rowsForTeamProfile(team, FILTERED)) || {};
     out.push({
       type:'team',title:team,subtitle:[profile.team_name && profile.team_name !== team ? profile.team_name : '',profile.region,profile.group].filter(Boolean).join(' • ') || 'Team profile',
       keywords:[team,profile.team_name,profile.region,profile.country,profile.group,profile.seed,profile.coach,'team profile roster stats'].filter(Boolean).join(' '),team,icon:team.slice(0,2)
@@ -8188,7 +8221,7 @@ function scoreGlobalSearchEntry(entry, query){
 }
 function globalSearchIconHtml(entry){
   if(entry.type === 'team'){
-    const profile = getTeamProfile(entry.team);
+    const profile = getTeamProfile(entry.team, rowsForTeamProfile(entry.team, FILTERED));
     const local = norm(profile?.team_logo_url || '');
     if(local) return `<img src="${escHtml(local)}" alt="" onerror="this.remove()">`;
   }
