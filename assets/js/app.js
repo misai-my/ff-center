@@ -1,5 +1,5 @@
 /* ============ Supabase init ============ */
-const EWC_QUALIFICATION_BUILD = '2026-07-12-team-profile-region-identity-fix';
+const EWC_QUALIFICATION_BUILD = '2026-07-12-team-profile-metadata-table';
 const SUPABASE_URL = 'https://ooutjrewmwsixghbouxi.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9vdXRqcmV3bXdzaXhnaGJvdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwMjg3NTMsImV4cCI6MjA4MjYwNDc1M30.13WkdGiQH39lZH3iDgVDd_tZrHlI0twhGeiZNdwaMSg';
 const TEAM_INSIGHTS_FN_URL = `${SUPABASE_URL}/functions/v1/team-insights`;
@@ -207,6 +207,8 @@ const TEAM_LOGOS_JSON_URL = 'data/team_logos.json';
 const TOURNAMENT_PROGRESSION_JSON_URL = 'data/tournament_progression.json';
 const TOURNAMENT_STAGE_CONFIG_TABLE = 'tournament_stage_config';
 const TOURNAMENT_TEAM_ASSIGNMENTS_TABLE = 'tournament_team_assignments';
+const TEAM_PROFILE_METADATA_TABLE = 'team_profile_metadata';
+const TEAM_PROFILE_METADATA_STORAGE_KEY = 'ffdc_team_profile_metadata_v1';
 const LIVE_MAX_ROWS_TO_LOAD = 5000;
 const HISTORICAL_MAX_ROWS_TO_LOAD = 50000;
 const CHUNK_SIZE = 1000;
@@ -217,6 +219,8 @@ let TOURNAMENT_TEAM_ASSIGNMENTS = [];
 let TOURNAMENT_PROGRESSION_DEFAULTS = {};
 let EWC_CURRENT_PROGRESSION = null;
 let EWC_GROUP_MAP_CACHE = new Map();
+let TEAM_PROFILE_METADATA_ROWS = [];
+let TEAM_PROFILE_METADATA_SOURCE = 'json';
 
 
 const FFDC_INDEX_TEAM_SELECTION_STORAGE_KEY = 'ffdc_index_team_selection_v1';
@@ -5674,6 +5678,120 @@ async function loadTeamLogosJson(){
   }
 }
 
+
+function profileMetadataSourceMatches(row){
+  const sourceMode = norm(row?.source_mode || row?.database_mode || 'global').toLowerCase();
+  const sourceTable = norm(row?.source_table || row?.table_name || 'all').toLowerCase();
+  const activeMode = norm(ACTIVE_DATA_SOURCE_MODE || 'live').toLowerCase();
+  const activeTable = norm(TABLE || ACTIVE_DATA_SOURCE?.table || '').toLowerCase();
+  const modeOk = !sourceMode || sourceMode === 'global' || sourceMode === 'all' || sourceMode === activeMode;
+  const tableOk = !sourceTable || sourceTable === 'global' || sourceTable === 'all' || sourceTable === activeTable;
+  return modeOk && tableOk;
+}
+function profileMetadataSpecificity(row){
+  let score = 0;
+  const mode = norm(row?.source_mode || row?.database_mode || '').toLowerCase();
+  const table = norm(row?.source_table || row?.table_name || '').toLowerCase();
+  if(mode && !['global','all'].includes(mode)) score += 10;
+  if(table && !['global','all'].includes(table)) score += 10;
+  if(norm(row?.tournament)) score += 3;
+  if(norm(row?.year)) score += 2;
+  if(norm(row?.season)) score += 2;
+  if(norm(row?.updated_at || row?.created_at)) score += 1;
+  return score;
+}
+function profileMetadataAliases(row){
+  const raw = row?.aliases;
+  if(Array.isArray(raw)) return raw;
+  if(typeof raw === 'string'){
+    try{
+      const parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)) return parsed;
+    }catch(_e){}
+    return raw.split(/[|,;]/g).map(v => v.trim()).filter(Boolean);
+  }
+  return [];
+}
+function normalizeTeamProfileMetadataRow(row){
+  if(!row || typeof row !== 'object') return null;
+  const teamName = norm(row.team_name || row.team || row.name || row.canonical_name || row.team_key || row.team_code);
+  const teamTag = norm(row.team_tag || row.tag || row.team_code || row.canonical_tag || row.code);
+  const canonicalName = norm(row.canonical_name || row.identity_name || '');
+  const canonicalTag = norm(row.canonical_tag || row.identity_tag || '');
+  if(!teamName && !teamTag && !canonicalName && !canonicalTag) return null;
+  const logo = norm(row.logo_url || row.team_logo_url || row.image_url || row.local_image_path || '');
+  return {
+    team_name: canonicalName || teamName || teamTag,
+    team_code: canonicalTag || teamTag || teamName,
+    team_tag: teamTag || canonicalTag,
+    team_logo_url: logo,
+    logo_url: norm(row.remote_image_url || row.secondary_logo_url || ''),
+    team_logo_tag: canonicalTag || teamTag || norm(row.team_key || ''),
+    region: norm(row.region) || 'TBD Region',
+    country: norm(row.country) || 'TBD Country',
+    group: norm(row.group_name || row.group || row.group_code) || 'TBD Group',
+    seed: norm(row.seed || row.team_seed || row.slot) || 'TBD Seed',
+    qualification_path: norm(row.qualification_path || row.path) || 'Qualification path TBD',
+    coach: norm(row.coach) || 'TBD Coach',
+    team_color: norm(row.team_color || row.color) || '#ffbd59',
+    profile_source: 'team_profile_metadata'
+  };
+}
+function teamProfileMetadataKeys(row, profile){
+  const values = [
+    row?.team_key, row?.team_name, row?.team, row?.name, row?.team_tag, row?.tag, row?.team_code, row?.code,
+    row?.canonical_name, row?.canonical_tag, profile?.team_name, profile?.team_code, profile?.team_tag, profile?.team_logo_tag,
+    ...profileMetadataAliases(row)
+  ];
+  const paired = `${norm(row?.team_name || row?.team || profile?.team_name)} / ${norm(row?.team_tag || row?.tag || profile?.team_tag)}`.replace(/\s+\/\s+$/, '').trim();
+  if(paired && paired.includes('/')) values.push(paired);
+  return uniqueList(values.map(v => norm(v)).filter(Boolean));
+}
+function registerTeamProfileMetadataRows(rows, source='supabase'){
+  const usable = (Array.isArray(rows) ? rows : [])
+    .filter(profileMetadataSourceMatches)
+    .sort((a,b) => profileMetadataSpecificity(a) - profileMetadataSpecificity(b));
+  let count = 0;
+  for(const row of usable){
+    const profile = normalizeTeamProfileMetadataRow(row);
+    if(!profile) continue;
+    const keys = teamProfileMetadataKeys(row, profile);
+    for(const key of keys){
+      const normalized = norm(key).toUpperCase();
+      if(normalized) SAMPLE_TEAM_PROFILES[normalized] = profile;
+    }
+    count++;
+  }
+  TEAM_PROFILE_METADATA_ROWS = usable;
+  TEAM_PROFILE_METADATA_SOURCE = count ? source : TEAM_PROFILE_METADATA_SOURCE;
+  return count;
+}
+function readLocalTeamProfileMetadata(){
+  try{
+    const root = JSON.parse(localStorage.getItem(TEAM_PROFILE_METADATA_STORAGE_KEY) || '{}');
+    if(Array.isArray(root)) return root;
+    if(Array.isArray(root?.profiles)) return root.profiles;
+    if(root?.profiles && typeof root.profiles === 'object') return Object.values(root.profiles);
+  }catch(_e){}
+  return [];
+}
+async function loadTeamProfileMetadataFromSupabase(){
+  const localRows = readLocalTeamProfileMetadata();
+  if(localRows.length) registerTeamProfileMetadataRows(localRows, 'local');
+  try{
+    const { data, error } = await withTimeout(
+      client.from(TEAM_PROFILE_METADATA_TABLE).select('*').limit(5000),
+      12000,
+      'Team profile metadata timed out'
+    );
+    if(error) throw error;
+    const count = registerTeamProfileMetadataRows(data || [], 'supabase');
+    if(count) console.info(`Loaded ${count} team profile metadata rows from ${TEAM_PROFILE_METADATA_TABLE}.`);
+  }catch(e){
+    console.warn(`${TEAM_PROFILE_METADATA_TABLE} unavailable; using JSON/local team profiles only:`, e?.message || e);
+  }
+}
+
 function teamProfileDirectLookup(value){
   const raw = norm(value);
   if(!raw) return null;
@@ -9322,6 +9440,7 @@ location.reload();`);
     await loadMatchApi();
     await loadCharacterJson();
     await Promise.all([loadPetJson(), loadLoadoutJson(), loadWeaponJson(), loadTeamLogosJson(), loadTournamentProgressionData()]);
+    await loadTeamProfileMetadataFromSupabase();
     updateSkillDiagnostics();
     updateSkillLookupDiagnostics();
     populateTopDropdowns();
