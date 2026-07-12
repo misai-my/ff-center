@@ -85,3 +85,11 @@ When the dashboard is set to **Merge by Team Identity**, the app now uses a two-
 2. Final hard match by any saved alias name or alias tag under the identity.
 
 This means visible aliases under an identity, for example `BIGETRON / BTR`, `BIGETRON BY VITALITY / BTR`, and `TEAM VITALITY / VIT`, will merge into the canonical identity row on the dashboard.
+
+## Delete identity
+
+Saved identities now include a **Delete** button in `admin-team-identity.html`. Deleting an identity removes the canonical identity record and all alias mappings connected to it. It does **not** delete or change any raw match rows in `ffbr_data` or the live source table.
+
+Use this when an identity was created by mistake or when aliases need to be rebuilt from scratch. After deletion, reload `index.html` and choose **Team Names → Merge by Team Identity** to confirm the old merge no longer applies.
+
+If deleting from Supabase fails with an RLS or permission error, rerun `supabase/10_team_identity_aliases.sql` so the admin delete policies are installed.
