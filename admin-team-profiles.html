@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Team Profile Metadata — Free Fire Data Center</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('ff_theme_v1');
+      const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="window.__ffdcSupabaseFailed=true"></script>
+  <script src="assets/js/data-source-config.js?v=20260712-team-profiles"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;800&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/admin-group-assignments.css?v=20260712-team-profiles" />
+  <style>
+    .profile-admin .setup-grid{grid-template-columns:repeat(12,minmax(0,1fr));align-items:end}.profile-admin .field.span-2{grid-column:span 2}.profile-admin .field.span-3{grid-column:span 3}.profile-admin .field.span-4{grid-column:span 4}.profile-admin .field.span-6{grid-column:span 6}.profile-admin .field.span-12{grid-column:span 12}
+    .profile-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;justify-content:space-between}.profile-toolbar .toolbar-left,.profile-toolbar .toolbar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.profile-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;margin-top:14px}.profile-card{border:1px solid var(--border);border-radius:18px;background:linear-gradient(180deg,var(--panel),var(--panel-2));box-shadow:var(--shadow-sm);padding:14px;display:grid;gap:12px}.profile-card-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.profile-card-title{display:grid;gap:4px;min-width:0}.profile-card-title strong{font-size:16px;letter-spacing:.02em}.profile-card-title span{font-size:12px;color:var(--muted);font-weight:800}.profile-chip-row{display:flex;gap:6px;flex-wrap:wrap}.profile-mini-chip{font-size:11px;font-weight:900;border:1px solid var(--border);border-radius:999px;padding:4px 7px;color:var(--muted);background:rgba(127,127,127,.12)}.profile-mini-chip.saved{color:#1fd78a;border-color:rgba(31,215,138,.45);background:rgba(31,215,138,.1)}.profile-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.profile-form-grid .full{grid-column:1/-1}.profile-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.empty-state{padding:24px;border:1px dashed var(--border);border-radius:16px;color:var(--muted);text-align:center}.hint-line{font-size:12px;color:var(--muted);line-height:1.45}.status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}.status-card{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:12px}.status-card span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:900}.status-card strong{font-size:22px}
+    @media (max-width: 980px){.profile-admin .setup-grid{grid-template-columns:1fr}.profile-admin .field.span-2,.profile-admin .field.span-3,.profile-admin .field.span-4,.profile-admin .field.span-6,.profile-admin .field.span-12{grid-column:auto}.profile-board{grid-template-columns:1fr}.status-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width: 620px){.profile-form-grid{grid-template-columns:1fr}.profile-form-grid .full{grid-column:auto}.status-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="admin-shell profile-admin">
+    <header class="admin-topbar">
+      <div class="admin-brand">
+        <div class="admin-logo">FF</div>
+        <div>
+          <p>Free Fire Data Center</p>
+          <h1>Team Profile Metadata</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn ghost" href="index.html">← Data Center</a>
+        <a class="btn ghost" href="admin-team-identity.html">Team Identity</a>
+        <a class="btn ghost" href="admin-index-teams.html">Index Teams</a>
+        <a class="btn ghost" href="admin-group-assignments.html">Group Assignments</a>
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
+        <div class="admin-user" id="adminUser">Checking access…</div>
+        <button class="btn danger" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <section class="notice" id="pageNotice" hidden></section>
+      <button class="btn secondary retry-init" id="retryInitBtn" type="button" hidden>Retry loading</button>
+
+      <section class="panel setup-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Profile source table</span>
+            <h2>Save region, country, seed, coach, path, and logos in Supabase</h2>
+            <p class="hint-line">This writes to <code>public.team_profile_metadata</code>. The dashboard checks this table first, then falls back to <code>data/team_logos.json</code>.</p>
+          </div>
+          <span class="status-pill" id="profileStatus">Not loaded</span>
+        </div>
+
+        <div class="setup-grid">
+          <label class="field span-3">
+            <span>Database source for team list</span>
+            <select id="sourceModeInput">
+              <option value="live">Live Supabase</option>
+              <option value="historical">Historical Supabase (ffbr_data)</option>
+            </select>
+          </label>
+          <label class="field span-3 historical-key-field" id="historicalKeyField" hidden>
+            <span>Historical public anon key</span>
+            <input id="historicalKeyInput" type="password" placeholder="Optional for this browser only" autocomplete="off" />
+            <small>Used only to read teams from historical <code>ffbr_data</code>.</small>
+          </label>
+          <label class="field span-2">
+            <span>Source table</span>
+            <input id="sourceTableInput" value="ff_player_stats_raw" autocomplete="off" />
+          </label>
+          <button class="btn primary load-btn" id="loadTeamsBtn" type="button">Load Teams</button>
+        </div>
+
+        <div class="status-grid" id="statusGrid" hidden>
+          <div class="status-card"><span>Teams found</span><strong id="statTeams">0</strong></div>
+          <div class="status-card"><span>Saved profiles</span><strong id="statProfiles">0</strong></div>
+          <div class="status-card"><span>Source</span><strong id="statSource">—</strong></div>
+          <div class="status-card"><span>Table</span><strong id="statTable">—</strong></div>
+        </div>
+      </section>
+
+      <section class="panel toolbar-panel" id="profileToolbar" hidden>
+        <div class="profile-toolbar">
+          <div class="toolbar-left">
+            <label class="field compact"><span>Tournament</span><select id="filterTournament"><option value="__all__">All</option></select></label>
+            <label class="field compact"><span>Year</span><select id="filterYear"><option value="__all__">All</option></select></label>
+            <label class="field compact"><span>Season</span><select id="filterSeason"><option value="__all__">All</option></select></label>
+            <label class="search-field"><span aria-hidden="true">⌕</span><input id="teamSearchInput" type="search" placeholder="Search teams…" /></label>
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn secondary" id="saveVisibleBtn" type="button">Save Visible</button>
+            <button class="btn secondary" id="clearFiltersBtn" type="button">Clear Filters</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="profile-board" id="profileBoard" aria-live="polite"><div class="empty-state">Load a database source to show teams.</div></section>
+    </main>
+  </div>
+
+  <div class="modal auth-modal" id="adminLoginModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card auth-card" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Administrator access</span>
+          <h2 id="adminLoginTitle">Sign in to manage team profiles</h2>
+          <p>Use an account listed in <code>public.app_admins</code>.</p>
+        </div>
+        <a class="icon-btn" href="index.html" aria-label="Back to Data Center" title="Back to Data Center">×</a>
+      </div>
+      <form id="adminLoginForm" class="auth-form team-form">
+        <label class="field required"><span>Email</span><input id="adminLoginEmail" type="email" autocomplete="email" required placeholder="you@example.com" /></label>
+        <label class="field required"><span>Password</span><div class="password-field"><input id="adminLoginPassword" type="password" autocomplete="current-password" required placeholder="Password" /><button class="btn ghost password-toggle" id="adminPasswordToggle" type="button">Show</button></div></label>
+        <div class="auth-message" id="adminLoginMessage" hidden></div>
+        <div class="modal-actions auth-actions"><a class="btn ghost" href="index.html">Back</a><button class="btn primary" id="adminLoginSubmit" type="submit">Sign In</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="loading-screen" id="loadingScreen"><div class="loader"></div><strong>Loading team profile metadata…</strong></div>
+  <script src="assets/js/admin-team-profiles.js?v=20260712-team-profiles"></script>
+</body>
+</html>

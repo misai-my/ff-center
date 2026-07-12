@@ -422,3 +422,16 @@ The dashboard now merges identity mappings from Supabase plus localStorage backu
 This build strengthens **Merge by Team Identity** so saved aliases are also used as a final hard-merge map. If an admin identity contains aliases such as `BIGETRON`, `BIGETRON BY VITALITY`, and `TEAM VITALITY`, the dashboard will collapse those rows into the canonical team name even if the alias was saved with older source/table/year metadata.
 
 After deploying, hard refresh the browser so `assets/js/app.js?v=team-identity-hard-merge-v3` is loaded.
+
+## Team Profile Metadata Table
+
+Team Overview profile fields can now be managed from Supabase instead of only `data/team_logos.json`.
+
+Added files:
+
+- `admin-team-profiles.html`
+- `assets/js/admin-team-profiles.js`
+- `supabase/11_team_profile_metadata.sql`
+- `docs/TEAM_PROFILE_METADATA.md`
+
+Run `supabase/11_team_profile_metadata.sql`, then open `admin-team-profiles.html` to set Region, Country, Group, Seed, Coach, Qualification Path, Logo URL, and Team Color. The dashboard checks `public.team_profile_metadata` first, then falls back to `data/team_logos.json`.
