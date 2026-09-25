@@ -21,7 +21,13 @@ const CAMPAIGN = [
   { map: 'solara', title: 'Solara Final Clash', hp: 145, attack: 12 }
 ];
 
-const builderState = { active: null, passives: [], pet: null };
+const loadoutSkills = [
+ {name:'Team Booster',skill:'RALLY SUPPLY',skill_type:'Loadout',role:'TEAM WORK',description:'Duel effect: restore 22 HP and gain 8 shield. Once per duel.',effect:'rally'},
+ {name:'Tactical Market',skill:'FIELD REQUISITION',skill_type:'Loadout',role:'INVENTORY',description:'Duel effect: gain 3 energy and reduce both skill cooldowns by 2. Once per duel.',effect:'market'},
+ {name:'Super Bonfire',skill:'RECOVERY ZONE',skill_type:'Loadout',role:'SURVIVAL',description:'Duel effect: restore 30 HP and gain 4 focus. Once per duel.',effect:'bonfire'}
+];
+loadoutSkills.forEach(c=>c.local_image_path='assets/loadout.svg');
+const builderState = {active:null,passives:[],pet:null,loadout:null};
 const ui = {
   builderScreen: document.getElementById('builderScreen'),
   battleScreen: document.getElementById('battleScreen'),
@@ -227,6 +233,7 @@ function createActionPower(card, type) {
 }
 
 function cardBattleSummary(card, slot) {
+ if(slot==='loadout')return card.description;
   const rarity = inferRarity(card), cost = cardCost(card, slot), cd = cardCooldown(card, slot);
   const power = slot === 'passive' ? createPassivePower(card).summary : createActionPower(card, slot).summary;
   return `${rarity}${slot !== 'passive' ? ` · Cost ${cost} · CD ${cd}` : ''}. ${power}`;
@@ -242,10 +249,10 @@ function filterCards(list) {
   });
 }
 function renderCard(item, slot) {
-  const selected = slot === 'active' ? builderState.active?.name === item.name : slot === 'pet' ? builderState.pet?.name === item.name : builderState.passives.some(p => p.name === item.name);
+  const selected = slot === 'active' ? builderState.active?.name === item.name : slot === 'pet' ? builderState.pet?.name === item.name : slot === 'loadout' ? builderState.loadout?.name === item.name : builderState.passives.some(p => p.name === item.name);
   const locked = slot === 'passive' && !selected && builderState.passives.length >= 3;
   const rarity = inferRarity(item), rarityClass = rarity.toLowerCase();
-  const costLine = slot === 'passive' ? 'PASSIVE' : `COST ${cardCost(item, slot)} · CD ${cardCooldown(item, slot)}`;
+  const costLine = slot === 'loadout' ? 'ONCE PER DUEL' : slot === 'passive' ? 'PASSIVE' : `COST ${cardCost(item, slot)} · CD ${cardCooldown(item, slot)}`;
   return `<article draggable="${locked ? 'false' : 'true'}" class="card template-card slot-${slot} ${rarityClass} ${selected ? 'selected' : ''} ${locked ? 'disabled' : ''}" data-slot="${slot}" data-name="${escapeHtml(item.name)}">
     <div class="card-topline"><span class="topline-icon">${slot === 'active' ? 'A' : slot === 'pet' ? 'P' : 'S'}</span><span class="topline-name">${escapeHtml(item.name)}</span></div>
     <div class="card-image-wrap"><img src="${item.local_image_path}" alt="${escapeHtml(item.name)}" loading="lazy" />
@@ -264,6 +271,8 @@ function selectCardForSlot(item, slot, forceAdd = false) {
   if (!item) return;
   if (slot === 'active') {
     builderState.active = builderState.active?.name === item.name && !forceAdd ? null : item;
+  } else if (slot === 'loadout') {
+    builderState.loadout = builderState.loadout?.name === item.name && !forceAdd ? null : item;
   } else if (slot === 'pet') {
     builderState.pet = builderState.pet?.name === item.name && !forceAdd ? null : item;
   } else {
@@ -277,6 +286,7 @@ function selectCardForSlot(item, slot, forceAdd = false) {
 function removeCardFromDeck(slot, name = '') {
   if (slot === 'active') builderState.active = null;
   else if (slot === 'pet') builderState.pet = null;
+  else if(slot==='loadout') builderState.loadout=null;
   else if (slot === 'passive') {
     if (name) builderState.passives = builderState.passives.filter(p => p.name !== name);
     else builderState.passives.pop();
@@ -293,6 +303,7 @@ function refreshBuilderSelectionUI() {
 function isCardSelectedForSlot(slot, name) {
   if (slot === 'active') return builderState.active?.name === name;
   if (slot === 'pet') return builderState.pet?.name === name;
+  if(slot==='loadout') return builderState.loadout?.name===name;
   return builderState.passives.some(p => p.name === name);
 }
 
@@ -318,7 +329,7 @@ function updateCardSelectionStates() {
 }
 
 function findCardBySlotAndName(slot, name) {
-  const source = slot === 'active' ? activeSkills : slot === 'pet' ? petSkills : passiveSkills;
+  const source = slot === 'active' ? activeSkills : slot === 'pet' ? petSkills : slot === 'loadout' ? loadoutSkills : passiveSkills;
   return source.find(c => c.name === name);
 }
 
@@ -364,6 +375,7 @@ function renderBuilder() {
   ui.activeGrid.innerHTML = filterCards(activeSkills).map(item => renderCard(item, 'active')).join('');
   ui.passiveGrid.innerHTML = filterCards(passiveSkills).map(item => renderCard(item, 'passive')).join('');
   ui.petGrid.innerHTML = filterCards(petSkills).map(item => renderCard(item, 'pet')).join('');
+  document.getElementById('loadoutGrid').innerHTML=filterCards(loadoutSkills).map(item=>renderCard(item,'loadout')).join('');
   attachBuilderCardEvents();
   renderSelectedSummary();
   renderMapInfo();
@@ -393,6 +405,7 @@ function renderSelectedSummary() {
       <div class="deck-left-column">
         ${topSlot('Active', builderState.active, 'active', 'Drop Active')}
         ${topSlot('Pet', builderState.pet, 'pet', 'Drop Pet')}
+${topSlot('Loadout', builderState.loadout, 'loadout', 'Drop Loadout')}
       </div>
       <div class="deck-right-column">
         ${topSlot('Passive 1', builderState.passives[0], 'passive', 'Drop Passive')}
@@ -403,7 +416,7 @@ function renderSelectedSummary() {
     attachDeckSlotRemoveEvents();
   }
 
-  if (ui.startBattleBtn) ui.startBattleBtn.disabled = !(builderState.active && builderState.passives.length === 3 && builderState.pet);
+  if (ui.startBattleBtn) ui.startBattleBtn.disabled = !(builderState.active && builderState.passives.length === 3 && builderState.pet && builderState.loadout);
 }
 
 
@@ -460,8 +473,8 @@ function attachBuilderCardEvents() {
   });
 }
 
-function clearLoadout() { builderState.active = null; builderState.passives = []; builderState.pet = null; renderBuilder(); }
-function randomLoadout() { builderState.active = activeSkills[rand(activeSkills.length)]; builderState.passives = shuffle([...passiveSkills]).slice(0, 3); builderState.pet = petSkills[rand(petSkills.length)]; renderBuilder(); }
+function clearLoadout() { builderState.active = null; builderState.passives = []; builderState.pet = null; builderState.loadout=null; renderBuilder(); }
+function randomLoadout() { builderState.active = activeSkills[rand(activeSkills.length)]; builderState.passives = shuffle([...passiveSkills]).slice(0, 3); builderState.pet = petSkills[rand(petSkills.length)]; builderState.loadout=loadoutSkills[rand(loadoutSkills.length)]; renderBuilder(); }
 function setTab(tabName) {
   document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -475,7 +488,7 @@ function makeEnemyLoadout(stage) {
   return { active: (favoredActive.length && Math.random() < .7) ? favoredActive[rand(favoredActive.length)] : activeSkills[rand(activeSkills.length)], passives: shuffle([...(favoredPassive.length ? favoredPassive : passiveSkills)]).slice(0, 3), pet: (favoredPet.length && Math.random() < .7) ? favoredPet[rand(favoredPet.length)] : petSkills[rand(petSkills.length)] };
 }
 function buildCombatant(name, loadout, ai = false, baseBoost = {}) {
-  const state = { name, label: name, ai, active: loadout.active, passives: loadout.passives, pet: loadout.pet,
+  const state = {loadout:loadout.loadout||loadoutSkills[rand(loadoutSkills.length)],loadoutUsed:false,gloo:2, name, label: name, ai, active: loadout.active, passives: loadout.passives, pet: loadout.pet,
     activeAction: createActionPower(loadout.active, 'active'), petAction: createActionPower(loadout.pet, 'pet'),
     maxHp: baseBoost.maxHp || 110, hp: baseBoost.maxHp || 110, shield: baseBoost.shield || 0, maxEnergy: 6, energy: 3,
     attack: baseBoost.attack || 8, defense: 0, crit: 8, dodge: baseBoost.dodge || 0, regen: 0,
@@ -486,6 +499,7 @@ function buildCombatant(name, loadout, ai = false, baseBoost = {}) {
   return state;
 }
 function startBattle() {
+ if(!builderState.active || builderState.passives.length!==3 || !builderState.pet || !builderState.loadout) return;
   const mode = ui.modeSelect.value;
   let selectedMap = ui.mapSelect.value, stage = null, enemyBoost = {};
   if (mode === 'campaign') { stage = CAMPAIGN[Math.min(campaignIndex, CAMPAIGN.length - 1)]; selectedMap = stage.map; ui.mapSelect.value = selectedMap; enemyBoost = { maxHp: stage.hp, attack: stage.attack, ...MAPS[selectedMap].enemyBoost }; }
@@ -493,7 +507,7 @@ function startBattle() {
   const map = MAPS[selectedMap], enemyLoadout = makeEnemyLoadout(stage || { map: selectedMap });
   actionBusy = false;
   const enemyDisplayName = `${enemyLoadout.active.name} - ${map.name}`;
-  combat = { mode, mapKey: selectedMap, map, stage, player: buildCombatant('You', { active: builderState.active, passives: builderState.passives, pet: builderState.pet }, false), enemy: buildCombatant(enemyDisplayName, enemyLoadout, true, enemyBoost), turn: 'player', turnNumber: 1, over: false, log: [] };
+  combat = { mode, mapKey: selectedMap, map, stage, player: buildCombatant('You', { active: builderState.active, passives: builderState.passives, pet: builderState.pet, loadout:builderState.loadout }, false), enemy: buildCombatant(enemyDisplayName, enemyLoadout, true, enemyBoost), turn: 'player', turnNumber: 1, over: false, log: [] };
   map.apply(combat.player); map.apply(combat.enemy);
   showBattleScreen();
   logMessage(`${map.name} advantage active: ${map.description}`);
@@ -502,6 +516,7 @@ function startBattle() {
   startTurn(combat.player, combat.enemy);
 }
 function showBattleScreen() { document.body.classList.add('is-battle-mode'); ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
+function scheduleBattle(fn,ms){const session=combat;setTimeout(()=>{if(combat===session&&!session.over&&ui.battleScreen.classList.contains('active'))fn();},ms);}
 function showBuilderScreen() { clearTimeout(autoTurnTimer); actionBusy = false; deckCollapsed = false; document.body.classList.remove('deck-collapsed'); document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
@@ -522,20 +537,28 @@ function startTurn(actor, target) {
   if (actor === combat.player) {
     actionBusy = false;
     ui.turnBanner.textContent = playerAutoEnabled ? 'Auto Battle' : 'Your Turn';
-    ui.handHint.textContent = playerAutoEnabled ? 'Auto is choosing the best action' : 'Use Basic, Active, or Pet once per turn';
+    ui.handHint.textContent = playerAutoEnabled ? 'Auto is choosing the best action' : 'Choose one action: attack, skill, gloo wall or loadout';
     renderBattle();
     if (playerAutoEnabled && !combat.over) {
       clearTimeout(autoTurnTimer);
       autoTurnTimer = setTimeout(takeAutoPlayerTurn, 620);
     }
   }
-  else { actionBusy = true; ui.turnBanner.textContent = 'Opponent Turn'; ui.handHint.textContent = 'Opponent is thinking...'; renderBattle(); setTimeout(() => takeAiTurn(), 800); }
+  else { actionBusy = true; ui.turnBanner.textContent = 'Opponent Turn'; ui.handHint.textContent = 'Opponent is thinking...'; renderBattle(); scheduleBattle(() => takeAiTurn(), 800); }
 }
 async function performPlayerAction(kind) {
   if (!combat || combat.over || combat.turn !== 'player' || actionBusy) return;
   actionBusy = true;
   renderBattle();
   try {
+    if(kind==='loadout') {
+      if(combat.player.loadoutUsed){actionBusy=false;renderBattle();return;}
+      deployLoadout(combat.player);
+    }
+    if(kind==='gloo') {
+      if(combat.player.gloo<=0 || combat.player.energy<1){actionBusy=false;renderBattle();return;}
+      combat.player.gloo--;combat.player.energy--;addShield(combat.player,20,logMessage,'Gloo wall');
+    }
     if (kind === 'basic') await basicAttack(combat.player, combat.enemy, logMessage);
     if (kind === 'active') {
       if (combat.player.activeCooldown > 0 || combat.player.energy < combat.player.activeAction.cost || combat.player.silenceTurns > 0) {
@@ -592,7 +615,8 @@ function chooseAutoPlayerAction() {
 
   if (dangerHp && canActive && isDefensiveAction(activeKind)) return 'active';
   if (dangerHp && canPet && isDefensiveAction(petKind)) return 'pet';
-  if (lowHp && canActive && ['heal', 'shield'].includes(activeKind)) return 'active';
+  if(!a.loadoutUsed && (lowHp || a.energy<2)) deployLoadout(a);
+  else if (lowHp && canActive && ['heal', 'shield'].includes(activeKind)) return 'active';
   if (lowHp && canPet && ['heal', 'shield'].includes(petKind)) return 'pet';
 
   if (enemyLow && canActive && isDamageAction(activeKind)) return 'active';
@@ -675,7 +699,7 @@ function dealDamage(attacker, defender, amount, intro, log, opts = {}) {
 }
 function restoreHp(unit, amount, log, intro = '') { const value = Math.round(amount * (1 + unit.healAmp)); const healed = Math.max(0, Math.min(unit.maxHp - unit.hp, value)); if (healed <= 0) return 0; unit.hp += healed; log(`${intro}. ${unit.name} recovered ${healed} HP.`); return healed; }
 function addShield(unit, amount, log, intro = '') { const value = Math.round(amount * (1 + unit.shieldAmp)); unit.shield += value; log(`${intro || unit.name}. ${unit.name} gained ${value} shield.`); }
-function afterAction(actor, target) { renderBattle(); if (combat.over) return; if (actor === combat.enemy) combat.turnNumber++; const nextActor = actor === combat.player ? combat.enemy : combat.player; const nextTarget = target === combat.player ? combat.enemy : combat.player; setTimeout(() => startTurn(nextActor, nextTarget), 300); }
+function afterAction(actor, target) { renderBattle(); if (combat.over) return; if (actor === combat.enemy) combat.turnNumber++; const nextActor = actor === combat.player ? combat.enemy : combat.player; const nextTarget = target === combat.player ? combat.enemy : combat.player; scheduleBattle(() => startTurn(nextActor, nextTarget), 300); }
 function finishBattle(winner) {
   if (combat.over) return;
   combat.over = true;
@@ -714,6 +738,16 @@ function statusBar(label, value, max, cls, rightText='') { return `<div class="s
 function renderStatus(unit) { return [ statusBar('HP', unit.hp, unit.maxHp, 'hp'), statusBar('Shield', unit.shield, Math.max(25, unit.maxHp * .5), 'shield', `${unit.shield}`), statusBar('Energy', unit.energy, unit.maxEnergy, 'energy', `${unit.energy}/${unit.maxEnergy}`), `<div class="muted">ATK ${unit.attack + unit.tempAttack} · DEF ${unit.defense} · CRIT ${unit.crit}% · DODGE ${unit.dodge + unit.tempDodge}%${unit.focus ? ` · FOCUS +${unit.focus}` : ''}${unit.silenceTurns ? ' · SILENCED' : ''}${unit.burnTurns ? ' · BURN' : ''}</div>` ].join(''); }
 function renderPassives(unit) { return unit.passives.map(card => `<div class="mini-card passive-mini"><img src="${card.local_image_path}" alt="${escapeHtml(card.name)}" /><div><b>${escapeHtml(card.name)}</b><div class="meta">${escapeHtml(card.skill)} · ${inferRarity(card)}</div><div class="meta">${escapeHtml(createPassivePower(card).summary)}</div></div></div>`).join(''); }
 function renderAvatar(unit) { return `<img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div class="name">${escapeHtml(unit.active.name)}</div><div class="sub">${escapeHtml(unit.pet.name)} · ${unit.name}</div>`; }
+function deployLoadout(unit){
+ unit.loadoutUsed=true;
+ if(unit.loadout.effect==='market'){
+ unit.energy=Math.min(unit.maxEnergy,unit.energy+3);unit.activeCooldown=Math.max(0,unit.activeCooldown-2);unit.petCooldown=Math.max(0,unit.petCooldown-2);
+ }else{
+ restoreHp(unit,unit.loadout.effect==='rally'?22:30,logMessage,unit.loadout.name);
+ if(unit.loadout.effect==='rally')addShield(unit,8,logMessage,unit.loadout.name);else unit.focus+=4;
+ }
+ logMessage(unit.name+' deployed '+unit.loadout.name+' — supply consumed.');
+}
 function renderHand() {
   if (!combat) return;
   document.body.classList.toggle('deck-collapsed', deckCollapsed);
@@ -724,6 +758,8 @@ function renderHand() {
   const petDisabled = busy || player.petCooldown > 0 || player.energy < player.petAction.cost;
 
   const actions = [
+ {type:'gloo',label:'Gloo Wall',detail:'20 shield · 1 energy · '+player.gloo+' left',disabled:busy||player.gloo<=0||player.energy<1},
+ {type:'loadout',label:player.loadout.name,detail:player.loadoutUsed?'CONSUMED':'Once per duel',disabled:busy||player.loadoutUsed},
     { type: 'basic', label: 'Basic', detail: `DMG ${Math.max(1, Math.round(player.attack + player.tempAttack))} · Crit ${player.crit}%`, disabled: basicDisabled },
     { type: 'active', label: 'Active', detail: `${player.active.skill} · Cost ${player.activeAction.cost} · CD ${player.activeCooldown}/${player.activeAction.cooldown}`, disabled: activeDisabled },
     { type: 'pet', label: 'Pet', detail: `${player.pet.skill} · Cost ${player.petAction.cost} · CD ${player.petCooldown}/${player.petAction.cooldown}`, disabled: petDisabled }
@@ -732,7 +768,7 @@ function renderHand() {
   const deckCards = [
     battleDeckCard(player.active, 'active', 'A'),
     ...player.passives.map(card => battleDeckCard(card, 'passive', 'S')),
-    battleDeckCard(player.pet, 'pet', 'P')
+    battleDeckCard(player.pet, 'pet', 'P'),battleDeckCard(player.loadout,'loadout','L')
   ].join('');
 
   ui.playerHand.innerHTML = `

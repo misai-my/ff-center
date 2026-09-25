@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#070b14" />
   <title>Free Fire Card Arena</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css" /><link rel="stylesheet" href="duel.css" />
 </head>
 <body>
   <main class="app-shell">
@@ -14,7 +14,7 @@
         <div class="game-mark">FFCA</div>
         <div>
           <h1>FREE FIRE CARD ARENA</h1>
-          <p>1 Active · 3 Passives · 1 Pet</p>
+          <p>1 Active · 3 Passives · 1 Pet · 1 Loadout</p>
         </div>
       </div>
       <div class="topbar-controls">
@@ -36,8 +36,8 @@
     <section id="builderScreen" class="screen active">
       <aside class="builder-sidebar panel deck-sidebar">
         <div class="section-kicker">PLAYER DECK</div>
-        <h2>Drop Cards Here</h2>
-        <p class="muted deck-hint">Click or drag cards into the outlined deck slots.</p>
+        <h2>Build your six</h2>
+        <p class="muted deck-hint">Six slots. One strategy. Click or drag to equip.</p>
         <div id="topSelectedSummary" class="deck-drop-grid"></div>
       </aside>
 
@@ -66,10 +66,10 @@
         <div class="tabs">
           <button class="tab active" data-tab="active">Active Skills</button>
           <button class="tab" data-tab="passive">Passive Skills</button>
-          <button class="tab" data-tab="pet">Pet Skills</button>
+          <button class="tab" data-tab="pet">Pet Skills</button><button class="tab" data-tab="loadout">Loadouts</button>
         </div>
 
-        <div id="activePanel" class="builder-section tab-panel active">
+        <div id="loadoutPanel" class="builder-section tab-panel"><div class="section-head"><h3>Supply Cards</h3><span>Select 1 · once per duel</span></div><div id="loadoutGrid" class="card-grid"></div><p class="muted">Fan-made duel rules: effects and map bonuses are adapted for this game.</p></div><div id="activePanel" class="builder-section tab-panel active">
           <div class="section-head"><h3>Active Skill Cards</h3><span>Select 1</span></div>
           <div id="activeGrid" class="card-grid"></div>
         </div>
@@ -127,7 +127,7 @@
         </aside>
 
         <section class="player-hand panel">
-          <div class="section-head"><h3>Battle Deck</h3><span id="handHint">Actions above · 5 card deck below</span></div>
+          <div class="section-head"><h3>Battle Deck</h3><span id="handHint">Actions above · six-card duel deck</span></div>
           <div id="playerHand" class="hand-grid"></div>
         </section>
       </div>
@@ -158,6 +158,6 @@
   </div>
 
   <script src="assets/data.js"></script>
-  <script src="script.js"></script>
+  <script src="assets/standalone.js"></script><script src="script.js"></script>
 </body>
 </html>

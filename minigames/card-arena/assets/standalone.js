@@ -1,0 +1,2 @@
+[...(window.FF_CHARACTERS||[]),...(window.FF_PETS||[])].forEach(c=>{c.local_image_path=c.image_url||'assets/loadout.svg';});
+document.addEventListener('error',e=>{if(e.target.tagName==='IMG'&&!e.target.dataset.fallback){e.target.dataset.fallback='1';e.target.src='assets/loadout.svg';}},true);
