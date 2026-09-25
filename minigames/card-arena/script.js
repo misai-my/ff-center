@@ -24,7 +24,8 @@ const CAMPAIGN = [
 const loadoutSkills = [
  {name:'Team Booster',skill:'RALLY SUPPLY',skill_type:'Loadout',role:'TEAM WORK',description:'Duel effect: restore 22 HP and gain 8 shield. Once per duel.',effect:'rally'},
  {name:'Tactical Market',skill:'FIELD REQUISITION',skill_type:'Loadout',role:'INVENTORY',description:'Duel effect: gain 3 energy and reduce both skill cooldowns by 2. Once per duel.',effect:'market'},
- {name:'Super Bonfire',skill:'RECOVERY ZONE',skill_type:'Loadout',role:'SURVIVAL',description:'Duel effect: restore 30 HP and gain 4 focus. Once per duel.',effect:'bonfire'}
+ {name:'Enhanced Hammer',skill:'WALL BREAKER',skill_type:'Loadout',role:'ATTACK',description:'Duel effect: remove up to 25 enemy shield and gain 8 focus. Once per duel.',effect:'hammer'},
+ {name:'Super Leg Pocket',skill:'RESERVE SUPPLY',skill_type:'Loadout',role:'INVENTORY',description:'Duel effect: gain 2 gloo walls and 2 energy. Once per duel.',effect:'pocket'}
 ];
 loadoutSkills.forEach(c=>c.local_image_path='assets/loadout.svg');
 const builderState = {active:null,passives:[],pet:null,loadout:null};
@@ -517,7 +518,7 @@ function startBattle() {
 }
 function showBattleScreen() { document.body.classList.add('is-battle-mode'); ui.builderScreen.classList.remove('active'); ui.battleScreen.classList.add('active'); ui.resultModal.classList.remove('active'); }
 function scheduleBattle(fn,ms){const session=combat;setTimeout(()=>{if(combat===session&&!session.over&&ui.battleScreen.classList.contains('active'))fn();},ms);}
-function showBuilderScreen() { clearTimeout(autoTurnTimer); actionBusy = false; deckCollapsed = false; document.body.classList.remove('deck-collapsed'); document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
+function showBuilderScreen() { if(combat)combat.over=true; clearTimeout(autoTurnTimer); actionBusy = false; deckCollapsed = false; document.body.classList.remove('deck-collapsed'); document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
   actionBusy = actor !== combat.player;
@@ -548,6 +549,7 @@ function startTurn(actor, target) {
 }
 async function performPlayerAction(kind) {
   if (!combat || combat.over || combat.turn !== 'player' || actionBusy) return;
+  const session=combat;
   actionBusy = true;
   renderBattle();
   try {
@@ -576,7 +578,8 @@ async function performPlayerAction(kind) {
       }
       await useSkill(combat.player, combat.enemy, combat.player.pet, combat.player.petAction, 'pet', logMessage);
     }
-    afterAction(combat.player, combat.enemy);
+    await sleep(180);
+    if(combat===session && ui.battleScreen.classList.contains('active'))afterAction(combat.player, combat.enemy);
   } catch (err) {
     console.error(err);
     actionBusy = false;
@@ -656,24 +659,30 @@ function togglePlayerAuto() {
 
 async function takeAiTurn() {
   if (!combat || combat.over || combat.turn !== 'enemy') return;
+  const session=combat;
   const a = combat.enemy, t = combat.player, lowHp = a.hp <= a.maxHp * .45, canActive = a.activeCooldown === 0 && a.energy >= a.activeAction.cost && a.silenceTurns <= 0, canPet = a.petCooldown === 0 && a.energy >= a.petAction.cost;
-  if (lowHp && canActive && ['heal','shield','support'].includes(a.activeAction.kind)) await useSkill(a, t, a.active, a.activeAction, 'active', logMessage);
+  if(!a.loadoutUsed && (lowHp || a.energy<2))deployLoadout(a);
+  else if (lowHp && canActive && ['heal','shield','support'].includes(a.activeAction.kind)) await useSkill(a, t, a.active, a.activeAction, 'active', logMessage);
   else if (lowHp && canPet && ['heal','shield','support'].includes(a.petAction.kind)) await useSkill(a, t, a.pet, a.petAction, 'pet', logMessage);
   else if (canActive && (['damage','explosive','info'].includes(a.activeAction.kind) || Math.random() < .62)) await useSkill(a, t, a.active, a.activeAction, 'active', logMessage);
   else if (canPet && Math.random() < .5) await useSkill(a, t, a.pet, a.petAction, 'pet', logMessage);
   else await basicAttack(a, t, logMessage);
-  afterAction(a, t);
+  if(combat===session && !session.over)afterAction(a, t);
 }
 async function useSkill(user, target, card, action, slot, log) {
+  const session=combat;
   user.energy -= action.cost;
   if (slot === 'active') user.activeCooldown = action.cooldown; else user.petCooldown = action.cooldown;
   if (!user.usedFirstSkill && user.firstSkillFocus) { user.focus += user.firstSkillFocus; user.usedFirstSkill = true; log(`${user.name} gained +${user.firstSkillFocus} focus from passive synergy.`); }
   if (slot === 'pet') await animatePetOverlay(user, target);
+  if(combat!==session || session.over)return;
   await action.effect(user, target, log);
   playTone(slot === 'active' ? 340 : 270, .08, 'square', .035, 40);
 }
 async function basicAttack(attacker, defender, log) {
+  const session=combat;
   await animateAction(attacker, defender, 'attack');
+  if(combat!==session || session.over || !ui.battleScreen.classList.contains('active'))return;
   const damage = attacker.attack + attacker.tempAttack + 7 + consumeFocus(attacker, log);
   dealDamage(attacker, defender, damage, `${attacker.name} used a basic attack`, log);
   playTone(180, .05, 'square', .03, -25);
@@ -693,6 +702,7 @@ function dealDamage(attacker, defender, amount, intro, log, opts = {}) {
   if (isCrit && attacker) animateCriticalAttack(attacker, defender);
   animateHit(defender, isCrit);
   log(`${intro}${isCrit ? ' · CRITICAL HIT!' : ''}. ${defender.name} took ${original} damage${original !== dmg ? ` (${original - dmg} shielded)` : ''}.`);
+  showDamage(defender,dmg,original-dmg,isCrit);
   renderBattle();
   if (defender.hp <= 0) finishBattle(defender === combat.enemy ? 'player' : 'enemy');
   return original;
@@ -739,12 +749,18 @@ function renderStatus(unit) { return [ statusBar('HP', unit.hp, unit.maxHp, 'hp'
 function renderPassives(unit) { return unit.passives.map(card => `<div class="mini-card passive-mini"><img src="${card.local_image_path}" alt="${escapeHtml(card.name)}" /><div><b>${escapeHtml(card.name)}</b><div class="meta">${escapeHtml(card.skill)} · ${inferRarity(card)}</div><div class="meta">${escapeHtml(createPassivePower(card).summary)}</div></div></div>`).join(''); }
 function renderAvatar(unit) { return `<img src="${unit.active.local_image_path}" alt="${escapeHtml(unit.active.name)}" /><div class="name">${escapeHtml(unit.active.name)}</div><div class="sub">${escapeHtml(unit.pet.name)} · ${unit.name}</div>`; }
 function deployLoadout(unit){
+ if(unit.loadoutUsed)return;
  unit.loadoutUsed=true;
+ const target=unit===combat.player?combat.enemy:combat.player;
  if(unit.loadout.effect==='market'){
- unit.energy=Math.min(unit.maxEnergy,unit.energy+3);unit.activeCooldown=Math.max(0,unit.activeCooldown-2);unit.petCooldown=Math.max(0,unit.petCooldown-2);
+  unit.energy=Math.min(unit.maxEnergy,unit.energy+3);unit.activeCooldown=Math.max(0,unit.activeCooldown-2);unit.petCooldown=Math.max(0,unit.petCooldown-2);
+ }else if(unit.loadout.effect==='hammer'){
+  const broken=Math.min(25,target.shield);target.shield-=broken;unit.focus+=8;
+  logMessage('Hammer breaks '+broken+' shield; next strike gains 8 focus.');
+ }else if(unit.loadout.effect==='pocket'){
+  unit.gloo+=2;unit.energy=Math.min(unit.maxEnergy,unit.energy+2);
  }else{
- restoreHp(unit,unit.loadout.effect==='rally'?22:30,logMessage,unit.loadout.name);
- if(unit.loadout.effect==='rally')addShield(unit,8,logMessage,unit.loadout.name);else unit.focus+=4;
+  restoreHp(unit,22,logMessage,unit.loadout.name);addShield(unit,8,logMessage,unit.loadout.name);
  }
  logMessage(unit.name+' deployed '+unit.loadout.name+' — supply consumed.');
 }
@@ -839,12 +855,16 @@ function animateCriticalAttack(attacker, defender) {
   createCritBurst(attacker === combat.enemy);
   setTimeout(() => attackerPane.classList.remove('critical-attack'), 980);
 }
-function createProjectile(enemy, kind) {
-  const layer = document.createElement('div'); layer.className = 'effect-layer';
-  const projectile = document.createElement('div'); projectile.className = `projectile ${enemy ? 'enemy' : ''} ${kind === 'pet' ? 'pet-projectile' : ''}`;
-  layer.appendChild(projectile); ui.battleBoard.appendChild(layer);
-  setTimeout(() => { const blast = document.createElement('div'); blast.className = `blast ${kind === 'pet' ? 'pet-blast' : ''}`; blast.style.left = enemy ? '20%' : '80%'; blast.style.top = '46%'; layer.appendChild(blast); }, 430);
-  setTimeout(() => layer.remove(), kind === 'pet' ? 1200 : 980);
+function showDamage(unit,hp,shield,crit){
+ const node=document.createElement('div');node.className='damage-float'+(crit?' critical':'');
+ node.textContent=(crit?'CRIT ':'')+(hp?'-'+hp:'BLOCK')+(shield?' · '+shield+' shield':'');
+ node.style.left=unit===combat.player?'22%':'78%';ui.battleBoard.appendChild(node);setTimeout(()=>node.remove(),1000);
+}
+function createProjectile(enemy,kind){
+ const layer=document.createElement('div');layer.className='duel-fx '+(enemy?'from-enemy':'');
+ layer.style.setProperty('--fx',kind==='attack'?'#ffd584':kind==='pet'?'#85f1ba':'#8ddfff');
+ layer.innerHTML='<i class="muzzle"></i><i class="tracer"></i><i class="impact"></i>'+Array.from({length:7},(_,i)=>'<i class="spark" style="--angle:'+i*51+'deg"></i>').join('');
+ ui.battleBoard.appendChild(layer);setTimeout(()=>layer.remove(),900);
 }
 async function animatePetOverlay(user, target) {
   if (!combat || !user.pet || !ui.battleBoard) return;
@@ -890,26 +910,7 @@ ui.soundBtn.addEventListener('click', () => { soundOn = !soundOn; ui.soundBtn.te
 document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
 
 
-function applyExternalUser(user) {
-  if (!user || typeof user !== 'object') return;
-  currentUser = {
-    id: user.id || user.email || currentUser.id,
-    name: user.name || user.email || currentUser.name || 'Data Center User',
-    email: user.email || currentUser.email || '',
-    authenticated: true
-  };
-  try { updateWallet(); } catch {}
-}
-
-window.addEventListener('message', event => {
-  if (!event.data || typeof event.data !== 'object') return;
-  if (event.data.type === 'ffdc-user') applyExternalUser(event.data.user);
-});
-
-try {
-  window.parent?.postMessage({ type: 'card-arena-ready' }, '*');
-} catch {}
-
+// Standalone game: no account injection or parent authentication dependency.
 
 function addDataCenterExitButton() {
   if (window.self === window.top || document.getElementById('exitDataCenterBtn')) return;

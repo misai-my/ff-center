@@ -28,7 +28,7 @@
           <button id="campaignBtn" type="button">CAMPAIGN</button>
           <button id="deckBtn" type="button">DECK</button>
           <button id="randomizeBtn" type="button">RANDOM</button>
-          <button id="soundBtn" type="button">SOUND</button>
+          <button id="tipsBtn" type="button" aria-expanded="false" aria-controls="tipsPanel">TIPS</button><button id="soundBtn" type="button">SOUND</button>
         </div>
       </div>
     </header>
@@ -157,7 +157,14 @@
     </div>
   </div>
 
-  <script src="assets/data.js"></script>
+  <aside id="tipsPanel" class="tips-panel" hidden aria-label="Gameplay tips">
+<button id="closeTips" type="button" aria-label="Close tips">Close ×</button><h2>Duel field guide</h2>
+<p id="liveTip" aria-live="polite"></p>
+<details open><summary>How turns work</summary><p>Choose one action per turn. Attack for free, or spend energy on a skill. Passives are always equipped. Cooldowns tick at the start of your turn.</p></details>
+<details><summary>Pick your loadout</summary><p><b>Team Booster:</b> recover HP and shield.<br><b>Tactical Market:</b> refill energy and shorten cooldowns.<br><b>Enhanced Hammer:</b> break shield and prepare a stronger hit.<br><b>Super Leg Pocket:</b> replenish gloo walls and energy.</p></details>
+<details><summary>Win the exchange</summary><p>Save gloo walls for incoming pressure. Spend focus on your next attack. Use healing after taking damage. Every loadout can be deployed only once per duel.</p></details>
+<p class="muted">These are custom card-game effects. They do not reproduce official Free Fire numeric balance.</p></aside>
+<script src="assets/data.js"></script>
   <script src="assets/standalone.js"></script><script src="script.js"></script>
-</body>
+<script src="tips.js"></script></body>
 </html>
