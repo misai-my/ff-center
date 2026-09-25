@@ -32,3 +32,6 @@ Keep this folder named `card-arena` at the root of your project. All CSS, script
 ```
 
 The iframe isolates the game's styles from your main page. Mobile scrolling stays inside the game. TIPS opens a field guide with contextual advice; Escape or Close hides it. No parent-page scripts or external user/account messages are required. Character artwork still uses supplied remote URLs.
+
+## Character image location
+Character images load from `../ff-center/assets/img/characters/` relative to `card-arena/index.html`. Put `card-arena` and `ff-center` alongside each other in the GitHub project. Original dataset filenames are retained. Pets continue to use supplied remote image URLs. Missing images use the bundled fallback.
