@@ -618,8 +618,9 @@ function chooseAutoPlayerAction() {
 
   if (dangerHp && canActive && isDefensiveAction(activeKind)) return 'active';
   if (dangerHp && canPet && isDefensiveAction(petKind)) return 'pet';
-  if(!a.loadoutUsed && (lowHp || a.energy<2)) deployLoadout(a);
-  else if (lowHp && canActive && ['heal', 'shield'].includes(activeKind)) return 'active';
+  if(!p.loadoutUsed && (lowHp || p.energy<2 || (p.loadout.effect==='hammer' && e.shield>=15))) return 'loadout';
+  if(dangerHp && shieldLow && p.gloo>0 && p.energy>=1) return 'gloo';
+  if (lowHp && canActive && ['heal', 'shield'].includes(activeKind)) return 'active';
   if (lowHp && canPet && ['heal', 'shield'].includes(petKind)) return 'pet';
 
   if (enemyLow && canActive && isDamageAction(activeKind)) return 'active';
@@ -646,7 +647,8 @@ async function takeAutoPlayerTurn() {
 }
 function togglePlayerAuto() {
   playerAutoEnabled = !playerAutoEnabled;
-  localStorage.setItem('ffcaPlayerAutoEnabled', playerAutoEnabled ? '1' : '0');
+  clearTimeout(autoTurnTimer);
+  try {localStorage.setItem('ffcaPlayerAutoEnabled', playerAutoEnabled ? '1' : '0');} catch {}
   if (combat && !combat.over) {
     logMessage(`Auto Battle ${playerAutoEnabled ? 'ON' : 'OFF'}.`);
     renderBattle();
