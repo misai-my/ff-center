@@ -1,4 +1,4 @@
-# Breakpoint: Survivor — RPG field build
+# Breakpoint: Survivor — illustrated RPG field build
 
 A static, unofficial Free Fire fan game prototype built around an action RPG loop. Explore three Bermuda areas, solve short quests, choose how to handle the courier and the subject record, collect equipment and supplies, complete an optional beacon quest, travel back to unlocked areas, spend credits, level up, specialize your character, and fight through three top-down encounters. Comic panels appear at the opening and the major story reveal.
 
@@ -28,7 +28,9 @@ XP from exploration, quests, and encounters raises your level and awards skill p
 
 ## Update an existing GitHub Pages installation
 
-Replace `index.html`, `game.js`, `arena.js`, `styles.css`, and `README.md` in `minigames/breakpoint-survivor/`, and add **`world.js`** in the same directory. The site uses relative asset paths. After GitHub Pages deploys, refresh the browser to load the new scripts.
+Replace `index.html`, `game.js`, `arena.js`, `world.js`, `styles.css`, and `README.md` in `minigames/breakpoint-survivor/`. Add `art.js` beside them and upload the entire `assets/` folder, keeping its four `.webp` files inside. The site uses relative paths and needs no build process. After GitHub Pages deploys, refresh the browser to load the new scripts and images. The illustrations have Canvas fallbacks while they load.
+
+The visual update includes an illustrated yard, top-down character and boss art, and props for crates, relays, gates, trading, and quest objects. These are original generated illustrations, optimized as WebP; they are not extracted from Free Fire.
 
 ## Lore and rights
 
