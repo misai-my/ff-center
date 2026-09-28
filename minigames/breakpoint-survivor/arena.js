@@ -16,8 +16,8 @@ window.BreakpointArena = class BreakpointArena {
     this.listen(window,'keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();this.keys.add(e.code);if(e.repeat)return;if(e.code==='KeyE')this.interact();if(e.code==='KeyF')this.heal();if(e.code==='KeyQ')this.scan();if(e.code==='ShiftLeft'||e.code==='ShiftRight')this.dodge()});
     this.listen(window,'keyup',e=>this.keys.delete(e.code));
     this.listen(window,'blur',()=>{this.keys.clear();this.joystick={x:0,y:0}});
-    this.listen(canvas,'pointermove',e=>{if(e.pointerType==='mouse')this.pointer=this.canvasPoint(e)});
-    this.listen(canvas,'pointerdown',e=>{if(e.pointerType==='mouse'){this.pointer=this.canvasPoint(e);this.shoot()}});
+    this.listen(canvas,'pointermove',e=>{if(e.pointerType==='mouse'){this.touchAim=false;this.pointer=this.canvasPoint(e)}});
+    this.listen(canvas,'pointerdown',e=>{if(e.pointerType==='mouse'){this.touchAim=false;this.pointer=this.canvasPoint(e);this.shoot()}});
     this.frame=requestAnimationFrame(t=>this.tick(t));
     this.notice(config.id==='mocoFight'?'Stay alive, scan the terminal, then extract.':'Reach the exit after completing the objective.');
   }
@@ -48,7 +48,7 @@ window.BreakpointArena = class BreakpointArena {
     if(Math.floor(this.elapsed)!==this.hudSecond){this.hudSecond=Math.floor(this.elapsed);this.hooks.onHud?.(this)}
     let dx=(this.keys.has('KeyD')||this.keys.has('ArrowRight')?1:0)-(this.keys.has('KeyA')||this.keys.has('ArrowLeft')?1:0)+this.joystick.x,dy=(this.keys.has('KeyS')||this.keys.has('ArrowDown')?1:0)-(this.keys.has('KeyW')||this.keys.has('ArrowUp')?1:0)+this.joystick.y;const n=Math.hypot(dx,dy);if(n>0){dx/=Math.max(1,n);dy/=Math.max(1,n);this.move(p,dx*210*dt,dy*210*dt)}
     if(this.keys.has('Space')){const enemy=this.nearest();if(enemy){const prev=this.touchAim;this.touchAim=true;this.shoot();this.touchAim=prev}}
-    if(this.objective()&&!this.exit.open){this.exit.open=true;this.notice('EXTRACTION OPEN · reach the cyan gate and press E.');this.hooks.onHud?.(this)}
+    if(this.objective()&&!this.exit.open){this.exit.open=true;this.notice('EXTRACTION OPEN · reach the exit gate and press E.');this.hooks.onHud?.(this)}
     for(const e of this.enemies){if(e.hp<=0)continue;e.stun=Math.max(0,e.stun-dt);if(e.stun>0)continue;const dist=Math.hypot(p.x-e.x,p.y-e.y),ang=Math.atan2(p.y-e.y,p.x-e.x);e.facing=ang;if(dist>105&&dist<590){const speed=dt*(e.type==='moco'?80:45),oldX=e.x,oldY=e.y;this.move(e,Math.cos(ang)*speed,Math.sin(ang)*speed);if(Math.hypot(e.x-oldX,e.y-oldY)<speed*.15)this.move(e,-Math.sin(ang)*speed,Math.cos(ang)*speed)}e.fire-=dt;if(e.fire<=0&&dist<570&&this.wallFraction(e.x,e.y,p.x,p.y)===Infinity){e.fire=e.type==='moco'?1.05:e.type==='drone'?1.15:1.6+Math.random()*.5;const speed=e.type==='drone'?295:250;this.bullets.push({x:e.x,y:e.y,vx:Math.cos(ang)*speed,vy:Math.sin(ang)*speed,life:2.3,owner:'enemy',damage:e.type==='drone'?11:e.type==='moco'?9:7})}}
     this.separateActors();
     for(const b of this.bullets){const x=b.x+b.vx*dt,y=b.y+b.vy*dt;b.life-=dt;let first=this.wallFraction(b.x,b.y,x,y),hit=null;
@@ -73,7 +73,7 @@ window.BreakpointArena = class BreakpointArena {
     if(this.messageTime>0){c.fillStyle='#101722dd';c.fillRect(230,24,440,43);c.strokeStyle='#ffcf72';c.strokeRect(230,24,440,43);this.label(c,450,51,this.message,'#f4f0e9')}
     c.restore();}
   drawFighter(c,actor,type,angle){
-    if(window.BreakpointArt?.actor(c,actor,type,angle,this.elapsed)){if(type==='player'||actor.stun>0){c.strokeStyle=type==='player'?'#8be5e2':'#8be5e299';c.lineWidth=2;c.beginPath();c.arc(actor.x,actor.y,type==='drone'?31:21,0,Math.PI*2);c.stroke()}return}
+    if(window.BreakpointArt?.actor(c,actor,type,angle,this.elapsed))return;
     c.save();c.translate(actor.x,actor.y);
     c.fillStyle='#070d15a9';c.beginPath();c.ellipse(3,7,type==='drone'?29:23,type==='drone'?17:15,0,0,Math.PI*2);c.fill();
     c.rotate(angle);
@@ -93,8 +93,6 @@ window.BreakpointArena = class BreakpointArena {
       c.fillStyle=moco?'#202a35':'#d1a57d';c.beginPath();c.arc(7,0,9,0,Math.PI*2);c.fill();c.strokeStyle='#16202a';c.stroke();
       if(moco){c.strokeStyle='#47d5cb';c.lineWidth=4;c.beginPath();c.arc(5,0,10,.55,Math.PI*1.45);c.stroke();c.fillStyle='#9cf6ef';c.fillRect(8,-4,6,8)}
       else{c.fillStyle=player?'#c6b193':captain?'#976c4d':'#69737a';c.beginPath();c.arc(8,0,8,0,Math.PI*2);c.fill();c.strokeStyle=trim;c.lineWidth=2;c.beginPath();c.arc(8,0,8,Math.PI*.72,Math.PI*1.28);c.stroke();c.fillStyle=captain?'#ffb56f':'#1b272f';c.fillRect(11,-4,6,8)}
-      if(player){c.strokeStyle='#8be5e2';c.lineWidth=2;c.beginPath();c.arc(0,0,22,0,Math.PI*2);c.stroke()}
-      if(actor.stun>0){c.strokeStyle='#8be5e2';c.lineWidth=3;c.beginPath();c.arc(0,0,25,0,Math.PI*2);c.stroke()}
     }
     c.restore();
   }

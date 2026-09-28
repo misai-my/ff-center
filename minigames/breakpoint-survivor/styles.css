@@ -12,3 +12,29 @@
 /* RPG field, journal, and character progression */
 .rpg-hud strong{display:block}.rpg-hud small{display:block;color:#a8bec4;font-size:10px;margin-top:3px}.world-toolbar{display:flex;gap:8px;margin-top:15px}.world-toolbar button{border:1px solid #7a7e85;background:#252d39;color:#f4f0e9;min-height:43px;padding:8px 14px;font:800 12px var(--head);letter-spacing:.09em}.world-toolbar button:hover{border-color:#8be5e2;background:#344852}.world-toolbar span{color:#8be5e2;margin-left:4px}.world-overlay{position:absolute;inset:0;background:#080e17db;z-index:5;display:grid;place-items:center;padding:14px;line-height:1.4;overflow:auto}.world-overlay[hidden]{display:none}.world-dialog{width:min(560px,100%);max-height:100%;overflow:auto;background:#ebe4d8;color:#181c25;border:5px solid #f8f1e8;box-shadow:9px 9px #05080e;padding:17px 22px}.world-dialog h3{font-size:34px;margin:5px 0}.world-dialog p{font-size:13px;line-height:1.5;margin-bottom:14px}.world-dialog-actions{display:grid;gap:7px}.world-dialog .choice{background:#252e3b;color:#fff;padding:9px 12px}.world-dialog .choice small{color:#bccbd2}.world-dialog .button.secondary{color:#1a1d25;border-color:#484e55;min-height:35px;justify-content:center}.world-touch .touch-buttons{display:block}.world-touch .touch-buttons .world-interact{width:112px;height:56px;border-color:#8be5e2;color:#0d1c20;background:#8be5e2;font-size:16px}
 @media(max-width:680px){.rpg-hud strong{font-size:12px}.rpg-hud small{font-size:9px}.world-toolbar{gap:4px}.world-toolbar button{flex:1;padding:7px 5px;font-size:10px}.world-dialog{padding:10px 14px;box-shadow:none}.world-dialog h3{font-size:27px}.world-dialog p{font-size:11px}.world-dialog .choice{padding:6px}.world-dialog .choice-text strong{font-size:11px}.world-dialog .choice-text small{font-size:9px}.world-touch .touch-buttons .world-interact{width:88px;height:45px;font-size:13px}}
+
+/* Illustrated title and story presentation */
+.intro{position:relative;isolation:isolate;display:flex;justify-content:flex-end;align-items:center;min-height:min(780px,calc(100vh - 125px));padding:55px clamp(24px,5vw,78px);margin:18px 0 28px;overflow:hidden;border:1px solid #53616a;background:linear-gradient(90deg,#09121b12 0%,#09121b22 35%,#09121bdc 68%,#09121bf7 100%),url('assets/home-key-art.webp') center center/cover no-repeat;box-shadow:0 20px 45px #0008}
+.intro:after{content:'';position:absolute;inset:0;border:1px solid #d0a36f66;pointer-events:none;z-index:-1}
+.intro-copy{position:relative;z-index:1;width:min(590px,55%);max-width:none;margin-left:auto;padding:12px 0}
+.intro h1{font-size:clamp(72px,8.8vw,140px);line-height:.78;letter-spacing:-.018em;margin:20px 0 26px;text-shadow:0 5px 24px #0008}
+.intro h1 em{color:#ffb56f}
+.intro-copy p{max-width:500px;color:#e6ded5;line-height:1.55;font-size:14px;text-shadow:0 2px 6px #000}
+.intro-copy .intro-hook{color:#fff;font:800 clamp(19px,2vw,30px)/1.03 var(--head);letter-spacing:.09em;margin-bottom:18px}
+.title-meta{display:flex;gap:15px;align-items:center;flex-wrap:wrap;font-size:10px;letter-spacing:.16em;font-weight:800;color:#d1d8d9}
+.intro .pill{background:#111924c9;color:#ffc18d;border-color:#f99556}
+.intro .button{box-shadow:4px 5px 0 #030911ab}
+.intro .button.secondary{background:#0a121ecb;border-color:#b8c4c7}
+.intro-notes{border-top:1px solid #c5c5b466;color:#e0e6e4;gap:18px;flex-wrap:wrap}
+.intro-save{margin-top:24px;font-size:10px;font-weight:800;letter-spacing:.16em;color:#f5c68f}
+.intro .cover{display:none}
+.panel{border:3px solid #d5c3a4;box-shadow:4px 4px 0 #03070c}
+.panel .comic-frame{background-image:url('assets/comic-scenes.webp');background-size:300% 200%;background-repeat:no-repeat;filter:saturate(.9) contrast(1.08)}
+.panel .comic-frame:before,.panel .comic-frame:after{display:none}
+.panel:after{background:linear-gradient(transparent 32%,#070b13ee 100%)}
+.panel-label{background:#121923;color:#f4d4a8;border:1px solid #d0a36f;font-size:11px;padding:5px 9px}
+.panel-caption,.panel:first-child .panel-caption{font-size:clamp(17px,2.3vw,29px);line-height:1.02;letter-spacing:.025em;bottom:16px;left:16px;right:16px;text-shadow:0 2px 5px #000}
+.panel:first-child .panel-caption{font-size:clamp(23px,3vw,38px)}
+.dialogue{border:1px solid #d6b98f;box-shadow:5px 5px 0 #070b11}
+@media(max-width:950px){.intro{min-height:650px;background-position:40% center}.intro-copy{width:min(560px,63%)}}
+@media(max-width:680px){.intro{min-height:690px;display:flex;align-items:flex-end;padding:24px 20px;margin:12px 0 25px;background-image:linear-gradient(0deg,#08121bf9 0%,#08121bf0 43%,#08121b1c 90%),url('assets/home-key-art.webp');background-position:31% center}.intro-copy{width:100%;padding:0}.intro h1{font-size:clamp(65px,16vw,104px);margin:16px 0 22px}.intro-copy p{font-size:12px}.intro-copy .intro-hook{font-size:23px}.intro-actions{margin:22px 0}.intro .button{min-height:49px;padding:10px 15px}.intro-notes{font-size:9px;gap:9px}.intro-save{margin-top:15px}.panels{grid-template-rows:210px 135px}.panel-caption,.panel:first-child .panel-caption{font-size:clamp(15px,4vw,25px)}}

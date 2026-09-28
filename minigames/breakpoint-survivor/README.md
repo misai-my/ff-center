@@ -12,11 +12,11 @@ Open `index.html` in a modern browser. No build process or backend is required. 
 | --- | --- | --- |
 | Move | WASD or arrows | Left movement stick |
 | Interact in field | E or Space | Interact button |
-| Aim and fire in combat | Mouse click or Space auto-target | Hold Fire |
+| Aim and fire in combat | Mouse click for manual aim; hold Space for nearest visible enemy | Hold Fire for nearest visible enemy |
 | Dodge, scan, patch in combat | Shift, Q, F | Action buttons |
 | Character, items, quests, travel | Skills, Inventory, Journal, Map buttons | Same buttons |
 
-Auto-targeting selects only enemies in clear line of sight. Move around cover when a shot is blocked.
+Assisted targeting selects the nearest enemy with a clear line of sight. Mouse clicks fire precisely toward the pointer. Move around cover when a shot is blocked. Assisted targeting stays available through the current three encounters; their challenge increases through enemy numbers, shield relays, and survival objectives. No later episode or automatic difficulty scaling is implemented yet.
 
 ### RPG route
 
@@ -28,9 +28,9 @@ XP from exploration, quests, and encounters raises your level and awards skill p
 
 ## Update an existing GitHub Pages installation
 
-Replace `index.html`, `game.js`, `arena.js`, `world.js`, `styles.css`, and `README.md` in `minigames/breakpoint-survivor/`. Add `art.js` beside them and upload the entire `assets/` folder, keeping its four `.webp` files inside. The site uses relative paths and needs no build process. After GitHub Pages deploys, refresh the browser to load the new scripts and images. The illustrations have Canvas fallbacks while they load.
+Replace `index.html`, `game.js`, `arena.js`, `world.js`, `styles.css`, and `README.md` in `minigames/breakpoint-survivor/`. Add `art.js` beside them and upload the entire `assets/` folder, keeping its six `.webp` files inside. The site uses relative paths and needs no build process. After GitHub Pages deploys, refresh the browser to load the new scripts and images. The gameplay illustrations have Canvas fallbacks while they load.
 
-The visual update includes an illustrated yard, top-down character and boss art, and props for crates, relays, gates, trading, and quest objects. These are original generated illustrations, optimized as WebP; they are not extracted from Free Fire.
+The visual update includes an illustrated yard, top-down character and boss art, props for crates, relays, gates, trading, and quest objects, a title illustration, and six comic scene illustrations. These are original generated illustrations, optimized as WebP; they are not extracted from Free Fire.
 
 ## Lore and rights
 
