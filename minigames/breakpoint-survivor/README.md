@@ -1,27 +1,35 @@
-# Breakpoint: Survivor — action prototype
+# Breakpoint: Survivor — RPG field build
 
-An unofficial, static, manga-inspired action story set against selected Free Fire lore. The illustrated chapters and consequential choices lead into three real-time top-down arenas. All artwork in the arenas is drawn by the game at runtime. Progress saves at story and arena checkpoints in the browser.
+A static, unofficial Free Fire fan game prototype built around an action RPG loop. Explore three Bermuda areas, solve short quests, choose how to handle the courier and the subject record, collect equipment and supplies, complete an optional beacon quest, travel back to unlocked areas, spend credits, level up, specialize your character, and fight through three top-down encounters. Comic panels appear at the opening and the major story reveal.
 
 ## Play
 
-Open `index.html` in a modern browser. The game has no build step or gameplay network dependency. Google Fonts are optional; system fallbacks work offline.
+Open `index.html` in a modern browser. No build process or backend is required. Story and character progress save in localStorage; world position saves periodically. A page reload during combat restarts that encounter at its checkpoint. New Game resets this browser's save. Previous story saves remain usable and route the player into the new field areas when appropriate.
 
-**Desktop:** Move with WASD or arrow keys. Aim and fire by clicking the arena, or hold Space for automatic targeting. Interact with E, use a field patch with F, scan with Q, and dodge with Shift.
+### Controls
 
-**Touch:** Use the left movement stick and the action buttons on the right. Hold Fire to shoot the nearest enemy. Tap Interact when close to a relay or the exit. Landscape gives more room to play.
+| Activity | Desktop | Touch |
+| --- | --- | --- |
+| Move | WASD or arrows | Left movement stick |
+| Interact in field | E or Space | Interact button |
+| Aim and fire in combat | Mouse click or Space auto-target | Hold Fire |
+| Dodge, scan, patch in combat | Shift, Q, F | Action buttons |
+| Character, items, quests, travel | Skills, Inventory, Journal, Map buttons | Same buttons |
 
-**Mission 1 — Patrol:** Defeat all three enemies, then reach and interact with the exit.
+Auto-targeting selects only enemies in clear line of sight. Move around cover when a shot is blocked.
 
-**Mission 2 — Relay Hunter:** Reach the two glowing relays and interact to disable them. The drone takes little damage until both are offline. Defeat it and extract.
+### RPG route
 
-**Mission 3 — Moco:** Decrypt the glowing terminal, survive 22 seconds, and extract. Moco is a survival encounter, not a kill target. Shoot to briefly interrupt her, dodge her attacks, or scan to jam her briefly.
+1. **Crash Site:** Find the patrol radio to unlock the gate. The supply cache is optional. Clear the patrol.
+2. **Service Road:** Speak with the courier, search for salvage, and trade with the scavenger. Disable the drone's two shield relays before defeating it.
+3. **Signal Outpost:** Decide whether to share or keep the subject file. Survive Moco's pursuit and extract.
 
-An arena restarts from its checkpoint after defeat or a page reload; completed story choices and encounters are saved. New Game resets that browser's save.
+XP from exploration, quests, and encounters raises your level and awards skill points. Upgrade Marksmanship (+4 shot damage), Vitality (+10 maximum HP), or Recon (+50 scan radius), each up to rank 3. Combat earns credits, which can buy patches and a permanent reinforced vest. Inventory and decisions persist between maps. The optional three-part beacon quest grants a permanent signal scrambler (+50 scan range); use Map to revisit unlocked areas for missed parts.
 
-## GitHub Pages update
+## Update an existing GitHub Pages installation
 
-Replace `index.html`, `game.js`, `styles.css`, and `README.md` under `minigames/breakpoint-survivor/`; add the new `arena.js` beside them. Keep the filenames and relative paths as provided. GitHub Pages will load the new file automatically when the branch deploys. No configuration or server is needed.
+Replace `index.html`, `game.js`, `arena.js`, `styles.css`, and `README.md` in `minigames/breakpoint-survivor/`, and add **`world.js`** in the same directory. The site uses relative asset paths. After GitHub Pages deploys, refresh the browser to load the new scripts.
 
 ## Lore and rights
 
-Official lore used: [Moco](https://ff.garena.com/en/chars/433), [Steffie](https://ff.garena.com/en/chars/150), [Rampage: Finale](https://ff.garena.com/en/article/1234/). Subject 031, the island recovery operation, combat mechanics, dialogue, and encounter levels are original fan fiction. Free Fire and its characters belong to Garena. This fan project is unaffiliated and contains no extracted game art or audio. Public promotion or monetization involving Garena IP may need permission from the rights holder.
+Official lore foundation: [Moco](https://ff.garena.com/en/chars/433), [Steffie](https://ff.garena.com/en/chars/150), [Rampage: Finale](https://ff.garena.com/en/article/1234/). Subject 031, the island mission, encounters, RPG levels, and dialogue are original fan fiction. Free Fire and its characters belong to Garena. This project is unaffiliated and includes no extracted game art or audio.
