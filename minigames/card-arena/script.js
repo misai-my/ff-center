@@ -489,7 +489,7 @@ function makeEnemyLoadout(stage) {
   return { active: (favoredActive.length && Math.random() < .7) ? favoredActive[rand(favoredActive.length)] : activeSkills[rand(activeSkills.length)], passives: shuffle([...(favoredPassive.length ? favoredPassive : passiveSkills)]).slice(0, 3), pet: (favoredPet.length && Math.random() < .7) ? favoredPet[rand(favoredPet.length)] : petSkills[rand(petSkills.length)] };
 }
 function buildCombatant(name, loadout, ai = false, baseBoost = {}) {
-  const state = {loadout:loadout.loadout||loadoutSkills[rand(loadoutSkills.length)],loadoutUsed:false,gloo:2, name, label: name, ai, active: loadout.active, passives: loadout.passives, pet: loadout.pet,
+  const state = {loadout:loadout.loadout||loadoutSkills[rand(loadoutSkills.length)],loadoutUsed:false,gloo:2,stance:'balanced', name, label: name, ai, active: loadout.active, passives: loadout.passives, pet: loadout.pet,
     activeAction: createActionPower(loadout.active, 'active'), petAction: createActionPower(loadout.pet, 'pet'),
     maxHp: baseBoost.maxHp || 110, hp: baseBoost.maxHp || 110, shield: baseBoost.shield || 0, maxEnergy: 6, energy: 3,
     attack: baseBoost.attack || 8, defense: 0, crit: 8, dodge: baseBoost.dodge || 0, regen: 0,
@@ -521,6 +521,13 @@ function scheduleBattle(fn,ms){const session=combat;setTimeout(()=>{if(combat===
 function showBuilderScreen() { if(combat)combat.over=true; clearTimeout(autoTurnTimer); actionBusy = false; deckCollapsed = false; document.body.classList.remove('deck-collapsed'); document.body.classList.remove('is-battle-mode'); ui.battleScreen.classList.remove('active'); ui.builderScreen.classList.add('active'); ui.resultModal.classList.remove('active'); renderBuilder(); }
 function startTurn(actor, target) {
   if (combat.over) return;
+  if(actor===combat.enemy)actor.stance=actor.hp<actor.maxHp*.35?'guard':actor.energy>=3?'rush':'balanced';
+  if(actor===combat.player && combat.turnNumber>=8){
+    const zone=(combat.turnNumber-7)*4;
+    combat.player.hp=Math.max(0,combat.player.hp-zone);combat.enemy.hp=Math.max(0,combat.enemy.hp-zone);
+    logMessage('SAFE ZONE: both fighters lose '+zone+' HP.');
+    if(combat.player.hp<=0||combat.enemy.hp<=0){finishBattle(combat.player.hp>combat.enemy.hp?'player':'enemy');return;}
+  }
   actionBusy = actor !== combat.player;
   actor.energy = Math.min(actor.maxEnergy, actor.energy + 1);
   actor.activeCooldown = Math.max(0, actor.activeCooldown - actor.cooldownMod);
@@ -545,11 +552,12 @@ function startTurn(actor, target) {
       autoTurnTimer = setTimeout(takeAutoPlayerTurn, 620);
     }
   }
-  else { actionBusy = true; ui.turnBanner.textContent = 'Opponent Turn'; ui.handHint.textContent = 'Opponent is thinking...'; renderBattle(); scheduleBattle(() => takeAiTurn(), 800); }
+  else { actionBusy = true; ui.turnBanner.textContent = 'Opponent Turn'; ui.handHint.textContent = 'Opponent is thinking...'; renderBattle(); scheduleBattle(() => takeAiTurn().catch(err=>{if(err.message!=='DUEL_CANCELLED')console.error(err);}), 650); }
 }
 async function performPlayerAction(kind) {
   if (!combat || combat.over || combat.turn !== 'player' || actionBusy) return;
   const session=combat;
+  clearTimeout(autoTurnTimer);
   actionBusy = true;
   renderBattle();
   try {
@@ -581,6 +589,7 @@ async function performPlayerAction(kind) {
     await sleep(180);
     if(combat===session && ui.battleScreen.classList.contains('active'))afterAction(combat.player, combat.enemy);
   } catch (err) {
+    if(err.message==='DUEL_CANCELLED')return;
     console.error(err);
     actionBusy = false;
     renderBattle();
@@ -641,6 +650,7 @@ function chooseAutoPlayerAction() {
 }
 async function takeAutoPlayerTurn() {
   if (!playerAutoEnabled || !combat || combat.over || combat.turn !== 'player' || actionBusy) return;
+  combat.player.stance=combat.player.hp<combat.player.maxHp*.35?'guard':combat.enemy.hp<35?'rush':'balanced';
   const action = chooseAutoPlayerAction();
   logMessage(`Auto Battle selected ${action.toUpperCase()}.`);
   await performPlayerAction(action);
@@ -698,6 +708,10 @@ function dealDamage(attacker, defender, amount, intro, log, opts = {}) {
   const isCrit = critChance > 0 && Math.random() * 100 < critChance;
   if (isCrit) dmg = Math.round(dmg * 1.55);
   if (defender.guardTurns > 0) dmg = Math.round(dmg * .72);
+  if(attacker?.stance==='rush')dmg=Math.round(dmg*1.2);
+  if(attacker?.stance==='guard')dmg=Math.round(dmg*.9);
+  if(defender.stance==='rush')dmg=Math.round(dmg*1.15);
+  if(defender.stance==='guard')dmg=Math.round(dmg*.8);
   const original = dmg;
   if (defender.shield > 0) { const absorbed = Math.min(defender.shield, dmg); defender.shield -= absorbed; dmg -= absorbed; }
   defender.hp = Math.max(0, defender.hp - dmg);
@@ -790,6 +804,7 @@ function renderHand() {
   ].join('');
 
   ui.playerHand.innerHTML = `
+    <div class="stance-row"><span>STANCE</span>${[['balanced','Balanced','Normal damage'],['rush','Rush','Deal +20% · take +15%'],['guard','Guard','Take −20% · deal −10%']].map(([key,label,hint])=>`<button data-stance="${key}" class="${player.stance===key?'chosen':''}" title="${hint}" ${busy?'disabled':''}>${label} · ${hint}</button>`).join('')}<span class="zone-alert">${combat.turnNumber<8?'ZONE CLOSES IN '+(8-combat.turnNumber)+' ROUNDS':'ZONE DAMAGE '+((combat.turnNumber-7)*4)+' / ROUND'}</span></div>
     <div class="battle-control-panel ${deckCollapsed ? 'deck-collapsed' : ''}">
       <div class="battle-action-header">
         <div class="battle-action-buttons">
@@ -805,6 +820,7 @@ function renderHand() {
       <div class="battle-deck-row">${deckCards}</div>
     </div>`;
 
+  ui.playerHand.querySelectorAll('[data-stance]').forEach(btn=>btn.addEventListener('click',()=>{if(!actionBusy&&combat.turn==='player'&&!combat.over){combat.player.stance=btn.dataset.stance;renderHand();}}));
   ui.playerHand.querySelectorAll('[data-play]').forEach(btn => btn.addEventListener('click', () => performPlayerAction(btn.dataset.play)));
   const autoToggle = ui.playerHand.querySelector('#autoBattleBtn');
   if (autoToggle) autoToggle.addEventListener('click', togglePlayerAuto);
@@ -825,7 +841,7 @@ function renderBattle() {
   ui.playerHero.innerHTML = renderHeroSummary(combat.player);
   ui.enemyHero.innerHTML = renderHeroSummary(combat.enemy);
   ui.playerStatus.innerHTML = renderStatus(combat.player);
-  ui.enemyStatus.innerHTML = renderStatus(combat.enemy);
+  ui.enemyStatus.innerHTML = '<div class="intent">OPPONENT STANCE · '+combat.enemy.stance.toUpperCase()+'</div>'+renderStatus(combat.enemy);
   ui.playerPassivePanel.innerHTML = renderPassives(combat.player);
   ui.enemyPassivePanel.innerHTML = renderPassives(combat.enemy);
   ui.playerAvatar.innerHTML = renderAvatar(combat.player);
@@ -837,12 +853,14 @@ function renderBattle() {
   renderHand();
 }
 async function animateAction(user, target, kind) {
+  const session=combat;
   const userPane = user === combat.player ? ui.playerAvatar : ui.enemyAvatar;
   userPane.classList.remove('attack','skill','critical-attack'); void userPane.offsetWidth;
   userPane.classList.add(kind === 'attack' ? 'attack' : 'skill');
   createProjectile(user === combat.enemy, kind);
   await sleep(kind === 'pet' ? 700 : 560);
   userPane.classList.remove('attack','skill');
+  if(session!==combat||session.over)throw new Error('DUEL_CANCELLED');
 }
 function animateHit(unit, isCrit = false) {
   const pane = unit === combat.player ? ui.playerAvatar : ui.enemyAvatar;

@@ -1,37 +1,39 @@
-# Free Fire Card Arena — Duel Edition
+# Free Fire Card Arena — Neon Duel
 
-Extract the complete folder and open index.html. No build step is required. Character and pet artwork uses the image URLs supplied in the original data; internet access is needed for that artwork. An included supply emblem appears if an image cannot load.
+## Install in your project
+Replace the contents of `ff-center/minigames/card-arena/` with this archive's `card-arena/` folder contents. Open `ff-center/minigames/card-arena/index.html`.
 
-## Build
-Equip exactly 1 active character skill, 3 different passive skills, 1 pet and 1 loadout. Use the plus buttons, double-click a card, or drag it onto its matching slot. RANDOM creates a valid build. CLEAR removes all six cards. Start Battle unlocks only with a complete build.
+Character art resolves to `../../assets/img/characters/` from the game page — your `ff-center/assets/img/characters/` directory. Filenames retain the original data's spelling and extension. Failed local character images try the supplied remote image URL, then the bundled placeholder. Pet art uses supplied remote URLs. Background and supply art are bundled. For a different deployment, pass `?assetBase=/your/path/characters/`.
 
-## Duel
-Take one action each turn: Basic Attack, Active Skill, Pet Skill, Gloo Wall or Loadout. Skills consume energy and have cooldowns. Passive cards apply automatically. You have two gloo walls per duel; each costs one energy and grants 20 shield. Loadout supplies are consumed once per duel:
-- Team Booster: restore 22 HP and gain 8 shield.
-- Tactical Market: gain 3 energy (up to the cap), reduce both cooldowns by 2.
-- Enhanced Hammer: remove up to 25 enemy shield and gain 8 focus.
-- Super Leg Pocket: gain 2 gloo walls and 2 energy.
-
-The opponent can use its own loadout. Auto Battle chooses character/pet/attack actions; use manual play for gloo and loadout timing. Campaign and map advantages from the original project remain. Enemy HP reaches zero: BOOYAH. Your HP reaches zero: defeat. Rematch resets supplies.
-
-## Design and scope
-Original gold-framed trading cards, dark duel mat, six visible equipment zones, energy/cooldown decisions and a combat log. Inspired by the presentation and decision-making of trading-card duels; this is not a reproduction of Yu-Gi-Oh rules. No random draw pile or monster summons: your six equipped cards are your persistent kit.
-
-This is a fan-made prototype. Skill effects, loadout effects, map bonuses, rarity and numeric balance are game adaptations, not official Free Fire simulation. The provided character/pet dataset is preserved; this release does not claim an OB55 data refresh. No server, multiplayer or account system is included.
-
-## Mobile
-Portrait phones use stacked build sections, a two-column card library, touch-size buttons and a three-column battle deck. Opponent/player health remain side-by-side. Landscape tablets use a wider layout. Rotation is not required; browser zoom is enabled.
-
-## Embed in your GitHub page project
-Keep this folder named `card-arena` at the root of your project. All CSS, scripts and bundled assets use relative paths, so it also works under a GitHub Pages repository subpath. Link with `./card-arena/index.html` or embed:
-
+For a page in the ff-center root:
 ```html
-<iframe src="./card-arena/index.html" title="Free Fire Card Arena"
+<iframe src="./minigames/card-arena/index.html" title="Free Fire Card Arena"
   style="display:block;width:100%;height:90dvh;min-height:600px;border:0"
-  allow="autoplay; fullscreen" loading="lazy"></iframe>
+  allow="autoplay; fullscreen"></iframe>
 ```
+Use an iframe to isolate this game from the host page's styles. The new `arena.css` replaces the old stacked stylesheets; no legacy CSS is loaded. Versioned script/style URLs help refresh old assets.
 
-The iframe isolates the game's styles from your main page. Mobile scrolling stays inside the game. TIPS opens a field guide with contextual advice; Escape or Close hides it. No parent-page scripts or external user/account messages are required. Character artwork still uses supplied remote URLs.
+## Build and battle
+Equip exactly 1 active skill, 3 different passives, 1 pet and 1 loadout. Click +, double-click or drag to a matching slot. RANDOM builds a complete kit.
 
-## Character image location
-Character images load from `../ff-center/assets/img/characters/` relative to `card-arena/index.html`. Put `card-arena` and `ff-center` alongside each other in the GitHub project. Original dataset filenames are retained. Pets continue to use supplied remote image URLs. Missing images use the bundled fallback.
+One action per turn: basic attack, active skill, pet skill, gloo wall or loadout. Skills spend energy and recover through cooldowns. Gloo costs 1 energy for 20 shield; start with two charges. Passive bonuses apply automatically.
+
+Choose a stance before your action:
+- Balanced: normal damage.
+- Rush: deal 20% more damage, take 15% more.
+- Guard: take 20% less damage, deal 10% less.
+
+At the start of round 8, the safe zone deals 4 direct HP damage to both fighters. This rises by 4 each round. It bypasses shields and prevents endless sustain. If both are reduced to zero by the same zone tick, the opponent wins the tie.
+
+One-use loadouts:
+- Team Booster: heal 22 HP and gain 8 shield.
+- Tactical Market: gain 3 energy and reduce both cooldowns by 2.
+- Enhanced Hammer: remove up to 25 enemy shield and gain 8 focus.
+- Super Leg Pocket: gain two gloo charges and two energy.
+
+AUTO chooses actions and stances. TIPS opens contextual advice and rules. Portrait and landscape layouts are supported. Reduced-motion preferences are respected.
+
+## Scope
+Fan-made card battler using the supplied character/pet reference data. Effects, rarity, stances, loadout values and map bonuses are custom duel rules, not an official Free Fire simulation or an OB55 balance guarantee. No multiplayer server or account dependency.
+
+Visual research: Konami's Master Duel developer message (readable cards and effect presentation), and Marvel Snap's official game overview (character-focused cards and tactical locations). Original interface styling; no copied game UI assets.
